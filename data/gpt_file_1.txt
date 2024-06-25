@@ -1,0 +1,68 @@
+**Patient Medical File**
+
+**Patient Information:**
+- **Name:** John Doe
+- **Date of Birth:** January 15, 1980
+- **Sex:** Male
+- **Address:** 123 Main Street, Anytown, USA
+- **Phone Number:** (555) 123-4567
+
+**Emergency Contact:**
+- **Name:** Jane Doe (wife)
+- **Phone Number:** (555) 987-6543
+
+**Chief Complaint:**
+- Patient presents with severe chest pain radiating to left arm and jaw, started 2 hours ago.
+
+**History of Present Illness:**
+- Patient states sudden onset of chest pain while at home watching TV. Pain described as crushing, 8/10 in severity, with associated sweating and shortness of breath. Denies any similar episodes in the past.
+
+**Past Medical History:**
+- Hypertension
+- Hyperlipidemia
+
+**Medications:**
+- Amlodipine 5 mg daily
+- Simvastatin 20 mg daily
+
+**Allergies:**
+- None known
+
+**Social History:**
+- Non-smoker
+- Occasional alcohol use (2-3 drinks per week)
+- Sedentary lifestyle
+
+**Family History:**
+- Father had myocardial infarction at age 55
+
+**Review of Systems:**
+- Cardiovascular: Positive for chest pain
+- Respiratory: Denies cough or shortness of breath
+- Gastrointestinal: Denies nausea or vomiting
+
+**Physical Examination:**
+- **Vital Signs:** BP 160/90 mmHg, HR 100 bpm, RR 18/min, Temp 98.6°F
+- **General:** Patient appears anxious, diaphoretic
+- **Cardiovascular:** Regular rate and rhythm, no murmurs
+- **Lungs:** Clear to auscultation bilaterally
+
+**Assessment:**
+- Acute coronary syndrome (rule out myocardial infarction)
+
+**Plan:**
+1. Administer oxygen via nasal cannula at 2 L/min.
+2. Obtain ECG and cardiac enzymes (troponin).
+3. Start IV access with normal saline.
+4. Provide 325 mg aspirin PO.
+5. Contact cardiology for urgent consultation.
+6. Monitor closely for any changes in condition.
+
+**Discharge Instructions:**
+- Admit to cardiac care unit for further management.
+- NPO (nothing by mouth) until further evaluation.
+- Follow-up with primary care physician upon discharge.
+
+**Provider Name:** Dr. Emily Smith, MD  
+**Date/Time:** June 24, 2024 10:30 AM  
+**Signature:** [Digital Signature]
