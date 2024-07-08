@@ -1,12 +1,16 @@
 from openai import OpenAI
+import yaml
 import json
-OPENAI_API_KEY = "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"
 
-client = OpenAI(api_key=OPENAI_API_KEY)
 MODEL  = "gpt-3.5-turbo"
 
 PATIENT_FILE_NAME = "data/ipass_handover_modified/ipass_file_1.txt" # txt file, any format
 HANDOVER_FILE_NAME = "data/ipass_handover_modified/ipass_handover_1_modified.json" # json file, contains "report" and "response" fields
+
+with open("config.yaml", "r") as f:
+    api_key = yaml.safe_load(f)["OPENAI_API_KEY"]
+
+client = OpenAI(api_key=api_key)
 
 def read_patient_file(file_name):
     with open(file_name, "r") as f:
