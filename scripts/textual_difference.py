@@ -1,6 +1,5 @@
 from openai import OpenAI
 import json
-OPENAI_API_KEY = "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"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 MODEL  = "gpt-4-turbo"
