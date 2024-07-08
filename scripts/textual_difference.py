@@ -5,8 +5,8 @@ OPENAI_API_KEY = "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"
 client = OpenAI(api_key=OPENAI_API_KEY)
 MODEL  = "gpt-3.5-turbo"
 
-PATIENT_FILE_NAME = "data/ipass_file_1.txt" # txt file, any format
-HANDOVER_FILE_NAME = "data/ipass_handover_1_modified.json" # json file, contains "report" and "response" fields
+PATIENT_FILE_NAME = "data/ipass_handover_modified/ipass_file_1.txt" # txt file, any format
+HANDOVER_FILE_NAME = "data/ipass_handover_modified/ipass_handover_1_modified.json" # json file, contains "report" and "response" fields
 
 def read_patient_file(file_name):
     with open(file_name, "r") as f:
@@ -21,7 +21,20 @@ def load_mds():
         return json.load(f)
     
 def gpt_response(system_role_message, prompt):
-    response = offload_buffers=True, 
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system_role_message},
+            {"role": "user", "content": prompt}
+        ]
+        # temperature=0.5
+    )
+    return response
+
+def one_shot_comparison(patient_record, handover_transcript):
+    system_role_message = """
+    You are a medical professional assisting in a nursing handover. Concisely list any important patient information that is missing from the handover transcript.
+    """
 
     prompt = f"""
     **Patient record:**

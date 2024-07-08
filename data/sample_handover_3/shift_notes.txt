@@ -1,0 +1,100 @@
+Nurse Shift Notes
+Patient Information:
+
+    Name: John Doe
+    Age: 68
+    Gender: Male
+    Date of Admission: 2024-07-01
+    Medical Record Number: 123456789
+
+Shift Details:
+
+    Nurse: Anne Johnson, RN
+    Shift: Day Shift (07:00 - 19:00)
+    Date: 2024-07-02
+
+Shift Notes:
+
+07:00
+
+    Report Received: Patient admitted to ICU with severe community-acquired pneumonia. Currently on high-flow nasal cannula (HFNC) at 40 L/min with FiO2 60%. IV antibiotics initiated (ceftriaxone and azithromycin). Vital signs stable but tachycardic.
+
+08:00
+
+    Assessment:
+        Vital Signs:
+            Temperature: 38.2°C
+            Heart Rate: 105 bpm
+            Blood Pressure: 138/80 mmHg
+            Respiratory Rate: 26 breaths/min
+            SpO2: 92% on HFNC
+        Physical Examination:
+            Patient alert and oriented x3
+            Respiratory effort slightly labored, crackles in right lower lobe on auscultation
+            No new complaints
+
+09:30
+
+    Medication Administration:
+        Administered scheduled IV antibiotics (ceftriaxone and azithromycin)
+        Administered acetaminophen 650 mg PO for fever
+
+11:00
+
+    Monitoring:
+        SpO2 dropped to 89% briefly, adjusted HFNC settings to 45 L/min, FiO2 70%, SpO2 improved to 93%
+        Patient expressing mild discomfort, repositioned for comfort
+
+12:30
+
+    Nutrition:
+        Assisted patient with lunch, tolerated soft diet well
+        Encouraged fluid intake to maintain hydration
+
+14:00
+
+    Assessment:
+        Vital Signs:
+            Temperature: 37.8°C
+            Heart Rate: 102 bpm
+            Blood Pressure: 135/78 mmHg
+            Respiratory Rate: 24 breaths/min
+            SpO2: 94% on HFNC
+        Physical Examination:
+            Patient continues to be alert and oriented
+            Respiratory status stable, no significant changes in lung sounds
+
+15:30
+
+    Family Communication:
+        Spoke with patient's spouse, provided update on current status and response to treatment
+        Addressed concerns about prognosis and answered questions
+
+17:00
+
+    Lab Results:
+        Reviewed latest labs, WBC 14,500/mm³, CRP still elevated
+        ABG shows slight improvement: pH 7.34, pCO2 50 mmHg, pO2 65 mmHg
+
+18:00
+
+    End-of-Shift Assessment:
+        Vital Signs:
+            Temperature: 37.5°C
+            Heart Rate: 100 bpm
+            Blood Pressure: 132/76 mmHg
+            Respiratory Rate: 22 breaths/min
+            SpO2: 95% on HFNC
+        Physical Examination:
+            Patient remains stable, slight improvement in respiratory effort
+            No new complaints or discomfort
+
+19:00
+
+    Report to Night Shift Nurse:
+        Provided comprehensive handover, highlighted current HFNC settings, recent lab results, and overall patient stability
+        Informed about need for close monitoring of respiratory status and regular vital signs assessment
+
+Nurse's Signature:
+Anne Johnson, RN
+Date: 2024-07-02

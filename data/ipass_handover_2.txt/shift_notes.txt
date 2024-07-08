@@ -1,0 +1,53 @@
+Nursing Shift Notes
+
+Patient: John Doe
+Room: ICU Room 5
+Date: 2024-07-08
+Shift: Day Shift (07:00-19:00)
+Nurse: [Your Name]
+
+07:30
+
+    Vital Signs: BP 130/80 mmHg, HR 75 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient is awake, alert, and oriented. Reports mild chest discomfort, rated 2/10 on pain scale. Lungs clear bilaterally, no respiratory distress. Cardiovascular status stable, telemetry shows no new arrhythmias.
+    Intervention: Administered morning medications per schedule, including metoprolol, atorvastatin, aspirin, and clopidogrel. Morphine 2 mg IV given for chest discomfort.
+
+09:00
+
+    Vital Signs: BP 128/82 mmHg, HR 72 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient resting comfortably in bed. No complaints of pain or discomfort.
+    Intervention: Encouraged use of incentive spirometer. Patient performed deep breathing exercises without difficulty. Monitored intake/output.
+
+11:30
+
+    Vital Signs: BP 132/78 mmHg, HR 74 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient remains stable. Reports no new symptoms. Telemetry continues to show normal sinus rhythm.
+    Intervention: Advanced diet to clear liquids as tolerated. Patient had apple juice and chicken broth without nausea. Blood glucose checked, 150 mg/dL, administered insulin per sliding scale.
+
+13:00
+
+    Vital Signs: BP 130/80 mmHg, HR 72 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient resting comfortably, engaging in light conversation with family at bedside. No complaints of pain or discomfort.
+    Intervention: Administered noon medications, including scheduled metoprolol and atorvastatin. Encouraged further use of incentive spirometer. Continued monitoring of intake/output.
+
+15:30
+
+    Vital Signs: BP 126/80 mmHg, HR 70 bpm, RR 18 breaths/min, Temp 98.6°F, SpO2 96% on room air.
+    Assessment: Patient stable, denies any new symptoms. Telemetry remains unremarkable.
+    Intervention: Educated patient and family on post-MI care, including the importance of medication adherence, diet, and exercise. Answered questions and provided educational materials.
+
+17:00
+
+    Vital Signs: BP 128/82 mmHg, HR 72 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient reports feeling well. Mild chest discomfort earlier in the shift resolved with morphine. No further pain reported.
+    Intervention: Continued monitoring. Administered scheduled medications. Blood glucose 140 mg/dL, insulin administered per sliding scale. Reinforced education on lifestyle changes and medication adherence.
+
+18:30
+
+    Vital Signs: BP 130/80 mmHg, HR 72 bpm, RR 18 breaths/min, Temp 98.7°F, SpO2 96% on room air.
+    Assessment: Patient stable, resting in bed. No new complaints. Family present and supportive.
+    Intervention: Prepared patient for end-of-shift handover. Ensured all documentation is up to date and communicated the plan for possible transfer to telemetry unit if stable overnight.
+
+Signature:
+[Your Name], RN
+Shift End Time: 19:00
