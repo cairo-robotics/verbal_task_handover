@@ -1,0 +1,19 @@
+{
+    "sheet size": [3, 3],
+    "sprite size": [20, 32],
+    "animation_frame_count" : 3,
+    "frames" : [
+        "SOUTH_1",
+        "SOUTH_2",
+        "SOUTH_3",
+        "WEST_1",
+        "WEST_2",
+        "WEST_3",
+        "EAST_1",
+        "EAST_2",
+        "EAST_3",
+        "NORTH_1",
+        "NORTH_2",
+        "NORTH_3"
+    ]
+}
