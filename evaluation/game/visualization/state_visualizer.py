@@ -13,7 +13,9 @@ GREEN = (0, 255, 0)
 class StateVisualizer:
     def __init__(self, **kwargs):
         self.PLAYER_IMG = MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "000.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json"))
-        self.UNSCALED_TILE_SIZE = 64
+        self.UNSCALED_TILE_SIZE = 32
+        self.GRASS_TILE = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
+        self.GRASS_TILE = pygame.transform.scale(self.GRASS_TILE, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
         self.scale_by_factor = 1
 
     def display_rendered_state(self, state, grid=None):
@@ -30,6 +32,8 @@ class StateVisualizer:
             for x, tile in enumerate(row):
                 if tile == "#":
                     pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                else:
+                    surface.blit(self.GRASS_TILE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
 
     def _render_player(self, surface, state):
         player_dir = state.player_dir

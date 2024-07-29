@@ -20,7 +20,6 @@ def blit_on_new_surface_of_size(surface, size, background_color=None):
     result_surface.blit(surface, (0, 0))
     return result_surface
 
-
 def run_static_resizeable_window(surface, fps=30):
     """
     window that can be resized and closed using gui
@@ -102,7 +101,7 @@ class MultiFramePygameImage:
             result[frame_name] = pygame.Rect(
                 frame_start[0], frame_start[1], sprite_width, sprite_height
             )
-            frame_start[0] = (i % 3) * sprite_width
-            frame_start[1] = (i // 3) * sprite_height
+            frame_start[0] = (i % sheet_width) * sprite_width
+            frame_start[1] = (i // sheet_width) * sprite_height
 
         return result
