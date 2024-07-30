@@ -1,0 +1,15 @@
+{
+    "objects" : {
+            "chest_0" : {
+                "type" : "chest",
+                "location" : "room2",
+                "position" : [3, 3],
+                "contains" : [
+                    {
+                        "name" : "key_0",
+                        "quantity" : 1
+                    }
+                ]
+            }
+        }
+}

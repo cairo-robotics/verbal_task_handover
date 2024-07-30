@@ -24,6 +24,10 @@ class StateVisualizer:
         self.UNSCALED_TILE_SIZE = 32
         self.GRASS_TILE = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
         self.GRASS_TILE = pygame.transform.scale(self.GRASS_TILE, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+        self.CHEST_CLOSED = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_closed.png")).convert_alpha()
+        self.CHEST_CLOSED = pygame.transform.scale(self.CHEST_CLOSED, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+        self.CHEST_OPEN = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_open.png")).convert_alpha()
+        self.CHEST_OPEN = pygame.transform.scale(self.CHEST_OPEN, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
         params = copy.deepcopy(self.DEFAULT_VALUES)
         params.update(kwargs)
@@ -64,6 +68,17 @@ class StateVisualizer:
         self.PLAYER_IMG.blit_on_surface(surface,
                                         self._position_in_unscaled_pixels(player_pos),
                                         sprite_name)
+        
+    def _render_objects(self, surface, state):
+        # import pdb; pdb.set_trace()
+        for obj in state.objects:
+            if obj.room == state.current_room:
+                x, y = obj.position
+                if obj.type == "chest":
+                    if obj.data["is_open"]:
+                        surface.blit(self.CHEST_OPEN, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
+                    else:
+                        surface.blit(self.CHEST_CLOSED, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
 
     def _position_in_unscaled_pixels(self, position):
         """
@@ -88,6 +103,7 @@ class StateVisualizer:
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
         self._render_grid(grid_surface, grid)
         self._render_player(grid_surface, state)
+        self._render_objects(grid_surface, state)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)

@@ -1,9 +1,11 @@
 import pygame
 from evaluation.game.visualization.utils import MultiFramePygameImage
-from game_mdp import GameState, Direction
+from game_mdp import GameState, Direction, start_state
 from evaluation.game.visualization.state_visualizer import StateVisualizer
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
+import json
+
 # Initialize Pygame
 pygame.init()
 
@@ -25,20 +27,13 @@ def load_map(filename):
     with open(filename, 'r') as f:
         return [list(line.strip()) for line in f]
 
-# # Draw the map
-# def draw_map(screen, game_map):
-#     for y, row in enumerate(game_map):
-#         for x, tile in enumerate(row):
-#             if tile == '#':
-#                 pygame.draw.rect(screen, WHITE, (x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-
 # Check collision
 def is_valid_move(game_map, new_pos):
     rows = len(game_map)
     cols = len(game_map[0])
     y, x = new_pos
     if 0 <= y < rows and 0 <= x < cols:
-        return game_map[y][x] != '#'
+        return game_map[y][x] in [' ', '>', '<']
     return False
 
 # Check for transition
@@ -61,16 +56,19 @@ def main():
     pygame.display.set_caption("2D Adventure Game")
     clock = pygame.time.Clock()
 
-    current_room = 'room1'
+    current_room = 'room2'
     game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
 
     player_pos = [2, 2]  # Start position (y, x)
     player_dir = Direction.SOUTH
-    state = GameState(player_pos, player_dir)
+    objects = start_state('./evaluation/game/maps/objects.json')
+    state = GameState(player_pos, player_dir, current_room, objects)
+    print(state.objects)
     # player_sprite = pygame.image.load('./evaluation/game/assets/vita_single.png').convert_alpha()
     # player_sprite = pygame.transform.scale(player_sprite, (TILE_SIZE, TILE_SIZE))
 
     pygame.init()
+
     surface = StateVisualizer().render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
@@ -87,6 +85,11 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # interact key
+                    # TODO implement
+                    pass
+
                 new_pos = list(player_pos)
                 if event.key == pygame.K_LEFT:
                     new_pos[1] -= 1
@@ -111,11 +114,11 @@ def main():
                     player_pos = new_player_pos
                 state.player_pos = player_pos
                 state.player_dir = player_dir
+                state.current_room = current_room
 
         # screen.fill(BLACK)
         # draw_map(screen, game_map)
         # screen.blit(player_sprite, (player_pos[1] * TILE_SIZE, player_pos[0] * TILE_SIZE))
-
 
         on_render(window, state, game_map)
         clock.tick(FPS)
