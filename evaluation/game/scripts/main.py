@@ -13,8 +13,8 @@ MAP_DIRECTORY = './evaluation/game/maps/'
 
 # Constants
 TILE_SIZE = 64
-SCREEN_WIDTH = TILE_SIZE * 8
-SCREEN_HEIGHT = TILE_SIZE * 8
+SCREEN_WIDTH = 15 * TILE_SIZE
+SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
 
 # Colors
@@ -45,8 +45,9 @@ def check_transition(current_room, game_map, player_pos):
         return 'room1', [y, len(game_map[0]) - 2]  # Transition to room1, new player position
     return None, None
 
-def on_render(window, state, grid):
-    surface = StateVisualizer().render_state(state, grid)
+def on_render(window, state_vis, state, grid):
+    window.fill(BLACK)
+    surface = state_vis.render_state(state, grid)
     window.blit(surface, (0, 0))
     pygame.display.flip()
 
@@ -56,7 +57,7 @@ def main():
     pygame.display.set_caption("2D Adventure Game")
     clock = pygame.time.Clock()
 
-    current_room = 'room2'
+    current_room = 'room1'
     game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
 
     player_pos = [2, 2]  # Start position (y, x)
@@ -69,13 +70,15 @@ def main():
 
     pygame.init()
 
-    surface = StateVisualizer().render_state(state, game_map)
+    state_vis = StateVisualizer()
+    surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
     grid_shape = (len(game_map[0]), len(game_map))
+    # grid_shape = (SCREEN_WIDTH, SCREEN_HEIGHT)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
 
-    window = pygame.display.set_mode(surface_size,  HWSURFACE | DOUBLEBUF | RESIZABLE)
+    window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     window.blit(surface, (0, 0))
     pygame.display.flip()
 
@@ -86,41 +89,36 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    # interact key
-                    # TODO implement
-                    pass
+                    state.handle_interact(game_map)
 
-                new_pos = list(player_pos)
-                if event.key == pygame.K_LEFT:
-                    new_pos[1] -= 1
-                    player_dir = Direction.WEST
-                elif event.key == pygame.K_RIGHT:
-                    new_pos[1] += 1
-                    player_dir = Direction.EAST
-                elif event.key == pygame.K_UP:
-                    new_pos[0] -= 1
-                    player_dir = Direction.NORTH
-                elif event.key == pygame.K_DOWN:
-                    new_pos[0] += 1
-                    player_dir = Direction.SOUTH
+                else:
+                    new_pos = list(player_pos)
+                    if event.key == pygame.K_LEFT:
+                        new_pos[1] -= 1
+                        player_dir = Direction.WEST
+                    elif event.key == pygame.K_RIGHT:
+                        new_pos[1] += 1
+                        player_dir = Direction.EAST
+                    elif event.key == pygame.K_UP:
+                        new_pos[0] -= 1
+                        player_dir = Direction.NORTH
+                    elif event.key == pygame.K_DOWN:
+                        new_pos[0] += 1
+                        player_dir = Direction.SOUTH
 
-                if is_valid_move(game_map, new_pos):
-                    player_pos = new_pos
+                    if is_valid_move(game_map, new_pos):
+                        player_pos = new_pos
 
-                new_room, new_player_pos = check_transition(current_room, game_map, player_pos)
-                if new_room:
-                    current_room = new_room
-                    game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
-                    player_pos = new_player_pos
-                state.player_pos = player_pos
-                state.player_dir = player_dir
-                state.current_room = current_room
+                    new_room, new_player_pos = check_transition(current_room, game_map, player_pos)
+                    if new_room:
+                        current_room = new_room
+                        game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
+                        player_pos = new_player_pos
+                    state.player_pos = player_pos
+                    state.player_dir = player_dir
+                    state.current_room = current_room
 
-        # screen.fill(BLACK)
-        # draw_map(screen, game_map)
-        # screen.blit(player_sprite, (player_pos[1] * TILE_SIZE, player_pos[0] * TILE_SIZE))
-
-        on_render(window, state, game_map)
+        on_render(window, state_vis, state, game_map)
         clock.tick(FPS)
 
     pygame.quit()

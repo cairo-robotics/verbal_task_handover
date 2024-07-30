@@ -86,22 +86,27 @@ class MultiFramePygameImage:
             **kwargs
         )
 
-    @staticmethod
-    def load_frames_rectangles(json_path):
+    # def sprite(self, frame_name):
+        # return self.image.subsurface(self.frames_rectangles[frame_name])
+
+    def load_frames_rectangles(self, json_path):
         with open(json_path, "r") as f:
             frames = json.load(f)
         
         sprite_width, sprite_height = frames["sprite size"]
         sheet_width, sheet_height = frames["sheet size"]
 
+        self.sprite_size = (sprite_width, sprite_height)
+
         result = {}
         frame_start = [0, 0]
         for i, frame_id in enumerate(frames["frames"]):
+            frame_start[0] = (i % sheet_width) * sprite_width
+            frame_start[1] = (i // sheet_width) * sprite_height
+            
             frame_name = frame_id + ".png"
             result[frame_name] = pygame.Rect(
                 frame_start[0], frame_start[1], sprite_width, sprite_height
             )
-            frame_start[0] = (i % sheet_width) * sprite_width
-            frame_start[1] = (i // sheet_width) * sprite_height
 
         return result
