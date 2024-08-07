@@ -13,7 +13,7 @@
     "npcs" : {
         "room1" : {
             "mark" : {
-                "position" : [3, 3],
+                "position" : [2, 6],
                 "interact_data" : [
                     ["Hello", ""],
                     ["I am a test NPC", "key1"],

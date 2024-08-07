@@ -26,6 +26,10 @@ GREEN = (0, 255, 0)
 def load_map(filename):
     with open(filename, 'r') as f:
         return [list(line.strip()) for line in f]
+    
+def load_transitions(filename):
+    with open(filename, 'r') as f:
+        return json.load(f)
 
 # Check collision
 def is_valid_move(game_map, new_pos):
@@ -33,16 +37,20 @@ def is_valid_move(game_map, new_pos):
     cols = len(game_map[0])
     y, x = new_pos
     if 0 <= y < rows and 0 <= x < cols:
-        return game_map[y][x] in [' ', '>', '<']
+        return game_map[y][x] in ' 0123456'
     return False
 
 # Check for transition
-def check_transition(current_room, game_map, player_pos):
+def check_transition(current_room, game_map, transitions, player_pos):
     y, x = player_pos
-    if current_room == 'room1' and game_map[y][x] == '>':
-        return 'room2', [y, 1]  # Transition to room2, new player position
-    elif current_room == 'room2' and game_map[y][x] == '<':
-        return 'room1', [y, len(game_map[0]) - 2]  # Transition to room1, new player position
+    # if current_room == 'room1' and game_map[y][x] == '>':
+    #     return 'room2', [y, 1]  # Transition to room2, new player position
+    # elif current_room == 'room2' and game_map[y][x] == '<':
+    #     return 'room1', [y, len(game_map[0]) - 2]  # Transition to room1, new player position
+    # return None, None
+    if game_map[y][x] in transitions[current_room]:
+        new_room, new_pos =  transitions[current_room][game_map[y][x]]
+        return new_room, new_pos
     return None, None
 
 def on_render(window, state_vis, state, grid):
@@ -63,6 +71,7 @@ def main():
     player_pos = [2, 2]  # Start position (y, x)
     player_dir = Direction.SOUTH
     objects = start_state('./evaluation/game/maps/objects.json')
+    transitions = load_transitions('./evaluation/game/maps/transitions.json')
     state = GameState(player_pos, player_dir, current_room, objects)
     print(state.objects)
     # player_sprite = pygame.image.load('./evaluation/game/assets/vita_single.png').convert_alpha()
@@ -89,8 +98,7 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    state.handle_interact(game_map)
-
+                    interact_output = state.handle_interact(game_map)
                 else:
                     new_pos = list(player_pos)
                     if event.key == pygame.K_LEFT:
@@ -109,7 +117,7 @@ def main():
                     if is_valid_move(game_map, new_pos):
                         player_pos = new_pos
 
-                    new_room, new_player_pos = check_transition(current_room, game_map, player_pos)
+                    new_room, new_player_pos = check_transition(current_room, game_map, transitions, player_pos)
                     if new_room:
                         current_room = new_room
                         game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
