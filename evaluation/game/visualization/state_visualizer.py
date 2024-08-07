@@ -14,6 +14,8 @@ class StateVisualizer:
     DEFAULT_VALUES = {
         # "height": 20 * 96,
         # "width": 20 * 96,
+        "screen_width": 15 * 96,
+        "screen_height": 15 * 96,
         "tile_size": 96,
         "window_fps" : 30,
         "sprite_scaling" : {
@@ -33,6 +35,7 @@ class StateVisualizer:
         }
 
         self.UNSCALED_TILE_SIZE = 32
+
         grass_tile = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
         grass_tile = pygame.transform.scale(grass_tile, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
         
@@ -73,6 +76,12 @@ class StateVisualizer:
                     pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
                     surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
+
+    # TODO implement
+    def _render_text(self, surface, text):
+        # text_surface = self.FONT.render(text, True, GREEN)
+        # surface.blit(text_surface, (self.TEXT_WINDOW_X, self.TEXT_WINDOW_Y))
+        pass
 
     def _render_player(self, surface, state):
         player_dir = state.player_dir
@@ -129,6 +138,10 @@ class StateVisualizer:
         self._render_grid(grid_surface, grid)
         self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
+
+        text_to_display = state.displayed_text
+        if text_to_display:
+            self._render_text(grid_surface, text_to_display)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)

@@ -80,6 +80,7 @@ class GameState:
             self._objects = defaultdict(lambda: {})
         self._objects = objects
         self.current_room = current_room
+        self.displayed_text = None
 
     @property
     def objects(self):
@@ -99,11 +100,19 @@ class GameState:
 
     def handle_interact(self, game_map):
         obj = self._get_facing_object()
-        if obj:
-            print("Interacting with object: ", self._get_facing_object())
+        output = None, None
+        if self.displayed_text:
+            self.displayed_text = None
+        
+        elif obj:
+            # print("Interacting with object: ", self._get_facing_object())
             output = obj.interact()
             if output:
                 print("Received: ", output)
+
+        if output[0]:
+            self.displayed_text = output[0]
+        return output
 
 def start_state(object_filename):
     with open(object_filename, 'r') as f:
