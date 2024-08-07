@@ -11,9 +11,21 @@
         }
     },
     "npcs" : {
+        "room0" : {
+            "lily" : {
+                "position" : [3, 8],
+                "facing" : "WEST",
+                "interact_data" : [
+                    ["Hello", ""],
+                    ["I am Lily", ""],
+                    ["Do you like my hair?", ""]
+                ]
+            }
+        },
         "room1" : {
             "mark" : {
                 "position" : [2, 6],
+                "facing" : "SOUTH", 
                 "interact_data" : [
                     ["Hello", ""],
                     ["I am a test NPC", "key1"],

@@ -32,6 +32,7 @@ class StateVisualizer:
         self.MULTI_FRAME_SPRITES = {
             "player": MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "player.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
             "mark"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "mark.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
+            "lily"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "lily.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
         }
 
         self.UNSCALED_TILE_SIZE = 32

@@ -13,6 +13,7 @@ class Direction(object):
     DIRECTION_TO_INDEX = { a:i for i, a in enumerate(INDEX_TO_DIRECTION) }
     OPPOSITE_DIRECTIONS = { NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST }
     DIRECTION_TO_NAME = { d:name for d, name in zip([NORTH, SOUTH, EAST, WEST], ["NORTH", "SOUTH", "EAST", "WEST"])}
+    NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
 
 class Object:
     def __init__(self, type, position):
@@ -52,11 +53,11 @@ class Chest(Object):
             return self.contains
 
 class NPC(Object):
-    def __init__(self, name, position, interact_data):
+    def __init__(self, name, position, facing, interact_data):
         super().__init__("npc", position)
         # self._sprite = name
         self.name = name
-        self.orientation = Direction.SOUTH
+        self.orientation = Direction.NAME_TO_DIRECTION[facing]
         self.interact_data = interact_data
         self.interact_count = 0
 
@@ -134,7 +135,7 @@ def start_state(object_filename):
         room_objs = all_entities["npcs"][room]
         for obj_name in room_objs:
             new_obj_dict = room_objs[obj_name]
-            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["interact_data"])
+            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"])
             objects[room].append(new_obj)
 
     return objects
