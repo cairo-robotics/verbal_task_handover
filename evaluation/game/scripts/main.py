@@ -137,8 +137,6 @@ def main(file_to_load=None):
                     state.player_dir = player_dir
                     state.current_room = current_room
 
-                    print(player_pos)
-
         on_render(window, state_vis, state, game_map)
         clock.tick(FPS)
 

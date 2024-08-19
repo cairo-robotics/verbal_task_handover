@@ -97,7 +97,7 @@ class NPC(Object):
     # def sprite(self):
     #     return self._sprite + "_" + Direction.DIRECTION_TO_NAME[self.orientation] + "_2.png"
 
-    def interact(self):
+    def interact(self, *args):
         if self.interact_count >= len(self.interact_data):
             return "...", None
         speech, item = tuple(self.interact_data[self.interact_count])
@@ -153,7 +153,6 @@ class GameState:
             self.displayed_text = None
         
         elif obj:
-            print("Interacting with object: ", self._get_facing_object())
             output = obj.interact(self.player_has_items)
             if obj.type == "door":
                 if output[0] is None:
@@ -165,6 +164,12 @@ class GameState:
             elif output[0] and obj.type == "chest":
                 self.player_has_items += output[1]
                 print("got item: ", output[1])
+
+            elif output[0] and obj.type == "npc":
+                if output[1]:
+                    self.player_has_items += output[1]
+                    print("got item: ", output[1])
+                print(output[0])
 
         return output
 
