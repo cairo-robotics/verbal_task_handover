@@ -20,6 +20,7 @@ class StateVisualizer:
         "window_fps" : 30,
         "sprite_scaling" : {
             "chest" : 0.7,
+            "door" : 2.0
         }
     }
 
@@ -33,6 +34,7 @@ class StateVisualizer:
             "player": MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "player.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
             "mark"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "mark.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
             "lily"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "lily.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
+            "door"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "wooden_door.png"), os.path.join(GRAPHICS_DIR, "wooden_door.json")),
         }
 
         self.UNSCALED_TILE_SIZE = 32
@@ -61,9 +63,9 @@ class StateVisualizer:
         for param_name, param_value in copy.deepcopy(kwargs).items():
             setattr(self, param_name, param_value)
 
-    def display_rendered_state(self, state, grid=None):
-        surface = self.render_state(state, grid)
-        run_static_resizeable_window(surface)
+    # def display_rendered_state(self, state, grid=None):
+    #     surface = self.render_state(state, grid)
+    #     run_static_resizeable_window(surface)
 
     def _unscaled_grid_pixel_size(self, grid):
         y_tiles = len(grid)
@@ -89,8 +91,8 @@ class StateVisualizer:
         dir_name = Direction.DIRECTION_TO_NAME[player_dir]
         sprite_name = dir_name + "_2.png"
         x_offset = (self.MULTI_FRAME_SPRITES["player"].sprite_size[1] - self.MULTI_FRAME_SPRITES["player"].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES["player"].sprite_size[1])
-        player_pos = (state.player_pos[1] + x_offset,
-                      state.player_pos[0])
+        player_pos = (state.player_pos[0] + x_offset,
+                      state.player_pos[1])
         self.MULTI_FRAME_SPRITES["player"].blit_on_surface(surface,
                                         self._position_in_unscaled_pixels(player_pos),
                                         sprite_name)
@@ -100,7 +102,7 @@ class StateVisualizer:
         for obj in state.objects:
             if obj.type == "npc":
                 x_offset = (self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1] - self.MULTI_FRAME_SPRITES[obj.name].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1])
-                npc_pos = (obj.position[1] + x_offset, obj.position[0])
+                npc_pos = (obj.position[0] + x_offset, obj.position[1])
                 sprite_name = Direction.DIRECTION_TO_NAME[obj.orientation] + "_2.png"
                 self.MULTI_FRAME_SPRITES[obj.name].blit_on_surface(surface,
                                                                    self._position_in_unscaled_pixels(npc_pos),
@@ -115,6 +117,14 @@ class StateVisualizer:
                         surface.blit(self.SPRITES["chest_open"], self._position_in_unscaled_pixels((x, y)))
                     else:
                         surface.blit(self.SPRITES["chest_closed"], self._position_in_unscaled_pixels((x, y)))
+                elif obj.sprite in ["door_open", "door_closed"]:
+                    sprite_name = ("OPEN" if obj.sprite == "door_open" else "CLOSED") + ".png"
+                    sprite = self.MULTI_FRAME_SPRITES["door"].sprite(sprite_name)
+                    rescaled_sprite = pygame.transform.scale(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    # self.MULTI_FRAME_SPRITES["door"].blit_on_surface(surface,
+                    #                                                 self._position_in_unscaled_pixels((x, y)),
+                    #                                                 sprite_name)
+                    surface.blit(rescaled_sprite, self._position_in_unscaled_pixels((x, y)))
 
     def _position_in_unscaled_pixels(self, position):
         """

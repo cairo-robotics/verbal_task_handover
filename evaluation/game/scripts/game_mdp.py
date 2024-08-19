@@ -1,14 +1,15 @@
 import json
 from collections import defaultdict
+import pickle
 class Direction(object):
     """
     The four possible directions a player can be facing.
     """
     
-    NORTH = (-1, 0)
-    SOUTH = (1, 0)
-    EAST  = (0, 1)
-    WEST  = (0, -1)
+    NORTH = (0, -1)
+    SOUTH = (0, 1)
+    EAST  = (1, 0)
+    WEST  = (-1, 0)
     ALL_DIRECTIONS = INDEX_TO_DIRECTION = [NORTH, SOUTH, EAST, WEST]
     DIRECTION_TO_INDEX = { a:i for i, a in enumerate(INDEX_TO_DIRECTION) }
     OPPOSITE_DIRECTIONS = { NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST }
@@ -18,7 +19,6 @@ class Direction(object):
 class Object:
     def __init__(self, type, position):
         self.type = type
-        self.is_passable = True
         self.position = position
         self._sprite = None
         self.sprite_scaling = 1.0
@@ -27,15 +27,43 @@ class Object:
     def sprite(self):
         return self._sprite
 
+    @property
+    def is_passable(self):
+        return True
+
     def interact(self):
         pass
+
+class Door(Object):
+    def __init__(self, position, is_locked, key):
+        super().__init__("door", position)
+        self.is_locked = is_locked
+        # self.is_open = False
+        self.key = key
+
+    @property
+    def sprite(self):
+        return "door_open" if not self.is_locked else "door_closed"
+
+    @property
+    def is_passable(self):
+        return not self.is_locked
+    
+    def interact(self, player_items):
+        if self.is_locked:
+            if self.key in player_items:
+                self.is_locked = False
+                # self.is_open = True
+                return True, "The door is unlocked."
+            else:
+                return False, "The door is locked."
+        return None, None
 
 class Chest(Object):
     def __init__(self, position, contains):
         super().__init__("chest", position)
         self.contains = contains
         self.is_open = False
-        self.is_passable = False
         self.sprite_scaling = 0.7
     
     @property
@@ -45,12 +73,16 @@ class Chest(Object):
         else:
             return "chest_closed"
 
-    def interact(self):
+    @property
+    def is_passable(self):
+        return False
+
+    def interact(self, *args):
         if self.is_open:
-            return None
+            return None, None
         else:
             self.is_open = True
-            return self.contains
+            return True, self.contains
 
 class NPC(Object):
     def __init__(self, name, position, facing, interact_data):
@@ -81,7 +113,22 @@ class GameState:
             self._objects = defaultdict(lambda: {})
         self._objects = objects
         self.current_room = current_room
+        self.player_has_items = []
         self.displayed_text = None
+
+    def __getstate__(self):
+        # Create a copy of the object's __dict__
+        state = self.__dict__.copy()
+        
+        # Convert the defaultdict to a regular dict
+        state['_objects'] = dict(self._objects)
+        
+        return state
+
+    def __setstate__(self, state):
+        # Restore the defaultdict
+        self.__dict__.update(state)
+        self._objects = defaultdict(list, state['_objects'])
 
     @property
     def objects(self):
@@ -92,7 +139,7 @@ class GameState:
 
     def _get_object_at_position(self, position):
         for obj in self.objects:
-            if tuple(obj.position) == position:
+            if tuple(obj.position) == tuple(position):
                 return obj
         return None
 
@@ -106,14 +153,33 @@ class GameState:
             self.displayed_text = None
         
         elif obj:
-            # print("Interacting with object: ", self._get_facing_object())
-            output = obj.interact()
-            if output:
-                print("Received: ", output)
+            print("Interacting with object: ", self._get_facing_object())
+            output = obj.interact(self.player_has_items)
+            if obj.type == "door":
+                if output[0] is None:
+                    return None, ""
+                elif output[0]:
+                    self.player_has_items.remove(obj.key)
+                    print("used key: ", obj.key)
 
-        if output[0]:
-            self.displayed_text = output[0]
+            elif output[0] and obj.type == "chest":
+                self.player_has_items += output[1]
+                print("got item: ", output[1])
+
         return output
+
+    def save(self, filename="save.pkl"):
+        with open(filename, "wb") as file:
+            pickle.dump(self, file)
+
+    @classmethod
+    def load(cls, filename="save.pkl"):
+        try:
+            with open(filename, "rb") as file:
+                return pickle.load(file)
+        except FileNotFoundError:
+            print(f"No save file found at {filename}")
+            return None
 
 def start_state(object_filename):
     with open(object_filename, 'r') as f:
@@ -128,7 +194,9 @@ def start_state(object_filename):
             obj_type = new_obj_dict["type"]
             if obj_type == "chest":
                 new_obj = Chest(new_obj_dict["position"], new_obj_dict["contains"])
-            
+            elif obj_type == "door":
+                new_obj = Door(new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
+
             objects[room].append(new_obj)
 
     for room in all_entities["npcs"]:

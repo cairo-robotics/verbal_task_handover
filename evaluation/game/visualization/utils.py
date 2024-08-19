@@ -53,8 +53,8 @@ class MultiFramePygameImage:
             **kwargs
         )
 
-    # def sprite(self, frame_name):
-        # return self.image.subsurface(self.frames_rectangles[frame_name])
+    def sprite(self, frame_name):
+        return self.image.subsurface(self.frames_rectangles[frame_name])
 
     def load_frames_rectangles(self, json_path):
         with open(json_path, "r") as f:

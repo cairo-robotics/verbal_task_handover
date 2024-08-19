@@ -1,5 +1,13 @@
 {
     "objects" : {
+        "room0" : {
+            "door_to_room1" : {
+                "position" : [0, 2],
+                "type" : "door",
+                "is_locked" : true,
+                "key": "key0"
+            }
+        },
         "room2" : {
             "chest0" : {
                 "position" : [3, 3],
@@ -24,7 +32,7 @@
         },
         "room1" : {
             "mark" : {
-                "position" : [2, 6],
+                "position" : [6, 2],
                 "facing" : "SOUTH", 
                 "interact_data" : [
                     ["Hello", ""],

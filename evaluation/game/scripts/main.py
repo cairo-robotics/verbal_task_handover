@@ -5,11 +5,15 @@ from evaluation.game.visualization.state_visualizer import StateVisualizer
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import json
+import argparse
 
 # Initialize Pygame
 pygame.init()
 
 MAP_DIRECTORY = './evaluation/game/maps/'
+SAVE_DIRECTORY = './evaluation/game/saves/'
+
+SAVE_FILENAME = 'test_save.pkl'
 
 # Constants
 TILE_SIZE = 64
@@ -32,22 +36,23 @@ def load_transitions(filename):
         return json.load(f)
 
 # Check collision
-def is_valid_move(game_map, new_pos):
+def is_valid_move(game_map, new_pos, game_state):
     rows = len(game_map)
     cols = len(game_map[0])
-    y, x = new_pos
+    x, y = new_pos
     if 0 <= y < rows and 0 <= x < cols:
-        return game_map[y][x] in ' 0123456'
+        if game_map[y][x] == ' ':
+            return True
+        elif game_map[y][x] in '0123456':
+            # check if door is passable
+            door = game_state._get_object_at_position(new_pos)
+            if door is None or door.is_passable:
+                return True
     return False
 
 # Check for transition
 def check_transition(current_room, game_map, transitions, player_pos):
-    y, x = player_pos
-    # if current_room == 'room1' and game_map[y][x] == '>':
-    #     return 'room2', [y, 1]  # Transition to room2, new player position
-    # elif current_room == 'room2' and game_map[y][x] == '<':
-    #     return 'room1', [y, len(game_map[0]) - 2]  # Transition to room1, new player position
-    # return None, None
+    x, y = player_pos
     if game_map[y][x] in transitions[current_room]:
         new_room, new_pos =  transitions[current_room][game_map[y][x]]
         return new_room, new_pos
@@ -60,23 +65,25 @@ def on_render(window, state_vis, state, grid):
     pygame.display.flip()
 
 # Main game loop
-def main():
+def main(file_to_load=None):
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("2D Adventure Game")
     clock = pygame.time.Clock()
 
-    current_room = 'room1'
-    game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
+    if file_to_load:
+        state = GameState.load(file_to_load)
+        player_pos = state.player_pos
+        player_dir = state.player_dir
+        current_room = state.current_room
+    else:
+        current_room = 'room0'
+        player_dir = Direction.SOUTH
+        player_pos = [2, 2]  # Start position (y, x)
+        objects = start_state('./evaluation/game/maps/objects.json')
+        state = GameState(player_pos, player_dir, current_room, objects)
 
-    player_pos = [2, 2]  # Start position (y, x)
-    player_dir = Direction.SOUTH
-    objects = start_state('./evaluation/game/maps/objects.json')
     transitions = load_transitions('./evaluation/game/maps/transitions.json')
-    state = GameState(player_pos, player_dir, current_room, objects)
-    print(state.objects)
-    # player_sprite = pygame.image.load('./evaluation/game/assets/vita_single.png').convert_alpha()
-    # player_sprite = pygame.transform.scale(player_sprite, (TILE_SIZE, TILE_SIZE))
-
+    game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     pygame.init()
 
     state_vis = StateVisualizer()
@@ -99,22 +106,26 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact(game_map)
+                elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    state.save(os.path.join(SAVE_DIRECTORY, "test_save.pkl"))
+                    print("Game saved!")
+
                 else:
                     new_pos = list(player_pos)
                     if event.key == pygame.K_LEFT:
-                        new_pos[1] -= 1
+                        new_pos[0] -= 1
                         player_dir = Direction.WEST
                     elif event.key == pygame.K_RIGHT:
-                        new_pos[1] += 1
+                        new_pos[0] += 1
                         player_dir = Direction.EAST
                     elif event.key == pygame.K_UP:
-                        new_pos[0] -= 1
+                        new_pos[1] -= 1
                         player_dir = Direction.NORTH
                     elif event.key == pygame.K_DOWN:
-                        new_pos[0] += 1
+                        new_pos[1] += 1
                         player_dir = Direction.SOUTH
 
-                    if is_valid_move(game_map, new_pos):
+                    if is_valid_move(game_map, new_pos, state):
                         player_pos = new_pos
 
                     new_room, new_player_pos = check_transition(current_room, game_map, transitions, player_pos)
@@ -126,10 +137,22 @@ def main():
                     state.player_dir = player_dir
                     state.current_room = current_room
 
+                    print(player_pos)
+
         on_render(window, state_vis, state, game_map)
         clock.tick(FPS)
 
     pygame.quit()
 
 if __name__ == '__main__':
-    main()
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Your Pygame game with save/load functionality")
+    parser.add_argument('--load', type=str, help='Filename of the save file to load')
+    args = parser.parse_args()
+
+    if args.load:
+        file_to_load = os.path.join(SAVE_DIRECTORY, args.load)
+    else:
+        file_to_load = None
+
+    main(file_to_load)
