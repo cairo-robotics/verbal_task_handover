@@ -146,30 +146,42 @@ class GameState:
     def _get_facing_object(self):
         return self._get_object_at_position(self._get_player_facing_position())
 
-    def handle_interact(self, game_map):
+    def handle_interact(self):
         obj = self._get_facing_object()
         output = None, None
-        if self.displayed_text:
-            self.displayed_text = None
-        
-        elif obj:
-            output = obj.interact(self.player_has_items)
-            if obj.type == "door":
+        if obj:
+            if obj.type == "npc":
+                output = obj.interact(self.player_has_items)
+                if output[1]:
+                    self.player_has_items += output[1]
+                    print("got item: ", output[1])
+                    self.displayed_text = "You received " + output[1] + "."
+                elif output[0] != self.displayed_text:
+                    self.displayed_text = output[0]
+                else:
+                    self.displayed_text = None
+
+            elif self.displayed_text:
+                self.displayed_text = None
+
+            elif obj.type == "door":
+                output = obj.interact(self.player_has_items)
                 if output[0] is None:
                     return None, ""
                 elif output[0]:
                     self.player_has_items.remove(obj.key)
                     print("used key: ", obj.key)
+                    self.displayed_text = "The door is unlocked."
 
-            elif output[0] and obj.type == "chest":
-                self.player_has_items += output[1]
-                print("got item: ", output[1])
-
-            elif output[0] and obj.type == "npc":
-                if output[1]:
+            elif obj.type == "chest":
+                output = obj.interact(self.player_has_items)
+                if output[0]:
                     self.player_has_items += output[1]
                     print("got item: ", output[1])
-                print(output[0])
+                    self.displayed_text = "You found " + str(output[1]) + "."
+
+        else:
+            self.displayed_text = None
 
         return output
 

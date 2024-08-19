@@ -60,7 +60,7 @@ def check_transition(current_room, game_map, transitions, player_pos):
 
 def on_render(window, state_vis, state, grid):
     window.fill(BLACK)
-    surface = state_vis.render_state(state, grid)
+    surface = state_vis.render_state(window, state, grid)
     window.blit(surface, (0, 0))
     pygame.display.flip()
 
@@ -86,15 +86,15 @@ def main(file_to_load=None):
     game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     pygame.init()
 
+
+    window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     state_vis = StateVisualizer()
-    surface = state_vis.render_state(state, game_map)
+    surface = state_vis.render_state(window, state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
     grid_shape = (len(game_map[0]), len(game_map))
     # grid_shape = (SCREEN_WIDTH, SCREEN_HEIGHT)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
-
-    window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     window.blit(surface, (0, 0))
     pygame.display.flip()
 
@@ -105,7 +105,7 @@ def main(file_to_load=None):
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    interact_output = state.handle_interact(game_map)
+                    interact_output = state.handle_interact()
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(os.path.join(SAVE_DIRECTORY, "test_save.pkl"))
                     print("Game saved!")

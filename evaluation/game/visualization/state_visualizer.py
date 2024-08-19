@@ -12,15 +12,10 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 class StateVisualizer:
     DEFAULT_VALUES = {
-        # "height": 20 * 96,
-        # "width": 20 * 96,
-        "screen_width": 15 * 96,
-        "screen_height": 15 * 96,
         "tile_size": 96,
         "window_fps" : 30,
         "sprite_scaling" : {
             "chest" : 0.7,
-            "door" : 2.0
         }
     }
 
@@ -38,6 +33,8 @@ class StateVisualizer:
         }
 
         self.UNSCALED_TILE_SIZE = 32
+        # Load a font
+        self.font = pygame.font.SysFont('Arial', 24)
 
         grass_tile = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
         grass_tile = pygame.transform.scale(grass_tile, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
@@ -63,10 +60,6 @@ class StateVisualizer:
         for param_name, param_value in copy.deepcopy(kwargs).items():
             setattr(self, param_name, param_value)
 
-    # def display_rendered_state(self, state, grid=None):
-    #     surface = self.render_state(state, grid)
-    #     run_static_resizeable_window(surface)
-
     def _unscaled_grid_pixel_size(self, grid):
         y_tiles = len(grid)
         x_tiles = len(grid[0])
@@ -80,11 +73,24 @@ class StateVisualizer:
                 else:
                     surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
 
-    # TODO implement
+    def _render_textbox(self, surface):
+        surface_width, surface_height = surface.get_size()
+        textbox_height = surface_height // 4
+        textbox_width = int(surface_width * 0.8)
+
+        # Create a surface for the textbox background
+        textbox_surface = pygame.Surface((textbox_width, textbox_height))
+        textbox_surface.fill((255, 255, 255))  # Black background
+
+        textbox_position = (int(surface_width * 0.1), int(surface_height * 0.75))
+        return textbox_surface, textbox_position
+
     def _render_text(self, surface, text):
-        # text_surface = self.FONT.render(text, True, GREEN)
-        # surface.blit(text_surface, (self.TEXT_WINDOW_X, self.TEXT_WINDOW_Y))
-        pass
+        textbox_surface, textbox_position = self._render_textbox(surface)
+        text_surface = self.font.render(text, True, (0, 0, 0))  # Black text
+        text_rect = text_surface.get_rect(center=(textbox_surface.get_width() // 2, textbox_surface.get_height() // 2))
+        textbox_surface.blit(text_surface, text_rect)
+        surface.blit(textbox_surface, textbox_position)
 
     def _render_player(self, surface, state):
         player_dir = state.player_dir
@@ -98,7 +104,6 @@ class StateVisualizer:
                                         sprite_name)
         
     def _render_objects(self, surface, state):
-        # import pdb; pdb.set_trace()
         for obj in state.objects:
             if obj.type == "npc":
                 x_offset = (self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1] - self.MULTI_FRAME_SPRITES[obj.name].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1])
@@ -144,15 +149,13 @@ class StateVisualizer:
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
 
-    def render_state(self, state, grid=None):
+    def render_state(self, window, state, grid):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
+
         self._render_grid(grid_surface, grid)
         self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
 
-        text_to_display = state.displayed_text
-        if text_to_display:
-            self._render_text(grid_surface, text_to_display)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)
@@ -166,5 +169,12 @@ class StateVisualizer:
         else:
             result_surface = rendered_surface
 
-        return result_surface
+        window_surface = pygame.surface.Surface(window.get_size())
+        window_surface.blit(result_surface, (0, 0))
+
+        text_to_display = state.displayed_text
+        if text_to_display:
+            self._render_text(window_surface, text_to_display)
+
+        return window_surface
     
