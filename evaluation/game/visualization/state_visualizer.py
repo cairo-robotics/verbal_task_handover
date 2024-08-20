@@ -12,11 +12,13 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 class StateVisualizer:
     DEFAULT_VALUES = {
-        "tile_size": 96,
-        "window_fps" : 30,
+        "tile_size" : 96, # game resolution
+        "game_surface_fps" : 30,
         "sprite_scaling" : {
             "chest" : 0.7,
-        }
+        },
+        "game_width_in_tiles" : 15,
+        "game_height_in_tiles" : 15,
     }
 
     def __init__(self, **kwargs):
@@ -75,14 +77,14 @@ class StateVisualizer:
 
     def _render_textbox(self, surface):
         surface_width, surface_height = surface.get_size()
-        textbox_height = surface_height // 4
-        textbox_width = int(surface_width * 0.8)
+        textbox_height = surface_height // 6
+        textbox_width = int(surface_width * 0.7)
 
         # Create a surface for the textbox background
         textbox_surface = pygame.Surface((textbox_width, textbox_height))
         textbox_surface.fill((255, 255, 255))  # Black background
 
-        textbox_position = (int(surface_width * 0.1), int(surface_height * 0.75))
+        textbox_position = (int((surface_width - textbox_width) // 2), int(surface_height * 0.75))
         return textbox_surface, textbox_position
 
     def _render_text(self, surface, text):
@@ -138,43 +140,39 @@ class StateVisualizer:
         (x,y) = position
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
 
-    def _position_in_scaled_pixels(self, position):
-        """
-        get x and y coordinates in tiles, returns x and y coordinates in pixels
-        """
-        (x,y) = position
-        return (self.tile_size * x, self.tile_size * y)
+    # def _position_in_scaled_pixels(self, position):
+    #     """
+    #     get x and y coordinates in tiles, returns x and y coordinates in pixels
+    #     """
+    #     (x,y) = position
+    #     return (self.tile_size * x, self.tile_size * y)
     
     @property
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
 
-    def render_state(self, window, state, grid):
+    def render_state(self, state, grid):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
+        # grid_surface = pygame.surface.Surface((self.UNSCALED_TILE_SIZE * self.game_width_in_tiles, self.UNSCALED_TILE_SIZE * self.game_height_in_tiles))
 
         self._render_grid(grid_surface, grid)
         self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
 
-
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)
 
-        rendered_surface = grid_surface
+        # import pdb; pdb.set_trace() 
+        tiles_width = max(self.game_width_in_tiles, len(grid[0]))
+        tiles_height = max(self.game_height_in_tiles, len(grid))
 
-        result_surface_size = (rendered_surface.get_width(), rendered_surface.get_height())
-
-        if result_surface_size != rendered_surface.get_size():
-            result_surface = blit_on_new_surface_of_size(rendered_surface, result_surface_size, background_color=self.background_color)
-        else:
-            result_surface = rendered_surface
-
-        window_surface = pygame.surface.Surface(window.get_size())
-        window_surface.blit(result_surface, (0, 0))
+        game_surface = pygame.surface.Surface((self.tile_size * tiles_width, self.tile_size * tiles_height))
+        grid_rect = grid_surface.get_rect(center=(game_surface.get_width() // 2, grid_surface.get_height() // 2))
+        game_surface.blit(grid_surface, grid_rect)
 
         text_to_display = state.displayed_text
         if text_to_display:
-            self._render_text(window_surface, text_to_display)
+            self._render_text(game_surface, text_to_display)
 
-        return window_surface
-    
+        # return game_surface
+        return game_surface

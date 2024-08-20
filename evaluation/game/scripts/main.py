@@ -60,7 +60,7 @@ def check_transition(current_room, game_map, transitions, player_pos):
 
 def on_render(window, state_vis, state, grid):
     window.fill(BLACK)
-    surface = state_vis.render_state(window, state, grid)
+    surface = state_vis.render_state(state, grid)
     window.blit(surface, (0, 0))
     pygame.display.flip()
 
@@ -89,7 +89,7 @@ def main(file_to_load=None):
 
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     state_vis = StateVisualizer()
-    surface = state_vis.render_state(window, state, game_map)
+    surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
     grid_shape = (len(game_map[0]), len(game_map))
