@@ -1,5 +1,4 @@
 import pygame
-from evaluation.game.visualization.utils import MultiFramePygameImage
 from game_mdp import GameState, Direction, start_state
 from evaluation.game.visualization.state_visualizer import StateVisualizer
 import os
@@ -61,7 +60,8 @@ def check_transition(current_room, game_map, transitions, player_pos):
 def on_render(window, state_vis, state, grid):
     window.fill(BLACK)
     surface = state_vis.render_state(state, grid)
-    window.blit(surface, (0, 0))
+    state_vis.scale_blit_to_window(window, surface)
+    # window.blit(surface, (0, 0))
     pygame.display.flip()
 
 # Main game loop

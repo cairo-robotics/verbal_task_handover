@@ -62,6 +62,15 @@ class StateVisualizer:
         for param_name, param_value in copy.deepcopy(kwargs).items():
             setattr(self, param_name, param_value)
 
+    def scale_blit_to_window(self, window, surface):
+        window_size = window.get_size()
+        surface_size = surface.get_size()
+        
+        scale_factor = min(window_size[0] / surface_size[0], window_size[1] / surface_size[1])
+        result_surface = scale_surface_by_factor(surface, scale_factor)
+
+        window.blit(result_surface, (0, 0))
+
     def _unscaled_grid_pixel_size(self, grid):
         y_tiles = len(grid)
         x_tiles = len(grid[0])
