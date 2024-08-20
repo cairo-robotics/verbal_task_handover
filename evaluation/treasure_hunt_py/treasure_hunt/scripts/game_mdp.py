@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 import pickle
+
 class Direction(object):
     """
     The four possible directions a player can be facing.

@@ -1,18 +1,19 @@
 import pygame
 from game_mdp import GameState, Direction, start_state
-from evaluation.game.visualization.state_visualizer import StateVisualizer
-from evaluation.game.scripts.telemetry import Telemetry
+from treasure_hunt.visualization.state_visualizer import StateVisualizer
+from treasure_hunt.scripts.telemetry import Telemetry
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import json
 import argparse
+import importlib.resources
 
 # Initialize Pygame
 pygame.init()
 
-MAP_DIRECTORY = './evaluation/game/maps/map0/'
-SAVE_DIRECTORY = './evaluation/game/saves/'
-TELEMETRY_SAVE_DIRECTORY = "./evaluation/game/telemetry/"
+MAP_DIRECTORY = './maps/map0/'
+SAVE_DIRECTORY = './saves/'
+TELEMETRY_SAVE_DIRECTORY = "./telemetry/"
 
 SAVE_FILENAME = 'test_save.pkl'
 TELEMETRY_FILENAME = 'telemetry_log.txt'
@@ -107,7 +108,7 @@ def main(args):
 
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     state_vis = StateVisualizer()
-    state_vis.set_texture_map_dir('./evaluation/game/maps/map0/texture_maps/')
+    state_vis.set_texture_map_dir(os.path.join(MAP_DIRECTORY, 'texture_maps/'))
     surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
