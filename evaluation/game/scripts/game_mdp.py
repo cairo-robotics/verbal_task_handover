@@ -133,6 +133,10 @@ class GameState:
     @property
     def objects(self):
         return self._objects[self.current_room]
+    
+    @property
+    def player_in_interaction(self):
+        return self.displayed_text is not None
 
     def _get_player_facing_position(self):
         return (self.player_pos[0] + self.player_dir[0], self.player_pos[1] + self.player_dir[1])

@@ -110,7 +110,7 @@ def main(file_to_load=None):
                     state.save(os.path.join(SAVE_DIRECTORY, "test_save.pkl"))
                     print("Game saved!")
 
-                else:
+                elif not state.player_in_interaction:
                     new_pos = list(player_pos)
                     if event.key == pygame.K_LEFT:
                         new_pos[0] -= 1
