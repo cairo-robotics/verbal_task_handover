@@ -13,6 +13,7 @@ GREEN = (0, 255, 0)
 class StateVisualizer:
     DEFAULT_VALUES = {
         "tile_size" : 96, # game resolution
+        "font_size" : 36,
         "game_surface_fps" : 30,
         "sprite_scaling" : {
             "chest" : 0.7,
@@ -34,9 +35,9 @@ class StateVisualizer:
             "door"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "wooden_door.png"), os.path.join(GRAPHICS_DIR, "wooden_door.json")),
         }
 
-        self.UNSCALED_TILE_SIZE = 32
+        self.UNSCALED_TILE_SIZE = 32 # sprite resolution
         # Load a font
-        self.font = pygame.font.SysFont('Arial', 24)
+        self.font = pygame.font.SysFont('Arial', self.font_size)
 
         grass_tile = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
         grass_tile = pygame.transform.scale(grass_tile, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
@@ -44,7 +45,7 @@ class StateVisualizer:
         chest_closed = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_closed.png")).convert_alpha()
         chest_closed = pygame.transform.scale(chest_closed, (self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"], self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"]))
         chest_open   = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_open.png")).convert_alpha()
-        chest_open = pygame.transform.scale(chest_open, (self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"], self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"]))
+        chest_open   = pygame.transform.scale(chest_open, (self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"], self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"]))
 
         self.SPRITES = {
             "grass" : grass_tile,
@@ -149,20 +150,12 @@ class StateVisualizer:
         (x,y) = position
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
 
-    # def _position_in_scaled_pixels(self, position):
-    #     """
-    #     get x and y coordinates in tiles, returns x and y coordinates in pixels
-    #     """
-    #     (x,y) = position
-    #     return (self.tile_size * x, self.tile_size * y)
-    
     @property
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
 
     def render_state(self, state, grid):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
-        # grid_surface = pygame.surface.Surface((self.UNSCALED_TILE_SIZE * self.game_width_in_tiles, self.UNSCALED_TILE_SIZE * self.game_height_in_tiles))
 
         self._render_grid(grid_surface, grid)
         self._render_player(grid_surface, state)
@@ -183,5 +176,4 @@ class StateVisualizer:
         if text_to_display:
             self._render_text(game_surface, text_to_display)
 
-        # return game_surface
         return game_surface

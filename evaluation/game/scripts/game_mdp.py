@@ -106,7 +106,7 @@ class NPC(Object):
         return speech, item
 
 class GameState:
-    def __init__(self, player_pos, player_dir, current_room, objects=None):
+    def __init__(self, player_pos, player_dir, current_room, objects=None, telemetry=None):
         self.player_pos = player_pos
         self.player_dir = player_dir
         if not objects:
@@ -116,12 +116,17 @@ class GameState:
         self.player_has_items = []
         self.displayed_text = None
 
+        self.telemetry = telemetry
+
     def __getstate__(self):
         # Create a copy of the object's __dict__
         state = self.__dict__.copy()
         
         # Convert the defaultdict to a regular dict
         state['_objects'] = dict(self._objects)
+
+        # remove telemetry data
+        state['telemetry'] = None
         
         return state
 
@@ -129,6 +134,13 @@ class GameState:
         # Restore the defaultdict
         self.__dict__.update(state)
         self._objects = defaultdict(list, state['_objects'])
+
+    def set_telemetry(self, telemetry):
+        self.telemetry = telemetry
+
+    def update_current_room(self, new_room):
+        self.current_room = new_room
+        self.telemetry.log_event(f"Entered room {new_room}")
 
     @property
     def objects(self):
@@ -160,8 +172,10 @@ class GameState:
                     self.player_has_items += output[1]
                     print("got item: ", output[1])
                     self.displayed_text = "You received " + output[1] + "."
+                    self.telemetry.log_event(f"Interacted with NPC {obj.name}", f"Received {output[1]}")
                 elif output[0] != self.displayed_text:
                     self.displayed_text = output[0]
+                    self.telemetry.log_event(f"Interacted with NPC {obj.name}", f"Dialogue: {output[0]}")
                 else:
                     self.displayed_text = None
 
@@ -176,6 +190,7 @@ class GameState:
                     self.player_has_items.remove(obj.key)
                     print("used key: ", obj.key)
                     self.displayed_text = "The door is unlocked."
+                    self.telemetry.log_event(f"Opened door", f"Used key {obj.key}")
 
             elif obj.type == "chest":
                 output = obj.interact(self.player_has_items)
@@ -183,6 +198,7 @@ class GameState:
                     self.player_has_items += output[1]
                     print("got item: ", output[1])
                     self.displayed_text = "You found " + str(output[1]) + "."
+                    self.telemetry.log_event(f"Opened chest", f"Received {output[1]}")
 
         else:
             self.displayed_text = None
@@ -194,10 +210,12 @@ class GameState:
             pickle.dump(self, file)
 
     @classmethod
-    def load(cls, filename="save.pkl"):
+    def load(cls, filename="save.pkl", telemetry=None):
         try:
             with open(filename, "rb") as file:
-                return pickle.load(file)
+                st =  pickle.load(file)
+                st.set_telemetry(telemetry)
+                return st
         except FileNotFoundError:
             print(f"No save file found at {filename}")
             return None
