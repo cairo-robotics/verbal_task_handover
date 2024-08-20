@@ -39,6 +39,7 @@ def blit_on_new_surface_of_size(surface, size, background_color=None):
 
 class MultiFramePygameImage:
     def __init__(self, img_path, frames_path):
+        self.mapping = None
         self.image = pygame.image.load(img_path).convert_alpha()
         self.frames_rectangles = self.load_frames_rectangles(frames_path)
     
@@ -55,6 +56,13 @@ class MultiFramePygameImage:
 
     def sprite(self, frame_name):
         return self.image.subsurface(self.frames_rectangles[frame_name])
+    
+    def blit_on_surface_scaled(
+        self, surface, top_left_pixel_position, frame_name, new_size
+        ):
+        sprite_surface = self.sprite(frame_name)
+        scaled_surface = pygame.transform.scale(sprite_surface, new_size)
+        surface.blit(scaled_surface, top_left_pixel_position)
 
     def load_frames_rectangles(self, json_path):
         with open(json_path, "r") as f:
@@ -75,5 +83,8 @@ class MultiFramePygameImage:
             result[frame_name] = pygame.Rect(
                 frame_start[0], frame_start[1], sprite_width, sprite_height
             )
+
+        if "mapping" in frames:
+            self.mapping = frames["mapping"]
 
         return result

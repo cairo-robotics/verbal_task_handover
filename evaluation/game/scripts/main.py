@@ -10,7 +10,7 @@ import argparse
 # Initialize Pygame
 pygame.init()
 
-MAP_DIRECTORY = './evaluation/game/maps/'
+MAP_DIRECTORY = './evaluation/game/maps/map0/'
 SAVE_DIRECTORY = './evaluation/game/saves/'
 TELEMETRY_SAVE_DIRECTORY = "./evaluation/game/telemetry/"
 
@@ -97,16 +97,17 @@ def main(args):
         current_room = 'room0'
         player_dir = Direction.SOUTH
         player_pos = [2, 2]  # Start position (y, x)
-        objects = start_state('./evaluation/game/maps/objects.json')
+        objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
         state = GameState(player_pos, player_dir, current_room, objects, telemetry=telemetry)
         print("Initializing new game...")
 
-    transitions = load_transitions('./evaluation/game/maps/transitions.json')
+    transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
     game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     pygame.init()
 
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     state_vis = StateVisualizer()
+    state_vis.set_texture_map_dir('./evaluation/game/maps/map0/texture_maps/')
     surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2

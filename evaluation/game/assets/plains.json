@@ -1,0 +1,33 @@
+{
+    "sheet size": [4, 4],
+    "sprite size": [16, 16],
+    "frames" : [
+        "DIRT_PATH_TOP_SINGLE",
+        "DIRT_PATH_TOP_LEFT",
+        "DIRT_PATH_TOP_MIDDLE",
+        "DIRT_PATH_TOP_RIGHT",
+        "DIRT_PATH_MIDDLE_SINGLE",
+        "DIRT_PATH_MIDDLE_LEFT",
+        "DIRT_PATH",
+        "DIRT_PATH_MIDDLE_RIGHT",
+        "DIRT_PATH_BOTTOM_SINGLE",
+        "DIRT_PATH_BOTTOM_LEFT",
+        "DIRT_PATH_BOTTOM_MIDDLE",
+        "DIRT_PATH_BOTTOM_RIGHT",
+        "GRASS_WITH_DIRT_NOTCH",
+        "DIRT_PATH_SINGLE_LEFT",
+        "DIRT_PATH_SINGLE_MIDDLE",
+        "DIRT_PATH_SINGLE_RIGHT"
+    ],
+    "mapping" : {
+        "A" : "DIRT_PATH_TOP_LEFT",
+        "B" : "DIRT_PATH_TOP_MIDDLE",
+        "C" : "DIRT_PATH_TOP_RIGHT",
+        "D" : "DIRT_PATH_MIDDLE_LEFT",
+        "E" : "DIRT_PATH",
+        "F" : "DIRT_PATH_MIDDLE_RIGHT",
+        "G" : "DIRT_PATH_BOTTOM_LEFT",
+        "H" : "DIRT_PATH_BOTTOM_MIDDLE",
+        "I" : "DIRT_PATH_BOTTOM_RIGHT"
+    }
+}

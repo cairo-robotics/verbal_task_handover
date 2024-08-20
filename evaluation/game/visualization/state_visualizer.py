@@ -22,7 +22,7 @@ class StateVisualizer:
         "game_height_in_tiles" : 15,
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, texture_maps=None, **kwargs):
 
         params = copy.deepcopy(self.DEFAULT_VALUES)
         params.update(kwargs)
@@ -33,6 +33,7 @@ class StateVisualizer:
             "mark"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "mark.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
             "lily"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "lily.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
             "door"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "wooden_door.png"), os.path.join(GRAPHICS_DIR, "wooden_door.json")),
+            "dirt"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "plains.png"), os.path.join(GRAPHICS_DIR, "plains.json")),
         }
 
         self.UNSCALED_TILE_SIZE = 32 # sprite resolution
@@ -53,6 +54,21 @@ class StateVisualizer:
             "chest_closed" : chest_closed
         }
 
+        self.texture_map_name = None
+        self.texture_map = None
+        self.texture_map_dir = None
+
+    def set_texture_map_dir(self, texture_map_dir):
+        self.texture_map_dir = texture_map_dir
+
+    def load_texture_map(self, filename):
+        filename = os.path.join(self.texture_map_dir, filename)
+        try:
+            with open(filename, 'r') as f:
+                return [list(line.strip()) for line in f]
+        except FileNotFoundError:
+            return None
+        
     @classmethod
     def configure_defaults(cls, **kwargs):
         cls._check_config_validity(kwargs)
@@ -82,6 +98,21 @@ class StateVisualizer:
             for x, tile in enumerate(row):
                 if tile == "#":
                     pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                else:
+                    surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
+
+    def _render_grid_with_textures(self, surface, grid, texture_map):
+        for y, row in enumerate(texture_map):
+            for x, tile in enumerate(row):
+                if tile == "#":
+                    pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                elif tile in 'ABCDEFGHI':
+                    mfs = self.MULTI_FRAME_SPRITES["dirt"]
+                    frame_name = mfs.mapping[tile] + ".png"
+                    mfs.blit_on_surface_scaled(surface,
+                                               (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
+                                               frame_name,
+                                               (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
                     surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
 
@@ -157,7 +188,15 @@ class StateVisualizer:
     def render_state(self, state, grid):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
 
-        self._render_grid(grid_surface, grid)
+        if state.current_room != self.texture_map_name:
+            self.texture_map_name = state.current_room
+            self.texture_map = self.load_texture_map(state.current_room + ".txt")
+        
+        if self.texture_map is not None:
+            self._render_grid_with_textures(grid_surface, grid, self.texture_map)
+        else:
+            self._render_grid(grid_surface, grid)
+        
         self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
 
