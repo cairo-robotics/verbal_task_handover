@@ -1,6 +1,6 @@
 import pygame
 from treasure_hunt.visualization.utils import *
-from treasure_hunt.scripts.game_mdp import Direction
+from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
 

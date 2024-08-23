@@ -1,7 +1,7 @@
 import pygame
-from game_mdp import GameState, Direction, start_state
+from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 from treasure_hunt.visualization.state_visualizer import StateVisualizer
-from treasure_hunt.scripts.telemetry import Telemetry
+from treasure_hunt.src.telemetry import Telemetry
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import json
@@ -12,7 +12,7 @@ pygame.init()
 
 MAP_DIRECTORY = './maps/map0/'
 SAVE_DIRECTORY = './saves/'
-TELEMETRY_SAVE_DIRECTORY = "./telemetry/"
+TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
 SAVE_FILENAME = 'test_save.pkl'
 TELEMETRY_FILENAME = 'telemetry_log.txt'
