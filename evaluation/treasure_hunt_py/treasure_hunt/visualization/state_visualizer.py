@@ -123,17 +123,23 @@ class StateVisualizer:
 
         # Create a surface for the textbox background
         textbox_surface = pygame.Surface((textbox_width, textbox_height))
-        textbox_surface.fill((255, 255, 255))  # Black background
+        textbox_surface.fill(WHITE)
 
         textbox_position = (int((surface_width - textbox_width) // 2), int(surface_height * 0.75))
         return textbox_surface, textbox_position
 
     def _render_text(self, surface, text):
         textbox_surface, textbox_position = self._render_textbox(surface)
-        text_surface = self.font.render(text, True, (0, 0, 0))  # Black text
+        text_surface = self.font.render(text, True, BLACK) 
         text_rect = text_surface.get_rect(center=(textbox_surface.get_width() // 2, textbox_surface.get_height() // 2))
         textbox_surface.blit(text_surface, text_rect)
         surface.blit(textbox_surface, textbox_position)
+
+    def _render_hud(self, surface, state):
+        # for now: just render the score
+        score_text = "Score: " + str(state.score)
+        score_surface = self.font.render(score_text, True, WHITE)
+        surface.blit(score_surface, (10, 10))
 
     def _render_player(self, surface, state):
         player_dir = state.player_dir
@@ -167,12 +173,7 @@ class StateVisualizer:
                         surface.blit(self.SPRITES["chest_closed"], self._position_in_unscaled_pixels((x, y)))
                 elif obj.sprite in ["door_open", "door_closed"]:
                     sprite_name = ("OPEN" if obj.sprite == "door_open" else "CLOSED") + ".png"
-                    sprite = self.MULTI_FRAME_SPRITES["door"].sprite(sprite_name)
-                    rescaled_sprite = pygame.transform.scale(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                    # self.MULTI_FRAME_SPRITES["door"].blit_on_surface(surface,
-                    #                                                 self._position_in_unscaled_pixels((x, y)),
-                    #                                                 sprite_name)
-                    surface.blit(rescaled_sprite, self._position_in_unscaled_pixels((x, y)))
+                    self.MULTI_FRAME_SPRITES["door"].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), sprite_name, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _position_in_unscaled_pixels(self, position):
         """
@@ -214,5 +215,6 @@ class StateVisualizer:
         text_to_display = state.displayed_text
         if text_to_display:
             self._render_text(game_surface, text_to_display)
+        self._render_hud(game_surface, state)
 
         return game_surface

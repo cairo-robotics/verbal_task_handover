@@ -6,7 +6,6 @@ import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import json
 import argparse
-import importlib.resources
 
 # Initialize Pygame
 pygame.init()

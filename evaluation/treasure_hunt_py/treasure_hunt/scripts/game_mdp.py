@@ -116,6 +116,7 @@ class GameState:
         self.current_room = current_room
         self.player_has_items = []
         self.displayed_text = None
+        self.score = 0
 
         self.telemetry = telemetry
 
