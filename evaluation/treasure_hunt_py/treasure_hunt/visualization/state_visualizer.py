@@ -58,17 +58,6 @@ class StateVisualizer:
         self.texture_map_name = None
         self.texture_map = None
         self.texture_map_dir = None
-
-    def set_texture_map_dir(self, texture_map_dir):
-        self.texture_map_dir = texture_map_dir
-
-    def load_texture_map(self, filename):
-        filename = os.path.join(self.texture_map_dir, filename)
-        try:
-            with open(filename, 'r') as f:
-                return [list(line.strip()) for line in f]
-        except FileNotFoundError:
-            return None
         
     @classmethod
     def configure_defaults(cls, **kwargs):
@@ -187,17 +176,13 @@ class StateVisualizer:
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
 
-    def render_state(self, state, grid):
-        grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(grid))
+    def render_state(self, state, game_map):
+        grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))
 
-        if state.current_room != self.texture_map_name:
-            self.texture_map_name = state.current_room
-            self.texture_map = self.load_texture_map(state.current_room + ".txt")
-        
-        if self.texture_map is not None:
-            self._render_grid_with_textures(grid_surface, grid, self.texture_map)
+        if game_map.texture_map is not None:
+            self._render_grid_with_textures(grid_surface, game_map.grid, game_map.texture_map)
         else:
-            self._render_grid(grid_surface, grid)
+            self._render_grid(grid_surface, game_map.grid)
         
         self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
@@ -206,8 +191,8 @@ class StateVisualizer:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)
 
         # import pdb; pdb.set_trace() 
-        tiles_width = max(self.game_width_in_tiles, len(grid[0]))
-        tiles_height = max(self.game_height_in_tiles, len(grid))
+        tiles_width = max(self.game_width_in_tiles, len(game_map.grid[0]))
+        tiles_height = max(self.game_height_in_tiles, len(game_map.grid))
 
         game_surface = pygame.surface.Surface((self.tile_size * tiles_width, self.tile_size * tiles_height))
         grid_rect = grid_surface.get_rect(center=(game_surface.get_width() // 2, grid_surface.get_height() // 2))
