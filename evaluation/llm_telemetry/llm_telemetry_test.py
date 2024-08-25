@@ -1,8 +1,8 @@
 import pygame
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
+from treasure_hunt.src.core import GameMap
 from treasure_hunt.visualization.state_visualizer import StateVisualizer
-# from treasure_hunt.src.telemetry import Telemetry
-from llm_telemetry import LLMTelemetryFull as Telemetry
+from treasure_hunt.src.telemetry import Telemetry, DummyTelemetry, Event
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import json
@@ -16,7 +16,6 @@ SAVE_DIRECTORY = './saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
 SAVE_FILENAME = 'test_save.pkl'
-TELEMETRY_FILENAME = 'telemetry_log.txt'
 
 # Constants
 TILE_SIZE = 64
@@ -29,41 +28,9 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
-# Load the map
-def load_map(filename):
-    with open(filename, 'r') as f:
-        return [list(line.strip()) for line in f]
-    
-def load_transitions(filename):
-    with open(filename, 'r') as f:
-        return json.load(f)
-
-# Check collision
-def is_valid_move(game_map, new_pos, game_state):
-    rows = len(game_map)
-    cols = len(game_map[0])
-    x, y = new_pos
-    if 0 <= y < rows and 0 <= x < cols:
-        if game_map[y][x] == ' ':
-            return True
-        elif game_map[y][x] in '0123456':
-            # check if door is passable
-            door = game_state._get_object_at_position(new_pos)
-            if door is None or door.is_passable:
-                return True
-    return False
-
-# Check for transition
-def check_transition(current_room, game_map, transitions, player_pos):
-    x, y = player_pos
-    if game_map[y][x] in transitions[current_room]:
-        new_room, new_pos =  transitions[current_room][game_map[y][x]]
-        return new_room, new_pos
-    return None, None
-
-def on_render(window, state_vis, state, grid):
+def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
-    surface = state_vis.render_state(state, grid)
+    surface = state_vis.render_state(state, game_map)
     state_vis.scale_blit_to_window(window, surface)
     # window.blit(surface, (0, 0))
     pygame.display.flip()
@@ -79,17 +46,19 @@ def main(args):
 
     save_file = os.path.join(SAVE_DIRECTORY, save_file)
     
-    telemetry_file = args.telemetry or TELEMETRY_FILENAME
-    telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, telemetry_file)
+    if args.telemetry:
+        telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, args.telemetry)
+        telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
+    else:
+        telemetry = DummyTelemetry()
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("2D Adventure Game")
     clock = pygame.time.Clock()
 
-    telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
 
     if load_file:
-        state = GameState.load(load_file, telemetry=telemetry)
+        state = GameState.load(load_file)
         player_pos = state.player_pos
         player_dir = state.player_dir
         current_room = state.current_room
@@ -99,21 +68,19 @@ def main(args):
         player_dir = Direction.SOUTH
         player_pos = [2, 2]  # Start position (y, x)
         objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
-        state = GameState(player_pos, player_dir, current_room, objects, telemetry=telemetry)
+        state = GameState(player_pos, player_dir, current_room, objects)
         print("Initializing new game...")
 
-    transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
-    game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
+    # transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
+    # game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
+    game_map = GameMap(MAP_DIRECTORY, current_room)
     pygame.init()
 
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
     state_vis = StateVisualizer()
-    state_vis.set_texture_map_dir(os.path.join(MAP_DIRECTORY, 'texture_maps/'))
     surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
-    grid_shape = (len(game_map[0]), len(game_map))
-    # grid_shape = (SCREEN_WIDTH, SCREEN_HEIGHT)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
     window.blit(surface, (0, 0))
     pygame.display.flip()
@@ -126,6 +93,8 @@ def main(args):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact()
+                    if interact_output:
+                        telemetry.log_event(interact_output)
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
                     print("Game saved to ", save_file)
@@ -149,15 +118,20 @@ def main(args):
                         new_pos[1] += 1
                         player_dir = Direction.SOUTH
 
-                    if is_valid_move(game_map, new_pos, state):
+                    if game_map.is_valid_move(new_pos, state):
                         player_pos = new_pos
 
-                    new_room, new_player_pos = check_transition(current_room, game_map, transitions, player_pos)
+                    new_room, new_player_pos = game_map.check_transition(player_pos)
                     if new_room:
                         current_room = new_room
-                        game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
                         player_pos = new_player_pos
+                        game_map.update_map(current_room)
                         state.update_current_room(current_room)
+                        telemetry.log_event(Event.ROOM_ENTERED, current_room)
+
+                    if player_pos != state.player_pos:
+                        telemetry.log_event(Event.PLAYER_MOVED, str(player_pos))
+
                     state.player_pos = player_pos
                     state.player_dir = player_dir
 

@@ -26,7 +26,7 @@ class Telemetry:
             self.file = open(self.log_file, "w")
         else:
             self.file = open(self.log_file, "a")
-        self.log_event("Telemetry started")
+        # self.log_event("Telemetry started")
 
     def log_event(self, event_type, details=""):
         if event_type is not None:
@@ -35,7 +35,7 @@ class Telemetry:
 
     def cleanup(self):
         print("Stopping telemetry...")
-        self.log_event("Telemetry stopped", "Game closed")
+        # self.log_event("Telemetry stopped", "Game closed")
         self.file.close()
 
 class DummyTelemetry(Telemetry):
