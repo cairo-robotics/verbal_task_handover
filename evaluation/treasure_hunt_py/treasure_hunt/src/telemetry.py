@@ -7,6 +7,7 @@ class Event:
     ITEM_OBTAINED = "Item obtained"
     ITEM_LOST = "Item lost"
     ROOM_ENTERED = "Room entered"
+    PLAYER_MOVED = "Player moved"
 
     def __init__(self, event_type, details=""):
         self.event_type = event_type
