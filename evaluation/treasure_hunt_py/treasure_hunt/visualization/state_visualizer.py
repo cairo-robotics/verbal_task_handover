@@ -4,7 +4,8 @@ from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
 
-GRAPHICS_DIR = "./assets/"
+# GRAPHICS_DIR = "./assets/"
+GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
 
 # Colors
 BLACK = (0, 0, 0)

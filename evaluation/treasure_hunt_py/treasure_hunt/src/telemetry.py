@@ -1,5 +1,21 @@
 import time
 
+class Event:
+    # define implemented event types
+    NPC_INTERACT = "NPC interact"
+    DOOR_UNLOCKED = "Door unlocked"
+    ITEM_OBTAINED = "Item obtained"
+    ITEM_LOST = "Item lost"
+    ROOM_ENTERED = "Room entered"
+
+    def __init__(self, event_type, details=""):
+        self.event_type = event_type
+        self.details = details
+        self.timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+    def __str__(self):
+        return f"{self.timestamp} - {self.event_type}: {self.details}"
+
 class Telemetry:
     def __init__(self, log_file="telemetry_log.txt", overwrite=False):
         self.log_file = log_file
@@ -11,12 +27,21 @@ class Telemetry:
             self.file = open(self.log_file, "a")
         self.log_event("Telemetry started")
 
-    def log_event(self, event_name, details=""):
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        log_entry = f"{timestamp} - {event_name}: {details}\n"
-        self.file.write(log_entry)
+    def log_event(self, event_type, details=""):
+        if event_type is not None:
+            ev = Event(event_type, details)
+            self.file.write(str(ev) + "\n")
 
     def cleanup(self):
         print("Stopping telemetry...")
         self.log_event("Telemetry stopped", "Game closed")
         self.file.close()
+
+class DummyTelemetry(Telemetry):
+    def __init__(self):
+        pass
+    def log_event(self, event_type, details=""):
+        # print("Telemetry:", event_type, details)
+        pass
+    def cleanup(self):
+        pass
