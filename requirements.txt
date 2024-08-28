@@ -17,3 +17,4 @@ six==1.16.0
 smclib==1.8.6
 srdfdom==0.6.4
 xacro==1.14.16
+openai==1.42.0
