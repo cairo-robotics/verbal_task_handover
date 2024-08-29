@@ -3,6 +3,7 @@ from treasure_hunt.visualization.utils import *
 from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
+import json
 
 # GRAPHICS_DIR = "./assets/"
 GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
@@ -16,49 +17,37 @@ class StateVisualizer:
         "tile_size" : 96, # game resolution
         "font_size" : 36,
         "game_surface_fps" : 30,
-        "sprite_scaling" : {
-            "chest" : 0.7,
-        },
         "game_width_in_tiles" : 15,
         "game_height_in_tiles" : 15,
     }
 
-    def __init__(self, texture_maps=None, **kwargs):
+    def __init__(self, config_filename="graphics_config.json", **kwargs):
 
         params = copy.deepcopy(self.DEFAULT_VALUES)
         params.update(kwargs)
         self.configure(**params)
 
-        self.MULTI_FRAME_SPRITES = {
-            "player": MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "player.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
-            "mark"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "mark.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
-            "lily"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "lily.png"), os.path.join(GRAPHICS_DIR, "char_sprites.json")),
-            "door"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "wooden_door.png"), os.path.join(GRAPHICS_DIR, "wooden_door.json")),
-            "dirt"  : MultiFramePygameImage(os.path.join(GRAPHICS_DIR, "plains.png"), os.path.join(GRAPHICS_DIR, "plains.json")),
-        }
 
         self.UNSCALED_TILE_SIZE = 32 # sprite resolution
         # Load a font
         self.font = pygame.font.SysFont('Arial', self.font_size)
 
-        grass_tile = pygame.image.load(os.path.join(GRAPHICS_DIR, "grass.png")).convert_alpha()
-        grass_tile = pygame.transform.scale(grass_tile, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-        
-        chest_closed = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_closed.png")).convert_alpha()
-        chest_closed = pygame.transform.scale(chest_closed, (self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"], self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"]))
-        chest_open   = pygame.image.load(os.path.join(GRAPHICS_DIR, "chest_open.png")).convert_alpha()
-        chest_open   = pygame.transform.scale(chest_open, (self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"], self.UNSCALED_TILE_SIZE * self.sprite_scaling["chest"]))
+        self.SPRITES = {}
+        self.MULTI_FRAME_SPRITES = {}
 
-        self.SPRITES = {
-            "grass" : grass_tile,
-            "chest_open" : chest_open,
-            "chest_closed" : chest_closed
-        }
+        self.load_sprites_from_config(os.path.join(GRAPHICS_DIR, config_filename))
 
-        self.texture_map_name = None
-        self.texture_map = None
-        self.texture_map_dir = None
-        
+    def load_sprites_from_config(self, config_filename):
+        with open(config_filename, "r") as f:
+            config = json.load(f)
+        for sprite_name in config:
+            if config[sprite_name]["type"] == "single":
+                self.SPRITES[sprite_name] = SingleFramePygameImage(os.path.join(GRAPHICS_DIR, config[sprite_name]["path"]))
+                self.SPRITES[sprite_name].sprite_scaling = config[sprite_name]["scaling"]
+            elif config[sprite_name]["type"] == "multi":
+                self.MULTI_FRAME_SPRITES[sprite_name] = MultiFramePygameImage(os.path.join(GRAPHICS_DIR, config[sprite_name]["path"]), os.path.join(GRAPHICS_DIR, config[sprite_name]["config"]))
+                self.MULTI_FRAME_SPRITES[sprite_name].sprite_scaling = config[sprite_name]["scaling"]
+
     @classmethod
     def configure_defaults(cls, **kwargs):
         cls._check_config_validity(kwargs)
@@ -89,22 +78,29 @@ class StateVisualizer:
                 if tile == "#":
                     pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
-                    surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
+                    self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _render_grid_with_textures(self, surface, grid, texture_map):
         for y, row in enumerate(texture_map):
             for x, tile in enumerate(row):
                 if tile == "#":
                     pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                elif tile in 'ABCDEFGHI':
-                    mfs = self.MULTI_FRAME_SPRITES["dirt"]
-                    frame_name = mfs.mapping[tile] + ".png"
-                    mfs.blit_on_surface_scaled(surface,
-                                               (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
-                                               frame_name,
-                                               (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
-                    surface.blit(self.SPRITES["grass"], (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE))
+                    self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    if tile in self.MULTI_FRAME_SPRITES["dirt"].mapping:
+                        mfs = self.MULTI_FRAME_SPRITES["dirt"]
+                        frame_name = mfs.mapping[tile] + ".png"
+                        mfs.blit_on_surface_scaled(surface,
+                                                (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
+                                                frame_name,
+                                                (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    elif tile in self.MULTI_FRAME_SPRITES["walls"].mapping:
+                        mfs = self.MULTI_FRAME_SPRITES["walls"]
+                        frame_name = mfs.mapping[tile] + ".png"
+                        mfs.blit_on_surface_scaled(surface,
+                                                (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
+                                                frame_name,
+                                                (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _render_textbox(self, surface):
         surface_width, surface_height = surface.get_size()
@@ -154,13 +150,10 @@ class StateVisualizer:
             else:
                 x, y = obj.position
                 if obj.sprite in ["chest_open", "chest_closed"]:
-                    z = self.sprite_scaling["chest"]
+                    z = self.SPRITES[obj.sprite].sprite_scaling
                     x += ((1 - z)/2)
                     y += ((1 - z)/2)
-                    if obj.sprite == "chest_open":
-                        surface.blit(self.SPRITES["chest_open"], self._position_in_unscaled_pixels((x, y)))
-                    else:
-                        surface.blit(self.SPRITES["chest_closed"], self._position_in_unscaled_pixels((x, y)))
+                    self.SPRITES[obj.sprite].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 elif obj.sprite in ["door_open", "door_closed"]:
                     sprite_name = ("OPEN" if obj.sprite == "door_open" else "CLOSED") + ".png"
                     self.MULTI_FRAME_SPRITES["door"].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), sprite_name, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))

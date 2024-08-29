@@ -1,0 +1,53 @@
+{
+    "grass" : {
+        "type" : "single",
+        "path": "grass.png",
+        "scaling": 1.0
+    },
+    "chest_open" : {
+        "type" : "single",
+        "path": "chest_open.png",
+        "scaling": 0.7
+    },
+    "chest_closed" : {
+        "type" : "single",
+        "path": "chest_closed.png",
+        "scaling": 0.7
+    },
+    "player" : {
+        "type" : "multi",
+        "path": "player.png",
+        "config": "char_sprites.json",
+        "scaling" : 1.0
+    },
+    "mark" : {
+        "type" : "multi",
+        "path": "mark.png",
+        "config": "char_sprites.json",
+        "scaling" : 1.0
+    },
+    "lily" : {
+        "type" : "multi",
+        "path": "lily.png",
+        "config": "char_sprites.json",
+        "scaling" : 1.0
+    },
+    "door" : {
+        "type" : "multi",
+        "path": "wooden_door.png",
+        "config": "wooden_door.json",
+        "scaling" : 1.0
+    },
+    "dirt" : {
+        "type" : "multi",
+        "path" : "plains.png",
+        "config" : "plains.json",
+        "scaling" : 1.0
+    },
+    "walls" : {
+        "type" : "multi",
+        "path" : "walls.png",
+        "config" : "walls.json",
+        "scaling" : 1.0
+    }
+}

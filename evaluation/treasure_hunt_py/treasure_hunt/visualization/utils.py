@@ -37,6 +37,19 @@ def blit_on_new_surface_of_size(surface, size, background_color=None):
     result_surface.blit(surface, (0, 0))
     return result_surface
 
+class SingleFramePygameImage:
+    def __init__(self, img_path, scaling=1.0):
+        self.image = pygame.image.load(img_path).convert_alpha()
+        self.sprite_scaling = scaling
+
+    def blit_on_surface_scaled(
+        self, surface, top_left_pixel_position, new_size
+    ):
+        scaled_surface = pygame.transform.scale(
+            self.image, (new_size[0] * self.sprite_scaling, new_size[1] * self.sprite_scaling)
+        )
+        surface.blit(scaled_surface, top_left_pixel_position)
+
 class MultiFramePygameImage:
     def __init__(self, img_path, frames_path):
         self.mapping = None
@@ -74,10 +87,15 @@ class MultiFramePygameImage:
         self.sprite_size = (sprite_width, sprite_height)
 
         result = {}
-        frame_start = [0, 0]
+
+        if "sheet start" in frames:
+            sheet_start = frames["sheet start"]
+        else: 
+            sheet_start = [0, 0]
+        frame_start = sheet_start.copy()
         for i, frame_id in enumerate(frames["frames"]):
-            frame_start[0] = (i % sheet_width) * sprite_width
-            frame_start[1] = (i // sheet_width) * sprite_height
+            frame_start[0] = (sheet_start[0] + i % sheet_width) * sprite_width
+            frame_start[1] = (sheet_start[1] + i // sheet_width) * sprite_height
             
             frame_name = frame_id + ".png"
             result[frame_name] = pygame.Rect(

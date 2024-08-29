@@ -1,0 +1,43 @@
+{
+    "sheet size": [6, 4],
+    "sprite size": [16, 16],
+    "sheet start" : [0, 3],
+    "frames" : [
+        "WALL_SINGLE_TOP",
+        "WALL_TOP_LEFT",
+        "WALL_TOP_MIDDLE",
+        "WALL_TOP_RIGHT",
+        "EMPTY",
+        "EMPTY",
+        "WALL_SINGLE",
+        "WALL_MIDDLE_LEFT",
+        "WALL",
+        "WALL_MIDDLE_RIGHT",
+        "WALL_HALF_RIGHT",
+        "WALL_HALF_LEFT",
+        "WALL_SINGLE_BOTTOM",
+        "WALL_BOTTOM_LEFT",
+        "WALL_BOTTOM_MIDDLE",
+        "WALL_BOTTOM_RIGHT",
+        "WALL_HALF_BOTTOM_LEFT",
+        "WALL_HALF_BOTTOM_RIGHT"
+    ],
+    "mapping" : {
+        "A" : "WALL_SINGLE_TOP",
+        "B" : "WALL_SINGLE",
+        "C" : "WALL_SINGLE_BOTTOM",
+        "D" : "WALL_TOP_LEFT",
+        "E" : "WALL_TOP_MIDDLE",
+        "F" : "WALL_TOP_RIGHT",
+        "G" : "WALL_MIDDLE_LEFT",
+        "H" : "WALL_MIDDLE_RIGHT",
+        "I" : "WALL_BOTTOM_LEFT",
+        "J" : "WALL_BOTTOM_MIDDLE",
+        "K" : "WALL_BOTTOM_RIGHT",
+        "L" : "WALL",
+        "M" : "WALL_HALF_LEFT",
+        "N" : "WALL_HALF_RIGHT",
+        "O" : "WALL_HALF_BOTTOM_LEFT",
+        "P" : "WALL_HALF_BOTTOM_RIGHT"
+    }
+}
