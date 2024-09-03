@@ -39,7 +39,8 @@ class Object:
         pass
 
 class Door(Object):
-    def __init__(self, position, is_locked, key):
+    def __init__(self, name, position, is_locked, key):
+        self.name = name
         super().__init__("door", position)
         self.is_locked = is_locked
         # self.is_open = False
@@ -156,7 +157,8 @@ class GameState:
 
     def handle_interact(self):
         obj = self._get_facing_object()
-        res = None
+        event_type = None
+        details = None
         if obj:
             if obj.type == "npc":
                 speech, item_data = obj.interact(self.player_has_items)
@@ -164,11 +166,13 @@ class GameState:
                     self.player_has_items += item_data
                     print("got item: ", item_data)
                     self.displayed_text = "You received " + item_data + "."
-                    res = Event.ITEM_OBTAINED
+                    event_type = Event.ITEM_OBTAINED
+                    details = item_data
 
                 elif speech != self.displayed_text:
                     if not self.displayed_text:
-                        res = Event.NPC_INTERACT
+                        event_type = Event.NPC_INTERACT
+                        details = obj.name
                     self.displayed_text = speech
                 else:
                     self.displayed_text = None
@@ -182,7 +186,8 @@ class GameState:
                     self.player_has_items.remove(obj.key)
                     print("used key: ", obj.key)
                     self.displayed_text = "The door is unlocked."
-                    res = Event.DOOR_UNLOCKED
+                    event_type = Event.DOOR_UNLOCKED
+                    details = obj.name + " using " + obj.key
 
             elif obj.type == "chest":
                 output = obj.interact(self.player_has_items)
@@ -190,12 +195,13 @@ class GameState:
                     self.player_has_items += output[1]
                     print("got item: ", output[1])
                     self.displayed_text = "You found " + str(output[1]) + "."
-                    res = Event.ITEM_OBTAINED
+                    event_type = Event.ITEM_OBTAINED
+                    details = output[1]
 
         else:
             self.displayed_text = None
         
-        return res
+        return event_type, details
 
     def save(self, filename="save.pkl"):
         with open(filename, "wb") as file:
@@ -225,7 +231,7 @@ def start_state(object_filename):
             if obj_type == "chest":
                 new_obj = Chest(new_obj_dict["position"], new_obj_dict["contains"])
             elif obj_type == "door":
-                new_obj = Door(new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
+                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
 
             objects[room].append(new_obj)
 

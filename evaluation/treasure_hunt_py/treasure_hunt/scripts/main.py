@@ -94,7 +94,7 @@ def main(args):
                 if event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact()
                     if interact_output:
-                        telemetry.log_event(interact_output)
+                        telemetry.log_event(*interact_output)
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
                     print("Game saved to ", save_file)
