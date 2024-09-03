@@ -1,0 +1,8 @@
+2024-08-25 14:39:33 - Telemetry started: 
+2024-08-25 14:39:36 - NPC interact: lily
+2024-08-25 14:39:38 - Room entered: room2
+2024-08-25 14:39:40 - Item obtained: ['key0']
+2024-08-25 14:39:42 - Room entered: room0
+2024-08-25 14:39:43 - Door unlocked: 
+2024-08-25 14:39:43 - Item lost: key0
+2024-08-25 14:39:44 - Telemetry stopped: Game closed
