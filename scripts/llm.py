@@ -32,7 +32,7 @@ class GPTHandoverInterface:
 
 def main():
     api_key, model = load_config_data()
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, model=model)
 
 if __name__ == "__main__":
     main()    

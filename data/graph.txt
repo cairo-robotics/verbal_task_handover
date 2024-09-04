@@ -1,0 +1,12 @@
+{'player history': ['Player: Interacted lily at time=2024-09-03 15:25:48',
+                    'Player: Entered room2 at time=2024-09-03 15:25:50',
+                    'Player: Obtained key0 at time=2024-09-03 15:25:52',
+                    'Player: Entered room0 at time=2024-09-03 15:25:53',
+                    'Player: Unlocked Door at time=2024-09-03 15:25:55',
+                    'Player: Entered room1 at time=2024-09-03 15:25:56',
+                    'Player: Interacted mark at time=2024-09-03 15:25:57',
+                    'Player: Obtained key1 at time=2024-09-03 15:25:57'],
+ 'player known data': ['Player: Started_in room0, ',
+                       'room0: Contains lily, Connected_to room2, Connected_to room1, ',
+                       'room2: Contains key0, Connected_to room0, ',
+                       'room1: Contains mark, Contains key1, ']}

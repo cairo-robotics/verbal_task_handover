@@ -193,10 +193,10 @@ class GameState:
                 output = obj.interact(self.player_has_items)
                 if output[0]:
                     self.player_has_items += output[1]
-                    print("got item: ", output[1])
+                    print("got item: ", output[1][0])
                     self.displayed_text = "You found " + str(output[1]) + "."
                     event_type = Event.ITEM_OBTAINED
-                    details = output[1]
+                    details = output[1][0]
 
         else:
             self.displayed_text = None
