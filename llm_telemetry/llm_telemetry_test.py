@@ -15,7 +15,7 @@ MAP_DIRECTORY = '/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_
 SAVE_DIRECTORY = './saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
-SAVE_FILENAME = 'test_save.pkl'
+SAVE_FILENAME = 'save.pkl'
 
 # Constants
 TILE_SIZE = 64
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Your Pygame game with save/load functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, help='Filename of the save file to write')
-    parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')
-    parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
+    parser.add_argument('--telemetry', type=str, default="telemetry_test.txt", help='Filename of the telemetry log file')
+    parser.add_argument('--append-telemetry', action='store_true', help="Overwrite the telemetry log file")
     args = parser.parse_args()
 
     main(args)
