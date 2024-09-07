@@ -11,13 +11,14 @@ import argparse
 # Initialize Pygame
 pygame.init()
 
-MAP_DIRECTORY = './maps/map0/'
-SAVE_DIRECTORY = './saves/'
+GAME_DIR = os.path.dirname(os.path.abspath(__file__))
+MAP_DIRECTORY = GAME_DIR + '/../maps/map1/'
+SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
 SAVE_FILENAME = 'test_save.pkl'
 
-# Constants
+# Constants  
 TILE_SIZE = 64
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
@@ -125,11 +126,11 @@ def main(args):
                     if new_room:
                         current_room = new_room
                         player_pos = new_player_pos
-                        game_map.update_map(current_room)
                         state.update_current_room(current_room)
                         telemetry.log_event(Event.ROOM_ENTERED, current_room)
                     state.player_pos = player_pos
                     state.player_dir = player_dir
+                    # print(player_pos)
 
         on_render(window, state_vis, state, game_map)
         clock.tick(FPS)

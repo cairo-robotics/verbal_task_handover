@@ -12,8 +12,15 @@ class GameMap:
 
     def update_map(self, room_name):
         self.current_room   = room_name
-        self.grid       = self._load_grid(os.path.join(self.map_dir, room_name + '.txt'))
+        self.grid           = self._load_grid(os.path.join(self.map_dir, room_name + '.txt'))
         self.texture_map    = self._load_texture_map(os.path.join(self.texture_map_dir, room_name + '.txt'))
+
+    def _find_in_map(self, char):
+        for y, row in enumerate(self.grid):
+            for x, cell in enumerate(row):
+                if cell == char:
+                    return y, x
+        return None
 
     def _load_grid(self, filename):
         with open(filename, 'r') as f:
@@ -37,7 +44,7 @@ class GameMap:
         if 0 <= y < rows and 0 <= x < cols:
             if self.grid[y][x] == ' ':
                 return True
-            elif self.grid[y][x] in '0123456':
+            elif self.grid[y][x].isdigit():
                 # check if door is passable
                 door = state._get_object_at_position(new_pos)
                 if door is None or door.is_passable:
@@ -48,7 +55,10 @@ class GameMap:
     def check_transition(self, player_pos):
         x, y = player_pos
         if self.grid[y][x] in self.transitions[self.current_room]:
-            new_room, new_pos =  self.transitions[self.current_room][self.grid[y][x]]
+            new_room, door_id =  self.transitions[self.current_room][self.grid[y][x]]
+            self.update_map(new_room)
+            door_pos = self._find_in_map(str(door_id))
+            new_pos = [door_pos[1], door_pos[0]]
             return new_room, new_pos
         return None, None
 

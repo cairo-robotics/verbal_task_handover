@@ -1,0 +1,53 @@
+{
+    "objects" : {
+        "room0" : {
+            "door_to_room1" : {
+                "position" : [0, 2],
+                "type" : "door",
+                "is_locked" : false,
+                "key": ""
+            }
+        },
+        "room2" : {
+            "chest0" : {
+                "position" : [3, 3],
+                "type" : "chest",
+                "contains" : [
+                    "key0"
+                ]
+            }
+        },
+        "room7" : {
+            "door" : {
+                "position" : [1, 4],
+                "type" : "door",
+                "is_locked" : true,
+                "key": "key0"
+            }
+        }
+    },
+    "npcs" : {
+        "room0" : {
+            "lily" : {
+                "position" : [3, 8],
+                "facing" : "WEST",
+                "interact_data" : [
+                    ["Hello", ""],
+                    ["I am Lily", ""],
+                    ["Do you like my hair?", ""]
+                ]
+            }
+        },
+        "room1" : {
+            "mark" : {
+                "position" : [6, 2],
+                "facing" : "SOUTH", 
+                "interact_data" : [
+                    ["Hello", ""],
+                    ["I am a test NPC", "key1"],
+                    ["I have nothing to say", ""]
+                ]
+            }
+        }
+    }
+}
