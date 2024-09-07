@@ -12,7 +12,7 @@ import argparse
 pygame.init()
 
 MAP_DIRECTORY = '/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/maps/map0/'
-SAVE_DIRECTORY = './saves/'
+SAVE_DIRECTORY = 'llm_telemetry/saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
 SAVE_FILENAME = 'save.pkl'
@@ -36,19 +36,19 @@ def on_render(window, state_vis, state, game_map):
     pygame.display.flip()
 
 # Main game loop
-def main(args):
-    if args.load:
-        save_file = args.save or args.load
-        load_file = os.path.join(SAVE_DIRECTORY, args.load)
+def main(arguments):
+    if arguments.load:
+        save_file = arguments.save or arguments.load
+        load_file = os.path.join(SAVE_DIRECTORY, arguments.load)
     else:
         load_file = None
-        save_file = args.save or SAVE_FILENAME
+        save_file = arguments.save or SAVE_FILENAME
 
     save_file = os.path.join(SAVE_DIRECTORY, save_file)
     
-    if args.telemetry:
-        telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, args.telemetry)
-        telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
+    if arguments.telemetry:
+        telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, arguments.telemetry)
+        telemetry = Telemetry(telemetry_file, arguments.overwrite_telemetry)
     else:
         telemetry = DummyTelemetry()
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, help='Filename of the save file to write')
     parser.add_argument('--telemetry', type=str, default="telemetry_test.txt", help='Filename of the telemetry log file')
-    parser.add_argument('--append-telemetry', action='store_true', help="Overwrite the telemetry log file")
-    args = parser.parse_args()
+    parser.add_argument('--overwrite-telemetry', action='store_true', help="Overwrite the telemetry log file")
+    arguments = parser.parse_args()
 
-    main(args)
+    main(arguments)

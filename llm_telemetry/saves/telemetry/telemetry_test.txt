@@ -42,3 +42,61 @@
 2024-09-03 15:25:57 - NPC interact: mark
 2024-09-03 15:25:57 - Item obtained: key1
 2024-09-03 15:25:58 - Player moved: [5, 3]
+2024-09-06 18:42:40 - Player moved: [2, 1]
+2024-09-06 18:42:40 - Player moved: [2, 2]
+2024-09-06 18:42:40 - Player moved: [2, 3]
+2024-09-06 18:42:40 - Player moved: [2, 4]
+2024-09-06 18:42:41 - Player moved: [2, 5]
+2024-09-06 18:42:41 - Player moved: [2, 6]
+2024-09-06 18:42:41 - Player moved: [2, 7]
+2024-09-06 18:42:41 - Player moved: [2, 8]
+2024-09-06 18:42:41 - NPC interact: lily
+2024-09-06 18:42:42 - Player moved: [2, 7]
+2024-09-06 18:42:43 - Player moved: [2, 6]
+2024-09-06 18:42:43 - Player moved: [1, 6]
+2024-09-06 18:42:43 - Player moved: [1, 5]
+2024-09-06 18:42:43 - Room entered: room2
+2024-09-06 18:42:43 - Player moved: [7, 5]
+2024-09-06 18:42:43 - Player moved: [6, 5]
+2024-09-06 18:42:43 - Player moved: [5, 5]
+2024-09-06 18:42:44 - Player moved: [4, 5]
+2024-09-06 18:42:44 - Player moved: [3, 5]
+2024-09-06 18:42:44 - Player moved: [3, 4]
+2024-09-06 18:42:44 - Item obtained: key0
+2024-09-06 18:42:45 - Player moved: [3, 5]
+2024-09-06 18:42:45 - Player moved: [4, 5]
+2024-09-06 18:42:45 - Player moved: [5, 5]
+2024-09-06 18:42:45 - Player moved: [6, 5]
+2024-09-06 18:42:46 - Room entered: room0
+2024-09-06 18:42:46 - Player moved: [0, 5]
+2024-09-06 18:42:46 - Room entered: room2
+2024-09-06 18:42:46 - Player moved: [7, 5]
+2024-09-06 18:42:47 - Room entered: room0
+2024-09-06 18:42:47 - Player moved: [0, 5]
+2024-09-06 18:42:47 - Player moved: [1, 5]
+2024-09-06 18:42:47 - Player moved: [2, 5]
+2024-09-06 18:42:47 - Player moved: [2, 4]
+2024-09-06 18:42:47 - Player moved: [2, 3]
+2024-09-06 18:42:47 - Player moved: [2, 2]
+2024-09-06 18:42:48 - Player moved: [1, 2]
+2024-09-06 18:42:48 - Door unlocked: door_to_room1 using key0
+2024-09-06 18:42:48 - Room entered: room1
+2024-09-06 18:42:48 - Player moved: [7, 3]
+2024-09-06 18:42:49 - Player moved: [6, 3]
+2024-09-06 18:42:49 - Player moved: [5, 3]
+2024-09-06 18:42:49 - Player moved: [5, 2]
+2024-09-06 18:42:49 - NPC interact: mark
+2024-09-06 18:42:49 - Item obtained: key1
+2024-09-06 18:42:50 - Player moved: [5, 3]
+2024-09-06 18:42:51 - Player moved: [6, 3]
+2024-09-06 18:42:51 - Room entered: room0
+2024-09-06 18:42:51 - Player moved: [0, 2]
+2024-09-06 18:42:51 - Player moved: [1, 2]
+2024-09-06 18:42:51 - Player moved: [2, 2]
+2024-09-06 18:42:51 - Player moved: [3, 2]
+2024-09-06 18:42:51 - Player moved: [4, 2]
+2024-09-06 18:42:51 - Player moved: [4, 3]
+2024-09-06 18:42:52 - Player moved: [4, 4]
+2024-09-06 18:42:52 - Player moved: [4, 5]
+2024-09-06 18:42:52 - Player moved: [4, 6]
+2024-09-06 18:42:52 - Player moved: [4, 7]
