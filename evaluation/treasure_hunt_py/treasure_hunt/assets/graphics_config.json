@@ -39,6 +39,12 @@
         "config": "char_sprites.json",
         "scaling": 1.0
     },
+    "jay" : {
+        "type" : "multi",
+        "path": "jay.png",
+        "config": "char_sprites.json",
+        "scaling" : 1.0
+    },
     "door" : {
         "type" : "multi",
         "path": "door.png",
@@ -55,6 +61,12 @@
         "type" : "multi",
         "path" : "walls.png",
         "config" : "walls.json",
+        "scaling" : 1.0
+    },
+    "banner" : {
+        "type" : "multi",
+        "path" : "banners.png",
+        "config" : "banners.json",
         "scaling" : 1.0
     },
     "keys" : {

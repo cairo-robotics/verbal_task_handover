@@ -21,11 +21,11 @@ class Direction(object):
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
 
 class Object:
-    def __init__(self, type, position):
+    def __init__(self, name, type, position):
+        self.name = name
         self.type = type
         self.position = position
-        self._sprite = None
-        self.sprite_scaling = 1.0
+        self._sprite = name
 
     @property
     def sprite(self):
@@ -38,20 +38,22 @@ class Object:
     def interact(self):
         pass
 
+class Stairs(Object):
+    def __init__(self, name, position):
+        super().__init__(name, "stairs", position)
+        self._sprite = "stairs"
+        # self.destination = destination
+
 class Door(Object):
     def __init__(self, name, position, is_locked, key):
-        self.name = name
-        super().__init__("door", position)
+        super().__init__(name, "door", position)
         self.is_locked = is_locked
         # self.is_open = False
         self.key = key
 
     @property
     def sprite(self):
-        if "stairs" in self.name:
-            return "stairs"
-        else:
-            return "door_open" if not self.is_locked else "door_closed"
+        return "door_open" if not self.is_locked else "door_closed"
 
     @property
     def is_passable(self):
@@ -68,11 +70,10 @@ class Door(Object):
         return None
 
 class Chest(Object):
-    def __init__(self, position, contains):
-        super().__init__("chest", position)
+    def __init__(self, name, position, contains):
+        super().__init__(name, "chest", position)
         self.contains = contains
         self.is_open = False
-        self.sprite_scaling = 0.7
     
     @property
     def sprite(self):
@@ -93,8 +94,8 @@ class Chest(Object):
             return self.contains
         
 class Treasure(Object):
-    def __init__(self, position):
-        super().__init__("treasure", position)
+    def __init__(self, name, position):
+        super().__init__(name, "treasure", position)
         self._sprite = "gem_red"
         self.collected = False
 
@@ -106,9 +107,8 @@ class Treasure(Object):
 
 class NPC(Object):
     def __init__(self, name, position, facing, interact_data, conditional_interact_data=None):
-        super().__init__("npc", position)
+        super().__init__(name, "npc", position)
         # self._sprite = name
-        self.name = name
         self.orientation = Direction.NAME_TO_DIRECTION[facing]
         self.interact_data = interact_data
         
@@ -123,10 +123,13 @@ class NPC(Object):
         if self.end_of_interaction:
             self.end_of_interaction = False
             return None, None
+        
 
+        item_override = False
         for key in self.conditional_interact_data:
             if key in player_has_items:
                 if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
+                    item_override = True
                     continue
                 else:
                     speech, item = tuple(self.conditional_interact_data[key][self.conditional_interact_counts[key]])
@@ -135,7 +138,7 @@ class NPC(Object):
                         self.end_of_interaction = True
                     return speech, item
                 
-        if self.current_conversation >= len(self.interact_data):
+        if item_override or self.current_conversation >= len(self.interact_data):
             self.end_of_interaction = True
             return "...", None  # No more conversations
 
@@ -203,8 +206,20 @@ class GameState:
 
     def handle_interact(self):
         obj = self._get_object_at_position(self.player_pos)
-        if obj is None:
-            obj = self._get_facing_object()
+
+        if obj is not None and obj.type == "treasure":
+            res = obj.interact()
+            if res:
+                self.score += 1
+                print("score: ", self.score)
+                self.displayed_text = "You found a TREASURE!"
+                self.displayed_icon = "red gem"
+                event_type = Event.TREASURE_FOUND
+                details = "treasure"
+                self.player_has_items.append(obj.name)
+                return event_type, details    
+
+        obj = self._get_facing_object()
         event_type = None
         details = None
         if obj:
@@ -242,17 +257,6 @@ class GameState:
             elif self.displayed_text:
                 self.displayed_text = None
                 self.displayed_icon = None
-
-            elif obj.type == "treasure":
-                res = obj.interact()
-                if res:
-                    self.score += 1
-                    print("score: ", self.score)
-                    self.displayed_text = "You found a TREASURE!"
-                    self.displayed_icon = "red gem"
-                    event_type = Event.TREASURE_FOUND
-                    details = "treasure"
-                    self.player_has_items.append(obj.name)
 
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)
@@ -306,11 +310,15 @@ def start_state(object_filename):
             new_obj_dict = room_objs[obj_name]
             obj_type = new_obj_dict["type"]
             if obj_type == "chest":
-                new_obj = Chest(new_obj_dict["position"], new_obj_dict["contains"])
+                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"])
             elif obj_type == "door":
                 new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
             elif obj_type == "treasure":
-                new_obj = Treasure(new_obj_dict["position"])
+                new_obj = Treasure(obj_name, new_obj_dict["position"])
+            elif obj_type == "stairs":
+                new_obj = Stairs(obj_name, new_obj_dict["position"])
+            else:
+                new_obj = Object(obj_name, obj_type, new_obj_dict["position"])
 
             objects[room].append(new_obj)
 

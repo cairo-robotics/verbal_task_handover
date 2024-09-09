@@ -199,20 +199,16 @@ class StateVisualizer:
                                                                    sprite_name)
             elif obj.sprite is not None:
                 x, y = obj.position
-                rendered=False
                 
-                for img_class in ["chest", "door"]:
-                    if img_class in obj.sprite:
-                        img_name = img_class
-                        z = self.MULTI_FRAME_SPRITES[img_name].sprite_scaling
-                        x += ((1 - z)/2)
-                        y += ((1 - z)/2)
-                        self.MULTI_FRAME_SPRITES[img_name].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), obj.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                        rendered = True
-                        break
-                    
-                if not rendered and "stairs" in obj.sprite:
-                    self.SPRITES["stairs"].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels(obj.position), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                if obj.type in self.MULTI_FRAME_SPRITES:
+                    img_name = obj.type
+                    z = self.MULTI_FRAME_SPRITES[img_name].sprite_scaling
+                    x += ((1 - z)/2)
+                    y += ((1 - z)/2)
+                    self.MULTI_FRAME_SPRITES[img_name].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), obj.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                
+                elif obj.sprite in self.SPRITES:
+                    self.SPRITES[obj.sprite].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels(obj.position), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _position_in_unscaled_pixels(self, position):
         """

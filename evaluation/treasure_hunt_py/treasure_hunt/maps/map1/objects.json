@@ -26,10 +26,18 @@
                 "contains" : "blue gem"
             },
             "stairs_to_room5" : {
-                "position" : [6, 1],
-                "type" : "door",
-                "is_locked" : false,
-                "key": ""
+                "type" : "stairs",
+                "position" : [6, 1]
+            }
+        },
+        "room3" : {
+            "treasure3" : {
+                "position" : [4, 4],
+                "type" : "treasure"
+            },
+            "red banner" : {
+                "position" : [2, 0],
+                "type" : "banner"
             }
         },
         "room4" : {
@@ -41,9 +49,7 @@
         "room5" : {
             "stairs_to_room2" : {
                 "position" : [4, 2],
-                "type" : "door",
-                "is_locked" : false,
-                "key": ""
+                "type" : "stairs"
             }
         },
         "room7" : {
@@ -61,11 +67,36 @@
                 "position" : [3, 8],
                 "facing" : "WEST",
                 "interact_data" : [
-                    ["> Hello, I'm Lily.", ""],
-                    ["> I hear you're looking for treasure.", ""],
-                    ["> I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
-                    ["> I hope that helps!", ""]
+                    [
+                        ["> Hello, I'm Lily.", ""],
+                        ["> I hear you're looking for treasure.", ""],
+                        ["> I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
+                        ["> I hope that helps!", ""]
+                    ]
                 ]
+            },
+            "jay" : {
+                "position" : [6, 1],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["> Hey, you.", ""],
+                        ["> I've heard about a treasure, but first I need something.", ""],
+                        ["> I need a BLUE GEM. If you find one, bring it to me.", ""]
+                    ],
+                    [
+                        ["> I need the BLUE GEM, sorry. I can't help you until you bring it to me.", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "blue gem" : [
+                        ["> Oh, you found the BLUE GEM. Thanks.", ""],
+                        ["> Okay, here's what I've heard about the treasure...", ""],
+                        ["> 'Find the RED BANNER, then head 3 steps SOUTH and 2 steps EAST.'", ""],
+                        ["> 'Then press SPACE to find what you seek.'", ""],
+                        ["> Lucky for you, I'm more of a blue gem guy, so that treasure's all yours.", ""]
+                    ]
+                }
             }
         },
         "room1" : {

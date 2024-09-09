@@ -42,7 +42,7 @@ class GameMap:
         cols = len(self.grid[0])
         x, y = new_pos
         if 0 <= y < rows and 0 <= x < cols:
-            if self.grid[y][x] == ' ':
+            if self.grid[y][x] in ' T': # T is just a placemarker for treasure
                 return True
             elif self.grid[y][x].isdigit() or self.grid[y][x] == 'D':
                 # check if door is passable
