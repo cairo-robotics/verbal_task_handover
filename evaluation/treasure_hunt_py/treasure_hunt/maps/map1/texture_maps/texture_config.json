@@ -1,0 +1,19 @@
+{
+    "walls" : {
+        "sprite" : "stone_tiles",
+        "mapping" : {
+            "#" : "stone_tile",
+            "A" : "wall_border_top_left",
+            "B" : "wall_border_top",
+            "C" : "wall_border_top_right",
+            "D" : "wall_border_outer_top_left",
+            "E" : "wall_border_outer_top_right",
+            "F" : "wall_border_left",
+            "G" : "stone_tile_top_left",
+            "H" : "stone_tile_top",
+            "I" : "wall_border_right",
+            "J" : "stone_tile_left",
+            "K" : "stone_tile"
+        }
+    }
+}

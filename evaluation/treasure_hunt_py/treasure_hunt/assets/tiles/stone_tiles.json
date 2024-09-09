@@ -1,0 +1,32 @@
+{
+    "sheet size": [7, 5],
+    "sprite size": [16, 16],
+    "frames" : [
+        "wall_border_top_left",
+        "wall_border_top",
+        "",
+        "",
+        "wall_border_top_right",
+        "wall_border_outer_top_left",
+        "wall_border_outer_top_right",
+        "wall_border_left",
+        "stone_tile_top_left",
+        "stone_tile_top",
+        "",
+        "wall_border_right",
+        "",
+        "",
+        "",
+        "stone_tile_left",
+        "stone_tile",
+        "",
+        "",
+        "",
+        "",
+        "wall_border_bottom_left",
+        "wall_border_bottom",
+        "",
+        "",
+        "wall_border_bottom_right"
+    ]
+}

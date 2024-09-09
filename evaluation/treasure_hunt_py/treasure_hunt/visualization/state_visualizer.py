@@ -82,29 +82,23 @@ class StateVisualizer:
                 else:
                     self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
-    def _render_grid_with_textures(self, surface, grid, texture_map):
-        for y, row in enumerate(texture_map):
-            for x, tile in enumerate(row):
-                if tile == "#":
-                    pygame.draw.rect(surface, WHITE, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                elif tile == "-":
-                    pygame.draw.rect(surface, BLACK, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                else:
-                    self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                    if tile in self.MULTI_FRAME_SPRITES["dirt"].mapping:
-                        mfs = self.MULTI_FRAME_SPRITES["dirt"]
-                        frame_name = mfs.mapping[tile] + ".png"
-                        mfs.blit_on_surface_scaled(surface,
-                                                (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
-                                                frame_name,
-                                                (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                    elif tile in self.MULTI_FRAME_SPRITES["walls"].mapping:
-                        mfs = self.MULTI_FRAME_SPRITES["walls"]
-                        frame_name = mfs.mapping[tile] + ".png"
-                        mfs.blit_on_surface_scaled(surface,
-                                                (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
-                                                frame_name,
-                                                (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+    def _render_grid_with_textures(self, surface, game_map):
+        texture_map_names = game_map.all_texture_maps
+
+        for map_name in texture_map_names:
+            texture_map = game_map.texture_maps[map_name]
+            for y in range(len(texture_map)):
+                for x in range(len(texture_map[y])):
+                    sprite_name, frame_name = game_map.get_texture_data((x, y), map_name)
+                    if sprite_name is not None:
+                        if frame_name is not None:
+                            mfs = self.MULTI_FRAME_SPRITES[sprite_name]
+                            mfs.blit_on_surface_scaled(surface,
+                                                       (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
+                                                       frame_name + ".png",
+                                                       (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                        elif sprite_name in self.SPRITES:
+                            self.SPRITES[sprite_name].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCA_UNSCALED_TILE_SIZELED_TILE_SIZE))
 
     def _render_textbox(self, surface):
         surface_width, surface_height = surface.get_size()
@@ -224,10 +218,9 @@ class StateVisualizer:
     def render_state(self, state, game_map):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))
 
-        if game_map.texture_map is not None:
-            self._render_grid_with_textures(grid_surface, game_map.grid, game_map.texture_map)
-        else:
-            self._render_grid(grid_surface, game_map.grid)
+        self._render_grid(grid_surface, game_map.grid)
+        if game_map.texture_maps:
+            self._render_grid_with_textures(grid_surface, game_map)
         
         self._render_objects(grid_surface, state)
         self._render_player(grid_surface, state)

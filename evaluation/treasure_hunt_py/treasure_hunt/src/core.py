@@ -5,6 +5,7 @@ class GameMap:
     def __init__(self, map_dir, starting_room='room0'):
         self.map_dir = map_dir
         self.texture_map_dir = os.path.join(map_dir, 'texture_maps/')
+        self.texture_config  = self._load_texture_config(os.path.join(self.texture_map_dir, 'texture_config.json'))
         self.current_room = starting_room
 
         self.update_map(starting_room)
@@ -13,7 +14,27 @@ class GameMap:
     def update_map(self, room_name):
         self.current_room   = room_name
         self.grid           = self._load_grid(os.path.join(self.map_dir, room_name + '.txt'))
-        self.texture_map    = self._load_texture_map(os.path.join(self.texture_map_dir, room_name + '.txt'))
+        self.texture_maps   = self._load_texture_maps(os.path.join(self.texture_map_dir, room_name))
+
+    @property
+    def all_texture_maps(self):
+        return self.texture_maps.keys()
+
+    def get_texture_data(self, coords, map_class):
+        x, y = coords
+        key = self.texture_maps[map_class][y][x]
+
+        if key == ' ':
+            return None, None
+        
+        sprite_type = self.texture_config[map_class]["sprite"]
+        frame_name  = self.texture_config[map_class]["mapping"][key]
+
+        return sprite_type, frame_name
+
+    def _load_texture_config(self, filename):
+        with open(filename, 'r') as f:
+            return json.load(f)
 
     def _find_in_map(self, char):
         for y, row in enumerate(self.grid):
@@ -32,6 +53,17 @@ class GameMap:
                 return [list(line.strip()) for line in f]
         except FileNotFoundError:
             return None
+        
+    def _load_texture_maps(self, map_dir):
+        texture_maps = {}
+        try:
+            for filename in os.listdir(map_dir):
+                if filename.endswith('.txt'):
+                    map_name = filename.split('.')[0]
+                    texture_maps[map_name] = self._load_texture_map(os.path.join(map_dir, filename))
+        except FileNotFoundError:
+            pass
+        return texture_maps
         
     def _load_transitions(self, filename):
         with open(filename, 'r') as f:

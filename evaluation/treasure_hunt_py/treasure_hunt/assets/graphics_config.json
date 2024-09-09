@@ -1,84 +1,90 @@
 {
     "grass" : {
         "type" : "single",
-        "path": "grass.png",
+        "path": "tiles/grass.png",
         "scaling": 1.0
     },
     "stairs" : {
         "type" : "single",
-        "path": "ladder.png",
+        "path": "objects/ladder.png",
         "scaling": 1.0
     },
     "chest" : {
         "type" : "multi",
-        "path": "chest.png",
-        "config": "chest.json",
+        "path": "objects/chest.png",
+        "config": "objects/chest.json",
         "scaling" : 1.0
     },
     "player" : {
         "type" : "multi",
-        "path": "player.png",
-        "config": "char_sprites.json",
+        "path": "chars/player.png",
+        "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
     "mark" : {
         "type" : "multi",
-        "path": "mark.png",
-        "config": "char_sprites.json",
+        "path": "chars/mark.png",
+        "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
     "lily" : {
         "type" : "multi",
-        "path": "lily.png",
-        "config": "char_sprites.json",
+        "path": "chars/lily.png",
+        "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
     "steve" : {
         "type" : "multi",
-        "path": "steve.png",
-        "config": "char_sprites.json",
+        "path": "chars/steve.png",
+        "config": "chars/char_sprites.json",
         "scaling": 1.0
     },
     "jay" : {
         "type" : "multi",
-        "path": "jay.png",
-        "config": "char_sprites.json",
+        "path": "chars/jay.png",
+        "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
     "door" : {
         "type" : "multi",
-        "path": "door.png",
-        "config": "door.json",
+        "path": "objects/door.png",
+        "config": "objects/door.json",
         "scaling" : 1.0
     },
     "dirt" : {
         "type" : "multi",
-        "path" : "plains.png",
-        "config" : "plains.json",
+        "path" : "tiles/plains.png",
+        "config" : "tiles/plains.json",
         "scaling" : 1.0
     },
     "walls" : {
         "type" : "multi",
-        "path" : "walls.png",
-        "config" : "walls.json",
+        "path" : "tiles/walls.png",
+        "config" : "tiles/walls.json",
         "scaling" : 1.0
     },
     "banner" : {
         "type" : "multi",
-        "path" : "banners.png",
-        "config" : "banners.json",
+        "path" : "objects/banners.png",
+        "config" : "objects/banners.json",
         "scaling" : 1.0
     },
     "keys" : {
         "type" : "multi",
-        "path" : "keys.png",
-        "config" : "keys.json",
+        "path" : "objects/keys.png",
+        "config" : "objects/keys.json",
         "scaling" : 2.0
     },
     "gems" : {
         "type" : "multi",
-        "path" : "gems.png",
-        "config" : "gems.json",
+        "path" : "objects/gems.png",
+        "config" : "objects/gems.json",
         "scaling" : 2.0
+    },
+    "stone_tiles" : {
+        "type" : "multi",
+        "path" : "tiles/stone_tiles.png",
+        "config" : "tiles/stone_tiles.json",
+        "scaling" : 1.0
     }
 }
