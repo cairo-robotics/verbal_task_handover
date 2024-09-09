@@ -1,0 +1,12 @@
+{
+    "sheet size": [6, 1],
+    "sprite size": [16, 16],
+    "frames" : [
+        "door_locked",
+        "door_unlocked",
+        "door_closed",
+        "door_half_open",
+        "door_open",
+        "door_clear"
+    ]
+}

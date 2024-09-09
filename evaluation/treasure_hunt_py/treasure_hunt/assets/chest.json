@@ -2,7 +2,7 @@
     "sheet size": [2, 1],
     "sprite size": [16, 16],
     "frames" : [
-        "CLOSED",
-        "OPEN"
+        "chest_closed",
+        "chest_open"
     ]
 }

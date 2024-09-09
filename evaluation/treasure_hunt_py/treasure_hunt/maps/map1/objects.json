@@ -10,7 +10,7 @@
             "door_to_room10" : {
                 "position" : [10, 7],
                 "type" : "door",
-                "is_locked" : true,
+                "is_locked" : false,
                 "key": "silver key"
             }
         },
@@ -19,12 +19,31 @@
                 "position" : [3, 3],
                 "type" : "chest",
                 "contains" : "gold key"
+            },
+            "chest1" : {
+                "position" : [1, 1],
+                "type" : "chest",
+                "contains" : "blue gem"
+            },
+            "stairs_to_room5" : {
+                "position" : [6, 1],
+                "type" : "door",
+                "is_locked" : false,
+                "key": ""
             }
         },
         "room4" : {
             "treasure1" : {
                 "position" : [6, 6],
                 "type" : "treasure"
+            }
+        },
+        "room5" : {
+            "stairs_to_room2" : {
+                "position" : [4, 2],
+                "type" : "door",
+                "is_locked" : false,
+                "key": ""
             }
         },
         "room7" : {

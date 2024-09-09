@@ -199,14 +199,20 @@ class StateVisualizer:
                                                                    sprite_name)
             elif obj.sprite is not None:
                 x, y = obj.position
-                if obj.sprite in ["chest_open", "chest_closed"]:
-                    z = self.SPRITES[obj.sprite].sprite_scaling
-                    x += ((1 - z)/2)
-                    y += ((1 - z)/2)
-                    self.SPRITES[obj.sprite].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                elif obj.sprite in ["door_open", "door_closed"]:
-                    sprite_name = ("OPEN" if obj.sprite == "door_open" else "CLOSED") + ".png"
-                    self.MULTI_FRAME_SPRITES["door"].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), sprite_name, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                rendered=False
+                
+                for img_class in ["chest", "door"]:
+                    if img_class in obj.sprite:
+                        img_name = img_class
+                        z = self.MULTI_FRAME_SPRITES[img_name].sprite_scaling
+                        x += ((1 - z)/2)
+                        y += ((1 - z)/2)
+                        self.MULTI_FRAME_SPRITES[img_name].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels((x, y)), obj.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                        rendered = True
+                        break
+                    
+                if not rendered and "stairs" in obj.sprite:
+                    self.SPRITES["stairs"].blit_on_surface_scaled(surface, self._position_in_unscaled_pixels(obj.position), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _position_in_unscaled_pixels(self, position):
         """
@@ -227,8 +233,8 @@ class StateVisualizer:
         else:
             self._render_grid(grid_surface, game_map.grid)
         
-        self._render_player(grid_surface, state)
         self._render_objects(grid_surface, state)
+        self._render_player(grid_surface, state)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)

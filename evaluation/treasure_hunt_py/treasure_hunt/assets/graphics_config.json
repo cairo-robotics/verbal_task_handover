@@ -4,15 +4,16 @@
         "path": "grass.png",
         "scaling": 1.0
     },
-    "chest_open" : {
+    "stairs" : {
         "type" : "single",
-        "path": "chest_open.png",
-        "scaling": 0.7
+        "path": "ladder.png",
+        "scaling": 1.0
     },
-    "chest_closed" : {
-        "type" : "single",
-        "path": "chest_closed.png",
-        "scaling": 0.7
+    "chest" : {
+        "type" : "multi",
+        "path": "chest.png",
+        "config": "chest.json",
+        "scaling" : 1.0
     },
     "player" : {
         "type" : "multi",
@@ -40,8 +41,8 @@
     },
     "door" : {
         "type" : "multi",
-        "path": "wooden_door.png",
-        "config": "wooden_door.json",
+        "path": "door.png",
+        "config": "door.json",
         "scaling" : 1.0
     },
     "dirt" : {
