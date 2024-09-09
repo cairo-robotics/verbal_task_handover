@@ -105,21 +105,51 @@ class Treasure(Object):
         return False
 
 class NPC(Object):
-    def __init__(self, name, position, facing, interact_data):
+    def __init__(self, name, position, facing, interact_data, conditional_interact_data=None):
         super().__init__("npc", position)
         # self._sprite = name
         self.name = name
         self.orientation = Direction.NAME_TO_DIRECTION[facing]
         self.interact_data = interact_data
-        self.interact_count = 0
+        
+        self.current_conversation = 0
+        self.current_line = 0
+        self.end_of_interaction = False
 
-    def interact(self, *args):
-        if self.interact_count >= len(self.interact_data):
-            return "...", None
-        speech, item = tuple(self.interact_data[self.interact_count])
-        self.interact_count += 1
+        self.conditional_interact_data = conditional_interact_data if conditional_interact_data is not None else {}
+        self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
 
-        return speech, item
+    def interact(self, player_has_items):
+        if self.end_of_interaction:
+            self.end_of_interaction = False
+            return None, None
+
+        for key in self.conditional_interact_data:
+            if key in player_has_items:
+                if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
+                    continue
+                else:
+                    speech, item = tuple(self.conditional_interact_data[key][self.conditional_interact_counts[key]])
+                    self.conditional_interact_counts[key] += 1
+                    if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
+                        self.end_of_interaction = True
+                    return speech, item
+                
+        if self.current_conversation >= len(self.interact_data):
+            self.end_of_interaction = True
+            return "...", None  # No more conversations
+
+        # Return the next line in the conversation
+        conversation = self.interact_data[self.current_conversation]
+        line = conversation[self.current_line]
+        self.current_line += 1
+        if self.current_line == len(conversation):
+            # Conversation is over, end interaction and reset for next conversation
+            self.end_of_interaction = True
+            self.current_conversation += 1
+            self.current_line = 0
+        return line[0], line[1]
+
 
 class GameState:
     def __init__(self, player_pos, player_dir, current_room, objects=None):
@@ -196,14 +226,17 @@ class GameState:
                         self.displayed_icon = item
                         event_type = Event.ITEM_OBTAINED
 
+                elif speech is None:
+                    self.displayed_text = None
+                    self.displayed_icon = None
+
                 elif speech != self.displayed_text:
                     if not self.displayed_text:
                         event_type = Event.NPC_INTERACT
                         details = obj.name
                     self.displayed_text = speech
                     self.displayed_icon = None
-                else:
-                    self.displayed_text = None
+
 
             elif self.displayed_text:
                 self.displayed_text = None
@@ -226,7 +259,7 @@ class GameState:
                         self.player_has_items.remove(obj.key)
                         self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
                         event_type = Event.DOOR_UNLOCKED
-                        details = obj.name + " using " + obj.key
+                        details = "used " + obj.key
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
 
@@ -283,7 +316,13 @@ def start_state(object_filename):
         room_objs = all_entities["npcs"][room]
         for obj_name in room_objs:
             new_obj_dict = room_objs[obj_name]
-            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"])
+
+            if "conditional_interacts" in new_obj_dict:
+                conditional_interact_data = new_obj_dict["conditional_interacts"]
+            else:
+                conditional_interact_data = None
+
+            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"], conditional_interact_data)
             objects[room].append(new_obj)
 
     return objects

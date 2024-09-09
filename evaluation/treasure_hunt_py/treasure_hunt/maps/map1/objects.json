@@ -73,12 +73,23 @@
                 "position" : [6, 2],
                 "facing" : "SOUTH", 
                 "interact_data" : [
-                    ["> Hello.", ""],
-                    ["> I'm not sure where to find treasure, but I know someone who might.", ""],
-                    ["> He's a bit of a recluse, so he likes to hang out in locked rooms.", ""],
-                    ["> Take this. Just tell him Mark sent you.", ""],
-                    ["", "silver key"]
-                ]
+                    [
+                        ["> Hello.", ""],
+                        ["> I'm not sure where to find treasure, but I know someone who might.", ""],
+                        ["> He's a bit of a recluse, so he likes to hang out in locked rooms.", ""],
+                        ["> Take this. Just tell him Mark sent you.", ""],
+                        ["", "silver key"]
+                    ],
+                    [
+                        ["> I'm glad I could help.", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "silver key" : [
+                        ["> Oh, you're back. Did you find Steve?", ""],
+                        ["> I hope he was able to help you.", ""]
+                    ]
+                }
             }
         },
         "room6" : {
