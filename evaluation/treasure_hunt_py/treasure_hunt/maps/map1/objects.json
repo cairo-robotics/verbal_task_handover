@@ -6,23 +6,25 @@
                 "type" : "door",
                 "is_locked" : false,
                 "key": ""
+            },
+            "treasure1" : {
+                "position" : [3, 3],
+                "type" : "treasure"
             }
         },
         "room2" : {
             "chest0" : {
                 "position" : [3, 3],
                 "type" : "chest",
-                "contains" : [
-                    "key0"
-                ]
+                "contains" : "gold key"
             }
         },
         "room7" : {
             "door" : {
                 "position" : [1, 4],
                 "type" : "door",
-                "is_locked" : true,
-                "key": "key0"
+                "is_locked" : false,
+                "key": "gold key"
             }
         }
     },
@@ -32,9 +34,9 @@
                 "position" : [3, 8],
                 "facing" : "WEST",
                 "interact_data" : [
-                    ["Hello", ""],
-                    ["I am Lily", ""],
-                    ["Do you like my hair?", ""]
+                    ["> Hello", ""],
+                    ["> I am Lily", ""],
+                    ["> Do you like my hair?", ""]
                 ]
             }
         },
@@ -43,9 +45,10 @@
                 "position" : [6, 2],
                 "facing" : "SOUTH", 
                 "interact_data" : [
-                    ["Hello", ""],
-                    ["I am a test NPC", "key1"],
-                    ["I have nothing to say", ""]
+                    ["> Hello.", ""],
+                    ["> I am a test NPC. Take this!", ""],
+                    ["", "silver key"],
+                    ["> I have nothing else to say.", ""]
                 ]
             }
         }

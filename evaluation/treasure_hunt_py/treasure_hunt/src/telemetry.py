@@ -8,6 +8,7 @@ class Event:
     ITEM_LOST = "Item lost"
     ROOM_ENTERED = "Room entered"
     PLAYER_MOVED = "Player moved"
+    TREASURE_FOUND = "Treasure collected"
 
     def __init__(self, event_type, details=""):
         self.event_type = event_type

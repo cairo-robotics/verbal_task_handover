@@ -44,7 +44,7 @@ class GameMap:
         if 0 <= y < rows and 0 <= x < cols:
             if self.grid[y][x] == ' ':
                 return True
-            elif self.grid[y][x].isdigit():
+            elif self.grid[y][x].isdigit() or self.grid[y][x] == 'D':
                 # check if door is passable
                 door = state._get_object_at_position(new_pos)
                 if door is None or door.is_passable:

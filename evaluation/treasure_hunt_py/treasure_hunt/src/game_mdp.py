@@ -59,10 +59,10 @@ class Door(Object):
             if self.key in player_items:
                 self.is_locked = False
                 # self.is_open = True
-                return True, "The door is unlocked."
+                return True
             else:
-                return False, "The door is locked."
-        return None, None
+                return False
+        return None
 
 class Chest(Object):
     def __init__(self, position, contains):
@@ -84,10 +84,22 @@ class Chest(Object):
 
     def interact(self, *args):
         if self.is_open:
-            return None, None
+            return None
         else:
             self.is_open = True
-            return True, self.contains
+            return self.contains
+        
+class Treasure(Object):
+    def __init__(self, position):
+        super().__init__("treasure", position)
+        self._sprite = "gem_red"
+        self.collected = False
+
+    def interact(self, *args):
+        if not self.collected:
+            self.collected = True
+            return True
+        return False
 
 class NPC(Object):
     def __init__(self, name, position, facing, interact_data):
@@ -116,6 +128,7 @@ class GameState:
         self.current_room = current_room
         self.player_has_items = []
         self.displayed_text = None
+        self.displayed_icon = None
         self.score = 0
 
     def __getstate__(self):
@@ -156,50 +169,67 @@ class GameState:
         return self._get_object_at_position(self._get_player_facing_position())
 
     def handle_interact(self):
-        obj = self._get_facing_object()
+        obj = self._get_object_at_position(self.player_pos)
+        if obj is None:
+            obj = self._get_facing_object()
         event_type = None
         details = None
         if obj:
             if obj.type == "npc":
-                speech, item_data = obj.interact(self.player_has_items)
-                if item_data:
-                    self.player_has_items += item_data
-                    print("got item: ", item_data)
-                    self.displayed_text = "You received " + item_data + "."
+                speech, item= obj.interact(self.player_has_items)
+                if item:
+                    self.player_has_items.append(item)
+                    self.displayed_text = f"You received the {item.upper()} from {obj.name.upper()}."
+                    self.displayed_icon = item
                     event_type = Event.ITEM_OBTAINED
-                    details = item_data
+                    details = item
 
                 elif speech != self.displayed_text:
                     if not self.displayed_text:
                         event_type = Event.NPC_INTERACT
                         details = obj.name
                     self.displayed_text = speech
+                    self.displayed_icon = None
                 else:
                     self.displayed_text = None
 
             elif self.displayed_text:
                 self.displayed_text = None
+                self.displayed_icon = None
+
+            elif obj.type == "treasure":
+                res = obj.interact()
+                if res:
+                    self.score += 1
+                    print("score: ", self.score)
+                    self.displayed_text = "You found a TREASURE!"
+                    self.displayed_icon = "red gem"
+                    event_type = Event.TREASURE_FOUND
+                    details = "treasure"
 
             elif obj.type == "door":
-                output = obj.interact(self.player_has_items)
-                if output[0]:
-                    self.player_has_items.remove(obj.key)
-                    print("used key: ", obj.key)
-                    self.displayed_text = "The door is unlocked."
-                    event_type = Event.DOOR_UNLOCKED
-                    details = obj.name + " using " + obj.key
+                res = obj.interact(self.player_has_items)
+                if res is not None:
+                    if res:
+                        self.player_has_items.remove(obj.key)
+                        self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
+                        event_type = Event.DOOR_UNLOCKED
+                        details = obj.name + " using " + obj.key
+                    else:
+                        self.displayed_text = "Looks like you don't have the key for this door."
 
             elif obj.type == "chest":
-                output = obj.interact(self.player_has_items)
-                if output[0]:
-                    self.player_has_items += output[1]
-                    print("got item: ", output[1][0])
-                    self.displayed_text = "You found " + str(output[1]) + "."
+                item = obj.interact()
+                if item:
+                    self.player_has_items.append(item)
+                    self.displayed_text = f"You found the {item.upper()} in the chest."
+                    self.displayed_icon = item
                     event_type = Event.ITEM_OBTAINED
-                    details = output[1][0]
+                    details = item
 
         else:
             self.displayed_text = None
+            self.displayed_icon = None
         
         return event_type, details
 
@@ -232,6 +262,8 @@ def start_state(object_filename):
                 new_obj = Chest(new_obj_dict["position"], new_obj_dict["contains"])
             elif obj_type == "door":
                 new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
+            elif obj_type == "treasure":
+                new_obj = Treasure(new_obj_dict["position"])
 
             objects[room].append(new_obj)
 

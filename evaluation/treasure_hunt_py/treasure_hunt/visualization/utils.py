@@ -11,7 +11,6 @@ def scale_surface_by_factor(surface, scale_by_factor):
     scaled_size = tuple(int(dim * scale_by_factor) for dim in unscaled_size)
     return pygame.transform.scale(surface, scaled_size)
 
-
 def blit_on_new_surface_of_size(surface, size, background_color=None):
     """blit surface on new surface of given size of surface (with no resize of its content), filling not covered parts of result area with background color"""
     result_surface = pygame.surface.Surface(size)
@@ -20,22 +19,8 @@ def blit_on_new_surface_of_size(surface, size, background_color=None):
     result_surface.blit(surface, (0, 0))
     return result_surface
 
-def scale_surface_by_factor(surface, scale_by_factor):
-    """return scaled input surfacem (with size multiplied by scale_by_factor param)
-    scales also content of the surface
-    """
-    unscaled_size = surface.get_size()
-    scaled_size = tuple(int(dim * scale_by_factor) for dim in unscaled_size)
-    return pygame.transform.scale(surface, scaled_size)
-
-
-def blit_on_new_surface_of_size(surface, size, background_color=None):
-    """blit surface on new surface of given size of surface (with no resize of its content), filling not covered parts of result area with background color"""
-    result_surface = pygame.surface.Surface(size)
-    if background_color:
-        result_surface.fill(background_color)
-    result_surface.blit(surface, (0, 0))
-    return result_surface
+def get_scaled_surface_size(pygame_image, new_size):
+    return (new_size[0] * pygame_image.sprite_scaling, new_size[1] * pygame_image.sprite_scaling)
 
 class SingleFramePygameImage:
     def __init__(self, img_path, scaling=1.0):
@@ -51,10 +36,11 @@ class SingleFramePygameImage:
         surface.blit(scaled_surface, top_left_pixel_position)
 
 class MultiFramePygameImage:
-    def __init__(self, img_path, frames_path):
+    def __init__(self, img_path, frames_path, scaling=1.0):
         self.mapping = None
         self.image = pygame.image.load(img_path).convert_alpha()
         self.frames_rectangles = self.load_frames_rectangles(frames_path)
+        self.sprite_scaling = scaling
     
     def blit_on_surface(
         self, surface, top_left_pixel_position, frame_name, **kwargs
@@ -74,7 +60,7 @@ class MultiFramePygameImage:
         self, surface, top_left_pixel_position, frame_name, new_size
         ):
         sprite_surface = self.sprite(frame_name)
-        scaled_surface = pygame.transform.scale(sprite_surface, new_size)
+        scaled_surface = pygame.transform.scale(sprite_surface, (new_size[0] * self.sprite_scaling, new_size[1] * self.sprite_scaling))
         surface.blit(scaled_surface, top_left_pixel_position)
 
     def load_frames_rectangles(self, json_path):

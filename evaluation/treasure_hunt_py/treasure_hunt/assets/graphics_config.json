@@ -49,5 +49,17 @@
         "path" : "walls.png",
         "config" : "walls.json",
         "scaling" : 1.0
+    },
+    "keys" : {
+        "type" : "multi",
+        "path" : "keys.png",
+        "config" : "keys.json",
+        "scaling" : 2.0
+    },
+    "gems" : {
+        "type" : "multi",
+        "path" : "gems.png",
+        "config" : "gems.json",
+        "scaling" : 2.0
     }
 }

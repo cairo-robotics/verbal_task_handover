@@ -118,10 +118,23 @@ class StateVisualizer:
         textbox_position = (int((surface_width - textbox_width) // 2), int(surface_height * 0.75))
         return textbox_surface, textbox_position
 
-    def _render_text(self, surface, text):
+    def _render_text(self, surface, text, item=None):
         textbox_surface, textbox_position = self._render_textbox(surface)
+
         text_surface = self.font.render(text, True, BLACK) 
         text_rect = text_surface.get_rect(center=(textbox_surface.get_width() // 2, textbox_surface.get_height() // 2))
+
+        # Blit item sprite onto the textbox, if applicable.
+        if item is not None:
+            if "gem" in item:
+                mfs = self.MULTI_FRAME_SPRITES["gems"]
+            elif "key" in item:
+                mfs = self.MULTI_FRAME_SPRITES["keys"]
+            
+            item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            item_sprite_pos = (text_rect.x - item_sprite_size[0], textbox_surface.get_height() // 2 - item_sprite_size[1] // 2)
+            mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            
         textbox_surface.blit(text_surface, text_rect)
         surface.blit(textbox_surface, textbox_position)
 
@@ -151,7 +164,7 @@ class StateVisualizer:
                 self.MULTI_FRAME_SPRITES[obj.name].blit_on_surface(surface,
                                                                    self._position_in_unscaled_pixels(npc_pos),
                                                                    sprite_name)
-            else:
+            elif obj.sprite is not None:
                 x, y = obj.position
                 if obj.sprite in ["chest_open", "chest_closed"]:
                     z = self.SPRITES[obj.sprite].sprite_scaling
@@ -197,7 +210,7 @@ class StateVisualizer:
 
         text_to_display = state.displayed_text
         if text_to_display:
-            self._render_text(game_surface, text_to_display)
+            self._render_text(game_surface, text_to_display, state.displayed_icon)
         self._render_hud(game_surface, state)
 
         return game_surface

@@ -1,0 +1,9 @@
+{
+    "sheet size": [3, 1],
+    "sprite size": [16, 16],
+    "frames" : [
+        "gold key",
+        "blue key",
+        "silver key"
+    ]
+}
