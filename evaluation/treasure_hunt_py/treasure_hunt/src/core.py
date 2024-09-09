@@ -45,12 +45,12 @@ class GameMap:
 
     def _load_grid(self, filename):
         with open(filename, 'r') as f:
-            return [list(line.strip()) for line in f]
+            return [list(line.rstrip('\n')) for line in f]
         
     def _load_texture_map(self, filename):
         try:
             with open(filename, 'r') as f:
-                return [list(line.strip()) for line in f]
+                return [list(line.rstrip('\n')) for line in f]
         except FileNotFoundError:
             return None
         
