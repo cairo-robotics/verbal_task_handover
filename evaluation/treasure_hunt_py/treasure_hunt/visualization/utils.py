@@ -40,8 +40,12 @@ class MultiFramePygameImage:
         self.mapping = None
         self.image = pygame.image.load(img_path).convert_alpha()
         self.frames_rectangles = self.load_frames_rectangles(frames_path)
+        self.extra_sprites = {}
         self.sprite_scaling = scaling
     
+    def add_extra_sprite(self, sprite_name, img_path):
+        self.extra_sprites[sprite_name] = pygame.image.load(img_path).convert_alpha()
+
     def blit_on_surface(
         self, surface, top_left_pixel_position, frame_name, **kwargs
     ):
@@ -54,6 +58,8 @@ class MultiFramePygameImage:
         )
 
     def sprite(self, frame_name):
+        if frame_name in self.extra_sprites:
+            return self.extra_sprites[frame_name]
         return self.image.subsurface(self.frames_rectangles[frame_name])
     
     def blit_on_surface_scaled(

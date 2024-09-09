@@ -24,7 +24,7 @@ class GameMap:
         x, y = coords
         key = self.texture_maps[map_class][y][x]
 
-        if key == ' ':
+        if key in ' -':
             return None, None
         
         sprite_type = self.texture_config[map_class]["sprite"]

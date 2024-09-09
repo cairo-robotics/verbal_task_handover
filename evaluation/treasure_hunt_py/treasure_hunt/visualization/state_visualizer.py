@@ -47,6 +47,9 @@ class StateVisualizer:
             elif config[sprite_name]["type"] == "multi":
                 self.MULTI_FRAME_SPRITES[sprite_name] = MultiFramePygameImage(os.path.join(GRAPHICS_DIR, config[sprite_name]["path"]), os.path.join(GRAPHICS_DIR, config[sprite_name]["config"]))
                 self.MULTI_FRAME_SPRITES[sprite_name].sprite_scaling = config[sprite_name]["scaling"]
+                if "extra_sprites" in config[sprite_name]:
+                    for extra_sprite in config[sprite_name]["extra_sprites"]:
+                        self.MULTI_FRAME_SPRITES[sprite_name].add_extra_sprite(extra_sprite["name"] + '.png', os.path.join(GRAPHICS_DIR, extra_sprite["path"]))
 
     @classmethod
     def configure_defaults(cls, **kwargs):

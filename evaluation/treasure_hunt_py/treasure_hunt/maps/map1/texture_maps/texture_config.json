@@ -15,5 +15,24 @@
             "J" : "stone_tile_left",
             "K" : "stone_tile"
         }
+    },
+    "ground" : {
+        "sprite" : "dirt",
+        "mapping" : {
+            "a" : "DIRT_PATH_TOP_LEFT",
+            "b" : "DIRT_PATH_TOP_MIDDLE",
+            "c" : "DIRT_PATH_TOP_RIGHT",
+            "d" : "DIRT_PATH_MIDDLE_LEFT",
+            "e" : "DIRT_PATH",
+            "f" : "DIRT_PATH_MIDDLE_RIGHT",
+            "g" : "DIRT_PATH_BOTTOM_LEFT",
+            "h" : "DIRT_PATH_BOTTOM_MIDDLE",
+            "i" : "DIRT_PATH_BOTTOM_RIGHT",
+            "j" : "DIRT_PATH_SINGLE_MIDDLE",
+            "k" : "grass",
+            "l" : "DIRT_PATH_TOP_SINGLE",
+            "m" : "DIRT_PATH_BOTTOM_SINGLE",
+            "n" : "GRASS_WITH_DIRT_NOTCH"
+        }
     }
 }

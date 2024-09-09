@@ -55,7 +55,13 @@
         "type" : "multi",
         "path" : "tiles/plains.png",
         "config" : "tiles/plains.json",
-        "scaling" : 1.0
+        "scaling" : 1.0,
+        "extra_sprites" : [
+            {
+                "name" : "grass",
+                "path" : "tiles/grass.png"
+            }
+        ]
     },
     "walls" : {
         "type" : "multi",
