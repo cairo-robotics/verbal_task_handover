@@ -117,14 +117,47 @@ class StateVisualizer:
 
         textbox_position = (int((surface_width - textbox_width) // 2), int(surface_height * 0.75))
         return textbox_surface, textbox_position
-
+    
     def _render_text(self, surface, text, item=None):
         textbox_surface, textbox_position = self._render_textbox(surface)
+        textbox_width = textbox_surface.get_width()
+        textbox_height = textbox_surface.get_height()
+        line_height = self.font.get_linesize()  # Height of each line
 
-        text_surface = self.font.render(text, True, BLACK) 
-        text_rect = text_surface.get_rect(center=(textbox_surface.get_width() // 2, textbox_surface.get_height() // 2))
+        margin = 20  # Horizontal buffer/padding from the edges of the textbox
 
-        # Blit item sprite onto the textbox, if applicable.
+        words = text.split(' ')
+        lines = []
+        current_line = ""
+
+        # Split text into multiple lines that fit within the textbox width (considering margin)
+        for word in words:
+            test_line = current_line + word + " "
+            test_surface = self.font.render(test_line, True, BLACK)
+            
+            # If the test line is too wide, finalize the current line and start a new one
+            if test_surface.get_width() > textbox_width - 2 * margin:
+                lines.append(current_line)  # Add the current line to the list
+                current_line = word + " "  # Start a new line with the current word
+            else:
+                current_line = test_line  # Continue adding words to the current line
+        
+        # Add the last line if there's any text left in current_line
+        if current_line:
+            lines.append(current_line)
+
+        # Calculate total height of the rendered text and the starting y-position for centering
+        total_text_height = len(lines) * line_height
+        start_y = (textbox_height - total_text_height) // 2
+
+        # Render each line and blit onto the textbox, centered with margin
+        for i, line in enumerate(lines):
+            text_surface = self.font.render(line, True, BLACK)
+            # Center the text within the available width (textbox_width - 2 * margin)
+            text_rect = text_surface.get_rect(midtop=((textbox_width // 2), start_y + i * line_height))
+            textbox_surface.blit(text_surface, text_rect)
+
+        # Blit item sprite if applicable
         if item is not None:
             if "gem" in item:
                 mfs = self.MULTI_FRAME_SPRITES["gems"]
@@ -132,10 +165,10 @@ class StateVisualizer:
                 mfs = self.MULTI_FRAME_SPRITES["keys"]
             
             item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-            item_sprite_pos = (text_rect.x - item_sprite_size[0], textbox_surface.get_height() // 2 - item_sprite_size[1] // 2)
+            item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
             mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-            
-        textbox_surface.blit(text_surface, text_rect)
+
+        # Blit the textbox onto the main surface
         surface.blit(textbox_surface, textbox_position)
 
     def _render_hud(self, surface, state):

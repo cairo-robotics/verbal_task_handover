@@ -48,7 +48,10 @@ class Door(Object):
 
     @property
     def sprite(self):
-        return "door_open" if not self.is_locked else "door_closed"
+        if "stairs" in self.name:
+            return "stairs"
+        else:
+            return "door_open" if not self.is_locked else "door_closed"
 
     @property
     def is_passable(self):
@@ -178,11 +181,20 @@ class GameState:
             if obj.type == "npc":
                 speech, item= obj.interact(self.player_has_items)
                 if item:
-                    self.player_has_items.append(item)
-                    self.displayed_text = f"You received the {item.upper()} from {obj.name.upper()}."
-                    self.displayed_icon = item
-                    event_type = Event.ITEM_OBTAINED
                     details = item
+                    
+                    if "treasure" in item:
+                        self.score += 1
+                        print("score: ", self.score)
+                        event_type = Event.TREASURE_FOUND
+                        self.displayed_text = "You received a TREASURE!"
+                        self.displayed_icon = "red gem"
+
+                    else:
+                        self.player_has_items.append(item)
+                        self.displayed_text = f"You received the {item.upper()} from {obj.name.upper()}."
+                        self.displayed_icon = item
+                        event_type = Event.ITEM_OBTAINED
 
                 elif speech != self.displayed_text:
                     if not self.displayed_text:

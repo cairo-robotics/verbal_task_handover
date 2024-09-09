@@ -32,6 +32,12 @@
         "config": "char_sprites.json",
         "scaling" : 1.0
     },
+    "steve" : {
+        "type" : "multi",
+        "path": "steve.png",
+        "config": "char_sprites.json",
+        "scaling": 1.0
+    },
     "door" : {
         "type" : "multi",
         "path": "wooden_door.png",

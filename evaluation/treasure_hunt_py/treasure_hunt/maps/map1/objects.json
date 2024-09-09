@@ -7,9 +7,11 @@
                 "is_locked" : false,
                 "key": ""
             },
-            "treasure1" : {
-                "position" : [3, 3],
-                "type" : "treasure"
+            "door_to_room10" : {
+                "position" : [10, 7],
+                "type" : "door",
+                "is_locked" : true,
+                "key": "silver key"
             }
         },
         "room2" : {
@@ -17,6 +19,12 @@
                 "position" : [3, 3],
                 "type" : "chest",
                 "contains" : "gold key"
+            }
+        },
+        "room4" : {
+            "treasure1" : {
+                "position" : [6, 6],
+                "type" : "treasure"
             }
         },
         "room7" : {
@@ -34,9 +42,10 @@
                 "position" : [3, 8],
                 "facing" : "WEST",
                 "interact_data" : [
-                    ["> Hello", ""],
-                    ["> I am Lily", ""],
-                    ["> Do you like my hair?", ""]
+                    ["> Hello, I'm Lily.", ""],
+                    ["> I hear you're looking for treasure.", ""],
+                    ["> I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
+                    ["> I hope that helps!", ""]
                 ]
             }
         },
@@ -46,11 +55,24 @@
                 "facing" : "SOUTH", 
                 "interact_data" : [
                     ["> Hello.", ""],
-                    ["> I am a test NPC. Take this!", ""],
-                    ["", "silver key"],
-                    ["> I have nothing else to say.", ""]
+                    ["> I'm not sure where to find treasure, but I know someone who might.", ""],
+                    ["> He's a bit of a recluse, so he likes to hang out in locked rooms.", ""],
+                    ["> Take this. Just tell him Mark sent you.", ""],
+                    ["", "silver key"]
+                ]
+            }
+        },
+        "room6" : {
+            "steve" : {
+                "position" : [5, 1],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    ["> Hmph. What's this you say about treasure?", ""],
+                    ["> Well. I've been holding onto this for awhile, but it's not like I'm using it...", ""],
+                    ["> Here, take it. Just don't tell anyone you got it from me.", ""],
+                    ["", "treasure2"]
                 ]
             }
         }
     }
-}
+} 
