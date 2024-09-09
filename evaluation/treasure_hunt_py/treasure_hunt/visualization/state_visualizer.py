@@ -158,7 +158,7 @@ class StateVisualizer:
             textbox_surface.blit(text_surface, text_rect)
 
         # Blit item sprite if applicable
-        if item is not None:
+        if item:
             if "gem" in item:
                 mfs = self.MULTI_FRAME_SPRITES["gems"]
             elif "key" in item:

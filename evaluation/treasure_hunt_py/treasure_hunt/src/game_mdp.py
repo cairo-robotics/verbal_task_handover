@@ -219,6 +219,7 @@ class GameState:
                         event_type = Event.TREASURE_FOUND
                         self.displayed_text = "You received a TREASURE!"
                         self.displayed_icon = "red gem"
+                        self.player_has_items.append(item)
 
                     else:
                         self.player_has_items.append(item)
@@ -251,6 +252,7 @@ class GameState:
                     self.displayed_icon = "red gem"
                     event_type = Event.TREASURE_FOUND
                     details = "treasure"
+                    self.player_has_items.append(obj.name)
 
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)

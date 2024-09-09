@@ -86,8 +86,10 @@
                 ],
                 "conditional_interacts" : {
                     "silver key" : [
-                        ["> Oh, you're back. Did you find Steve?", ""],
-                        ["> I hope he was able to help you.", ""]
+                        ["> My friend likes to hang out in locked rooms. He should be able to help.", ""]
+                    ],
+                    "treasure2" : [
+                        ["> Oh, looks like you found that treasure. I'm glad I could help.", ""]
                     ]
                 }
             }
@@ -97,10 +99,12 @@
                 "position" : [5, 1],
                 "facing" : "SOUTH",
                 "interact_data" : [
-                    ["> Hmph. What's this you say about treasure?", ""],
-                    ["> Well. I've been holding onto this for awhile, but it's not like I'm using it...", ""],
-                    ["> Here, take it. Just don't tell anyone you got it from me.", ""],
-                    ["", "treasure2"]
+                    [
+                        ["> Hmph. What's this you say about treasure?", ""],
+                        ["> Well. I've been holding onto this for awhile, but it's not like I'm using it...", ""],
+                        ["> Here, take it. Just don't tell anyone you got it from me.", ""],
+                        ["", "treasure2"]
+                    ]
                 ]
             }
         }
