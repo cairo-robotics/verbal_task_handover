@@ -45,6 +45,24 @@
         "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
+    "guy" : {
+        "type" : "multi",
+        "path": "chars/guy.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "marie" : {
+        "type" : "multi",
+        "path": "chars/marie.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "eliza" : {
+        "type" : "multi",
+        "path": "chars/eliza.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
     "door" : {
         "type" : "multi",
         "path": "objects/door.png",
@@ -56,12 +74,6 @@
         "path" : "tiles/plains.png",
         "config" : "tiles/plains.json",
         "scaling" : 1.0,
-        "extra_sprites" : [
-            {
-                "name" : "grass",
-                "path" : "tiles/grass.png"
-            }
-        ],
         "auto_tile" : true
     },
     "banner" : {
@@ -88,5 +100,15 @@
         "config" : "tiles/stone_tiles.json",
         "layer" : true,
         "scaling" : 1.0
+    },
+    "torch": {
+        "type": "single",
+        "path": "objects/torch.png",
+        "scaling": 1.0
+    },
+    "barrel" : {
+        "type": "single",
+        "path": "objects/barrel.png",
+        "scaling": 1.0
     }
 }

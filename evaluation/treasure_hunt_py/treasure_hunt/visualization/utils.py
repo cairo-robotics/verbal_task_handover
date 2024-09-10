@@ -2,6 +2,39 @@ import pygame
 from pygame.locals import DOUBLEBUF, HWSURFACE, QUIT, RESIZABLE, VIDEORESIZE
 import json
 
+def run_static_resizeable_window(surface, fps=30):
+    """
+    window that can be resized and closed using gui
+    """
+    pygame.init()
+    clock = pygame.time.Clock()
+    window = pygame.display.set_mode(
+        surface.get_size(), HWSURFACE | DOUBLEBUF | RESIZABLE
+    )
+    window.blit(surface, (0, 0))
+    pygame.display.flip()
+    try:
+        while True:
+            pygame.event.pump()
+            event = pygame.event.wait()
+            if event.type == QUIT:
+                pygame.display.quit()
+                pygame.quit()
+            elif event.type == VIDEORESIZE:
+                window = pygame.display.set_mode(
+                    event.dict["size"], HWSURFACE | DOUBLEBUF | RESIZABLE
+                )
+                window.blit(
+                    pygame.transform.scale(surface, event.dict["size"]), (0, 0)
+                )
+                pygame.display.flip()
+                clock.tick(fps)
+    except:
+        pygame.display.quit()
+        pygame.quit()
+        if event.type != QUIT:  # if user meant to quit error does not matter
+            raise
+
 
 def scale_surface_by_factor(surface, scale_by_factor):
     """return scaled input surfacem (with size multiplied by scale_by_factor param)

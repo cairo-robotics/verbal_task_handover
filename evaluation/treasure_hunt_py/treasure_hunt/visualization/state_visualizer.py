@@ -13,7 +13,9 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
-def auto_tile(grid, x, y, key, use_inner_corners=True):
+def auto_tile(grid, x, y, key):
+    layers = []
+
     # Check surrounding tiles
     top = grid[y-1][x] == key if y > 0 else True
     bottom = grid[y+1][x] == key if y < len(grid)-1 else True
@@ -26,19 +28,16 @@ def auto_tile(grid, x, y, key, use_inner_corners=True):
     bottom_left = grid[y+1][x-1] == key if y < len(grid)-1 and x > 0 else True
     bottom_right = grid[y+1][x+1] == key if y < len(grid)-1 and x < len(grid[0])-1 else True
 
-    # make sure inner corners included in sprite pack
-
-    if use_inner_corners:
-        if top and bottom and left and right and not bottom_right:
-            return "inner_bottom_right"
-        elif top and bottom and left and right and not bottom_left:
-            return "inner_bottom_left"
-        elif top and bottom and left and right and not top_right:
-            return "inner_top_right"
-        elif top and bottom and left and right and not top_left:
-            return "inner_top_left"
+    if top and bottom and left and right and not bottom_right:
+        return "inner_bottom_right"
+    elif top and bottom and left and right and not bottom_left:
+        return "inner_bottom_left"
+    elif top and bottom and left and right and not top_right:
+        return "inner_top_right"
+    elif top and bottom and left and right and not top_left:
+        return "inner_top_left"
         
-    if top and bottom and left and right:
+    elif top and bottom and left and right:
         return "center"
     elif top and left and right and not bottom:
         return "bottom"
@@ -70,6 +69,8 @@ def auto_tile(grid, x, y, key, use_inner_corners=True):
         return "horizontal_left"
     else:
         return "single"  # or perhaps a default texture
+    
+    return layers
 
 class StateVisualizer:
     DEFAULT_VALUES = {
