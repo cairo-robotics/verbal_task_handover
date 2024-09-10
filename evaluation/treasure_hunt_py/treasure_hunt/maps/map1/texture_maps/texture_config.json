@@ -1,6 +1,6 @@
 {
     "walls" : {
-        "sprite" : "stone_tiles"
+        "sprite" : "walls"
     },
     "ground" : {
         "sprite" : "dirt",

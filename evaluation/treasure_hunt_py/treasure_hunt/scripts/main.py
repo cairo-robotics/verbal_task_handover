@@ -27,7 +27,6 @@ FPS = 30
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
 
 def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
@@ -56,7 +55,6 @@ def main(args):
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("2D Adventure Game")
     clock = pygame.time.Clock()
-
 
     if load_file:
         state = GameState.load(load_file)
@@ -133,7 +131,9 @@ def main(args):
                     # print(player_pos)
 
         on_render(window, state_vis, state, game_map)
-        clock.tick(FPS)
+        
+        dt = clock.tick(FPS)
+        
 
     pygame.quit()
 

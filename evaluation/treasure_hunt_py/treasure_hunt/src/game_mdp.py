@@ -38,6 +38,9 @@ class Object:
     def interact(self):
         pass
 
+    def on_update(self):
+        pass
+
 class Stairs(Object):
     def __init__(self, name, position):
         super().__init__(name, "stairs", position)
@@ -48,25 +51,51 @@ class Door(Object):
     def __init__(self, name, position, is_locked, key):
         super().__init__(name, "door", position)
         self.is_locked = is_locked
-        # self.is_open = False
+        self.was_unlocked = False
+        self.is_open = False
         self.key = key
 
     @property
     def sprite(self):
-        return "door_open" if not self.is_locked else "door_closed"
+        # return "door_open" if not self.is_open else "door_closed"
+
+        # TODO: comment the below during the actual task! This is just for sanity checking during development
+        if self.is_locked:
+            return "door_locked"
+        elif self.is_open:
+            return "door_open"
+        elif self.was_unlocked:
+            return "door_unlocked"
+        return "door_closed"
 
     @property
     def is_passable(self):
-        return not self.is_locked
+        return self.is_open
+    
+    def open(self):
+        self.is_open = True
+
+    def close(self):
+        self.is_open = False
+
+    def unlock(self):
+        self.is_locked = False
+        self.was_unlocked = True
+
+    def on_update(self):
+        self.close()
     
     def interact(self, player_items):
         if self.is_locked:
             if self.key in player_items:
-                self.is_locked = False
+                self.unlock()
                 # self.is_open = True
                 return True
             else:
                 return False
+        elif not self.is_open:
+            self.open()
+            return None
         return None
 
 class Chest(Object):
@@ -183,6 +212,8 @@ class GameState:
 
     def update_current_room(self, new_room):
         self.current_room = new_room
+        for obj in self._objects[self.current_room]:
+            obj.on_update()
 
     @property
     def objects(self):

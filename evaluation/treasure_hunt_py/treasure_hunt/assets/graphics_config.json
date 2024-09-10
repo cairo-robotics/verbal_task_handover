@@ -81,7 +81,7 @@
         "config" : "objects/gems.json",
         "scaling" : 2.0
     },
-    "stone_tiles" : {
+    "walls" : {
         "type" : "multi",
         "path" : "tiles/stone_tiles.png",
         "config" : "tiles/stone_tiles.json",
