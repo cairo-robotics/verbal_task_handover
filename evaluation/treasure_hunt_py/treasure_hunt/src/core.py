@@ -28,13 +28,11 @@ class GameMap:
             return None, None
         
         sprite_type = self.texture_config[map_class]["sprite"]
-        # if key in "#":
-        #     frame_name  = self.auto_tiler(self.texture_maps[map_class], x, y, key)
-        #     # import pdb; pdb.set_trace()
-        #     print(frame_name)
-        # else:
-        frame_name  = self.texture_config[map_class]["mapping"][key]
-
+        map_dict = self.texture_config[map_class]["mapping"]
+        if key in map_dict:
+            frame_name  = self.texture_config[map_class]["mapping"][key]
+        else:
+            frame_name = None
         return sprite_type, frame_name
 
     def _load_texture_config(self, filename):

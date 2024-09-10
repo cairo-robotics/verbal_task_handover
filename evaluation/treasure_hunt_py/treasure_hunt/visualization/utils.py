@@ -43,6 +43,7 @@ class MultiFramePygameImage:
         self.extra_sprites = {}
         self.sprite_scaling = scaling
         self.layer = False
+        self.auto_tile = False
     
     def add_extra_sprite(self, sprite_name, img_path):
         self.extra_sprites[sprite_name] = pygame.image.load(img_path).convert_alpha()

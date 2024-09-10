@@ -61,7 +61,8 @@
                 "name" : "grass",
                 "path" : "tiles/grass.png"
             }
-        ]
+        ],
+        "auto_tile" : true
     },
     "banner" : {
         "type" : "multi",

@@ -13,7 +13,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
-def auto_tile(grid, x, y, key):
+def auto_tile(grid, x, y, key, use_inner_corners=True):
     # Check surrounding tiles
     top = grid[y-1][x] == key if y > 0 else True
     bottom = grid[y+1][x] == key if y < len(grid)-1 else True
@@ -26,46 +26,50 @@ def auto_tile(grid, x, y, key):
     bottom_left = grid[y+1][x-1] == key if y < len(grid)-1 and x > 0 else True
     bottom_right = grid[y+1][x+1] == key if y < len(grid)-1 and x < len(grid[0])-1 else True
 
-    if top and bottom and left and right and not bottom_right:
-        return "top_left"
-    elif top and bottom and left and right and not bottom_left:
-        return "top_right"
-    elif top and bottom and left and right and not top_right:
-        return "bottom_left"
-    elif top and bottom and left and right and not top_left:
-        return "bottom_right"
-    elif top and bottom and left and right:
+    # make sure inner corners included in sprite pack
+
+    if use_inner_corners:
+        if top and bottom and left and right and not bottom_right:
+            return "inner_bottom_right"
+        elif top and bottom and left and right and not bottom_left:
+            return "inner_bottom_left"
+        elif top and bottom and left and right and not top_right:
+            return "inner_top_right"
+        elif top and bottom and left and right and not top_left:
+            return "inner_top_left"
+        
+    if top and bottom and left and right:
         return "center"
     elif top and left and right and not bottom:
-        return "top"
-    elif bottom and left and right and not top:
         return "bottom"
+    elif bottom and left and right and not top:
+        return "top"
     elif left and top and bottom and not right:
-        return "left"
-    elif right and top and bottom and not left:
         return "right"
+    elif right and top and bottom and not left:
+        return "left"
     elif top and left and not right and not bottom:
-        return "outer_corner_top_left"
+        return "bottom_right"
     elif top and right and not left and not bottom:
-        return "outer_corner_top_right"
+        return "bottom_left"
     elif bottom and left and not right and not top:
-        return "outer_corner_bottom_left"
+        return "top_right"
     elif bottom and right and not left and not top:
-        return "outer_corner_bottom_right"
+        return "top_left"
     elif left and right:
         return "horizontal"
-    elif left:
-        return "horizontal_left"
-    elif right:
-        return "horizontal_right"
     elif top and bottom:
         return "vertical"
     elif top:
-        return "vertical_top"
-    elif bottom:
         return "vertical_bottom"
+    elif bottom:
+        return "vertical_top"
+    elif left:
+        return "horizontal_right"
+    elif right:
+        return "horizontal_left"
     else:
-        return "center"  # or perhaps a default texture
+        return "single"  # or perhaps a default texture
 
 class StateVisualizer:
     DEFAULT_VALUES = {
@@ -107,6 +111,8 @@ class StateVisualizer:
                         self.MULTI_FRAME_SPRITES[sprite_name].add_extra_sprite(extra_sprite["name"] + '.png', os.path.join(GRAPHICS_DIR, extra_sprite["path"]))
                 if "layer" in config[sprite_name] and config[sprite_name]["layer"]:
                     self.MULTI_FRAME_SPRITES[sprite_name].layer = True
+                if "auto_tile" in config[sprite_name] and config[sprite_name]["auto_tile"]:
+                    self.MULTI_FRAME_SPRITES[sprite_name].auto_tile = True
 
     @classmethod
     def configure_defaults(cls, **kwargs):
@@ -155,6 +161,10 @@ class StateVisualizer:
                     if sprite_name is not None:
                         if frame_name is not None:
                             mfs = self.MULTI_FRAME_SPRITES[sprite_name]
+
+                            if mfs.auto_tile and frame_name == "default":
+                                frame_name = auto_tile(texture_map, x, y, texture_map[y][x])
+
                             mfs.blit_on_surface_scaled(surface,
                                                        (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE),
                                                        frame_name + ".png",

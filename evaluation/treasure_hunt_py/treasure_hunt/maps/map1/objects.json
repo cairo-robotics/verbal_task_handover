@@ -16,8 +16,8 @@
             "door_to_room6" : {
                 "position" : [10, 2],
                 "type" : "door",
-                "is_locked" : false,
-                "key": ""
+                "is_locked" : true,
+                "key": "silver key"
             },
             "door_to_room3" : {
                 "position" : [2, 10],
@@ -34,8 +34,8 @@
             "door_to_room10" : {
                 "position" : [10, 7],
                 "type" : "door",
-                "is_locked" : true,
-                "key": "silver key"
+                "is_locked" : false,
+                "key": ""
             }
         },
         "room2" : {
