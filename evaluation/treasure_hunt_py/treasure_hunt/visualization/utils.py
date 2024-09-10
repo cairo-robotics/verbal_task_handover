@@ -42,6 +42,7 @@ class MultiFramePygameImage:
         self.frames_rectangles = self.load_frames_rectangles(frames_path)
         self.extra_sprites = {}
         self.sprite_scaling = scaling
+        self.layer = False
     
     def add_extra_sprite(self, sprite_name, img_path):
         self.extra_sprites[sprite_name] = pygame.image.load(img_path).convert_alpha()
@@ -62,12 +63,21 @@ class MultiFramePygameImage:
             return self.extra_sprites[frame_name]
         return self.image.subsurface(self.frames_rectangles[frame_name])
     
-    def blit_on_surface_scaled(
+    def _blit_on_surface_scaled(
         self, surface, top_left_pixel_position, frame_name, new_size
         ):
+
         sprite_surface = self.sprite(frame_name)
         scaled_surface = pygame.transform.scale(sprite_surface, (new_size[0] * self.sprite_scaling, new_size[1] * self.sprite_scaling))
         surface.blit(scaled_surface, top_left_pixel_position)
+
+    def blit_on_surface_scaled(
+        self, surface, top_left_pixel_position, frame_name, new_size
+        ):
+
+        if self.layer:
+            self._blit_on_surface_scaled(surface, top_left_pixel_position, "base.png", new_size)
+        self._blit_on_surface_scaled(surface, top_left_pixel_position, frame_name, new_size)
 
     def load_frames_rectangles(self, json_path):
         with open(json_path, "r") as f:

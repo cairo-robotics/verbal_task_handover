@@ -28,7 +28,12 @@ class GameMap:
             return None, None
         
         sprite_type = self.texture_config[map_class]["sprite"]
-        frame_name  = self.texture_config[map_class]["mapping"][key]
+        if key in "#":
+            frame_name  = self.auto_tiler(self.texture_maps[map_class], x, y, key)
+            # import pdb; pdb.set_trace()
+            print(frame_name)
+        else:
+            frame_name  = self.texture_config[map_class]["mapping"][key]
 
         return sprite_type, frame_name
 
@@ -114,3 +119,52 @@ class GameMap:
     #         state.player_dir = new_dir
 
     #     return move_success, self.current_room, state.player_pos
+    def auto_tiler(self, grid, x, y, key):
+        # Check surrounding tiles
+        top = grid[y-1][x] == key if y > 0 else True
+        bottom = grid[y+1][x] == key if y < len(grid)-1 else True
+        left = grid[y][x-1] == key if x > 0 else True
+        right = grid[y][x+1] == key if x < len(grid[0])-1 else True
+
+        # Check diagonals
+        top_left = grid[y-1][x-1] == key if y > 0 and x > 0 else True
+        top_right = grid[y-1][x+1] == key if y > 0 and x < len(grid[0])-1 else True
+        bottom_left = grid[y+1][x-1] == key if y < len(grid)-1 and x > 0 else True
+        bottom_right = grid[y+1][x+1] == key if y < len(grid)-1 and x < len(grid[0])-1 else True
+
+        if top and bottom and left and right and not bottom_right:
+            return "top_left"
+        elif top and bottom and left and right and not bottom_left:
+            return "top_right"
+        elif top and bottom and left and right and not top_right:
+            return "bottom_left"
+        elif top and bottom and left and right and not top_left:
+            return "bottom_right"
+        elif top and bottom and left and right:
+            return "center"
+        elif top and left and right and not bottom:
+            return "top"
+        elif bottom and left and right and not top:
+            return "bottom"
+        elif left and top and bottom and not right:
+            return "left"
+        elif right and top and bottom and not left:
+            return "right"
+        elif top and left and not right and not bottom:
+            return "outer_corner_top_left"
+        elif top and right and not left and not bottom:
+            return "outer_corner_top_right"
+        elif bottom and left and not right and not top:
+            return "outer_corner_bottom_left"
+        elif bottom and right and not left and not top:
+            return "outer_corner_bottom_right"
+        elif left:
+            return "horizontal_left"
+        elif right:
+            return "horizontal_right"
+        elif top:
+            return "vertical_top"
+        elif bottom:
+            return "vertical_bottom"
+        else:
+            return "center"  # or perhaps a default texture

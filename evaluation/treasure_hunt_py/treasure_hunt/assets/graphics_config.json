@@ -63,12 +63,6 @@
             }
         ]
     },
-    "walls" : {
-        "type" : "multi",
-        "path" : "tiles/walls.png",
-        "config" : "tiles/walls.json",
-        "scaling" : 1.0
-    },
     "banner" : {
         "type" : "multi",
         "path" : "objects/banners.png",
@@ -91,6 +85,7 @@
         "type" : "multi",
         "path" : "tiles/stone_tiles.png",
         "config" : "tiles/stone_tiles.json",
+        "layer" : true,
         "scaling" : 1.0
     }
 }

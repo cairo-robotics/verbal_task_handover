@@ -50,6 +50,8 @@ class StateVisualizer:
                 if "extra_sprites" in config[sprite_name]:
                     for extra_sprite in config[sprite_name]["extra_sprites"]:
                         self.MULTI_FRAME_SPRITES[sprite_name].add_extra_sprite(extra_sprite["name"] + '.png', os.path.join(GRAPHICS_DIR, extra_sprite["path"]))
+                if "layer" in config[sprite_name] and config[sprite_name]["layer"]:
+                    self.MULTI_FRAME_SPRITES[sprite_name].layer = True
 
     @classmethod
     def configure_defaults(cls, **kwargs):
