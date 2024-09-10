@@ -1,4 +1,4 @@
-*.yaml
+api_config.sh
 unused/
 
 # Byte-compiled / optimized / DLL files
