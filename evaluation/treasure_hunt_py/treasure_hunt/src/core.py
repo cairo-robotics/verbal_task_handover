@@ -87,9 +87,13 @@ class GameMap:
         return False
 
     # Check for transition between rooms
-    def check_transition(self, player_pos):
+    def check_transition(self, player_pos, game_state):
         x, y = player_pos
         if self.grid[y][x] in self.transitions[self.current_room]:
+            # make sure the transition is not blocked by an object (e.g. hidden stairs)
+            if not game_state.check_available_transition(x, y):
+                return None, None
+
             new_room, door_id =  self.transitions[self.current_room][self.grid[y][x]]
             self.update_map(new_room)
             door_pos = self._find_in_map(str(door_id))

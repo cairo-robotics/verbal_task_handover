@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 import pickle
+import time
 
 from .telemetry import Event
 
@@ -21,11 +22,13 @@ class Direction(object):
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
 
 class Object:
-    def __init__(self, name, type, position):
+    def __init__(self, name, type, position, id=None):
         self.name = name
         self.type = type
         self.position = position
-        self._sprite = name
+        self._sprite = id if id is not None else name
+        self._is_passable = True
+        self.is_visible = True
 
     @property
     def sprite(self):
@@ -33,23 +36,42 @@ class Object:
 
     @property
     def is_passable(self):
-        return True
+        return self._is_passable
 
     def interact(self):
-        pass
+        return None
 
     def on_update(self):
         pass
 
+    def make_invisible(self):
+        self.is_visible = False
+    def make_visible(self):
+        self.is_visible = True
+
+class KeyObject(Object):
+    def __init__(self, linked_object, name, type, position, id=None):
+        super().__init__(name, type, position, id)
+        self.interact_count = 0
+        self.linked_object = linked_object
+        self.linked_object.make_invisible()
+
+    def interact(self):
+        self.interact_count += 1
+        if self.interact_count >= 3:
+            self.linked_object.make_visible()
+            return True
+        return None
+
 class Stairs(Object):
-    def __init__(self, name, position):
-        super().__init__(name, "stairs", position)
+    def __init__(self, name, position, id=None):
+        super().__init__(name, "stairs", position, id)
         self._sprite = "stairs"
         # self.destination = destination
 
 class Door(Object):
-    def __init__(self, name, position, is_locked, key):
-        super().__init__(name, "door", position)
+    def __init__(self, name, position, is_locked, key, id=None):
+        super().__init__(name, "door", position, id)
         self.is_locked = is_locked
         self.was_unlocked = False
         self.is_open = False
@@ -99,8 +121,8 @@ class Door(Object):
         return None
 
 class Chest(Object):
-    def __init__(self, name, position, contains):
-        super().__init__(name, "chest", position)
+    def __init__(self, name, position, contains, id=None):
+        super().__init__(name, "chest", position, id)
         self.contains = contains
         self.is_open = False
     
@@ -116,15 +138,24 @@ class Chest(Object):
         return False
 
     def interact(self, *args):
-        if self.is_open:
+        if self.is_open or not self.is_visible or not self.contains:
             return None
         else:
             self.is_open = True
             return self.contains
         
+class Barrel(Chest):
+    def __init__(self, name, position, contains, id=None):
+        super().__init__(name, position, contains, id)
+        self.type = "barrel"
+
+    @property
+    def sprite(self):
+        return "barrel"
+        
 class Treasure(Object):
-    def __init__(self, name, position):
-        super().__init__(name, "treasure", position)
+    def __init__(self, name, position, id=None):
+        super().__init__(name, "treasure", position, id)
         self._sprite = "gem_red"
         self.collected = False
 
@@ -195,6 +226,7 @@ class GameState:
         self.displayed_text = None
         self.displayed_icon = None
         self.score = 0
+        self.cooldown = 0
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -212,16 +244,22 @@ class GameState:
 
     def update_current_room(self, new_room):
         self.current_room = new_room
-        for obj in self._objects[self.current_room]:
+        for name, obj in self._objects[self.current_room].items():
             obj.on_update()
+
+    def on_tick(self):
+        self.cooldown = max(0, self.cooldown - 1)
 
     @property
     def objects(self):
-        return self._objects[self.current_room]
+        return self._objects[self.current_room].values()
     
     @property
     def player_in_interaction(self):
         return self.displayed_text is not None
+    
+    def _get_object_by_name(self, room, name):
+        return self._objects[room][name]
 
     def _get_player_facing_position(self):
         return (self.player_pos[0] + self.player_dir[0], self.player_pos[1] + self.player_dir[1])
@@ -234,8 +272,18 @@ class GameState:
 
     def _get_facing_object(self):
         return self._get_object_at_position(self._get_player_facing_position())
+    
+    def check_available_transition(self, x, y):
+        obj = self._get_object_at_position((x, y))
+        if obj is None or (obj.is_visible and obj.is_passable):
+            return True
+        return False
 
     def handle_interact(self):
+        if self.cooldown > 0:
+            return None, None
+
+
         obj = self._get_object_at_position(self.player_pos)
 
         if obj is not None and obj.type == "treasure":
@@ -284,11 +332,6 @@ class GameState:
                     self.displayed_text = speech
                     self.displayed_icon = None
 
-
-            elif self.displayed_text:
-                self.displayed_text = None
-                self.displayed_icon = None
-
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)
                 if res is not None:
@@ -300,14 +343,45 @@ class GameState:
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
 
-            elif obj.type == "chest":
-                item = obj.interact()
-                if item:
-                    self.player_has_items.append(item)
-                    self.displayed_text = f"You found the {item.upper()} in the chest."
-                    self.displayed_icon = item
-                    event_type = Event.ITEM_OBTAINED
-                    details = item
+            elif (obj.type == "chest" or obj.type == "barrel"):
+                if obj.type == "barrel" and not self.displayed_text:
+                    self.displayed_text = "You search around inside the barrel..."
+                    self.displayed_icon = None
+                    self.cooldown = 50
+                    return None, None
+                
+                elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
+                    item = obj.interact()
+                    if item and "treasure" in item:
+                        self.score += 1
+                        print("score: ", self.score)
+                        event_type = Event.TREASURE_FOUND
+                        details = item
+                        self.displayed_text = "You found a TREASURE!"
+                        self.displayed_icon = "red gem"
+                        self.player_has_items.append(item)
+                    
+                    elif item:
+                        self.player_has_items.append(item)
+                        self.displayed_text = f"You found the {item.upper()} in the {obj.type}."
+                        self.displayed_icon = item
+                        event_type = Event.ITEM_OBTAINED
+                        details = item
+                    else:
+                        self.displayed_text = "There's nothing in here."
+                        self.displayed_icon = None
+                else:
+                    self.displayed_text = None
+                    self.displayed_icon = None
+
+            elif self.displayed_text:
+                self.displayed_text = None
+                self.displayed_icon = None
+
+            else:
+                res = obj.interact()
+                # if res:
+                #     self.displayed_text = res
 
         else:
             self.displayed_text = None
@@ -333,25 +407,34 @@ def start_state(object_filename):
     with open(object_filename, 'r') as f:
         all_entities = json.load(f)
     
-    objects = defaultdict(lambda: [])
+    objects = defaultdict(lambda: {})
 
     for room in all_entities["objects"]:
         room_objs = all_entities["objects"][room]
         for obj_name in room_objs:
             new_obj_dict = room_objs[obj_name]
             obj_type = new_obj_dict["type"]
+            obj_id = new_obj_dict.get("id", None)
             if obj_type == "chest":
-                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"])
+                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
+            elif obj_type == "barrel":
+                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
             elif obj_type == "door":
-                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"])
+                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id)
             elif obj_type == "treasure":
-                new_obj = Treasure(obj_name, new_obj_dict["position"])
+                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id)
             elif obj_type == "stairs":
-                new_obj = Stairs(obj_name, new_obj_dict["position"])
+                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id)
+            elif obj_type == "key object":
+                new_obj = KeyObject(
+                                objects[room][new_obj_dict["linked_object"]],
+                                **new_obj_dict["key_object"], 
+                                id=obj_id
+                                    )
             else:
-                new_obj = Object(obj_name, obj_type, new_obj_dict["position"])
+                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
 
-            objects[room].append(new_obj)
+            objects[room][obj_name] = new_obj
 
     for room in all_entities["npcs"]:
         room_objs = all_entities["npcs"][room]
@@ -364,6 +447,6 @@ def start_state(object_filename):
                 conditional_interact_data = None
 
             new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"], conditional_interact_data)
-            objects[room].append(new_obj)
+            objects[room][obj_name] = new_obj
 
     return objects

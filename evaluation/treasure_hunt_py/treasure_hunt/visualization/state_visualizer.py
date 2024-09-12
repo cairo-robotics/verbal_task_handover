@@ -257,6 +257,8 @@ class StateVisualizer:
         
     def _render_objects(self, surface, state):
         for obj in state.objects:
+            if not obj.is_visible:
+                continue
             if obj.type == "npc":
                 x_offset = (self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1] - self.MULTI_FRAME_SPRITES[obj.name].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES[obj.name].sprite_size[1])
                 npc_pos = (obj.position[0] + x_offset, obj.position[1])

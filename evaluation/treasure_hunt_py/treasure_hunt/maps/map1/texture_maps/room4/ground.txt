@@ -1,9 +1,9 @@
-- -------
--g-------
--g-------
--ggdgggg-
--gdggggn-
--gdggddg-
--gggdddg-
--gggdddg-
+-d-------
+-d-------
+-d-------
+-dd     -
+-dd    n-
+-dd ddd -
+-   ddd -
+-   ddd -
 ---------

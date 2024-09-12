@@ -18,6 +18,8 @@ TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
 SAVE_FILENAME = 'test_save.pkl'
 
+STARTING_ROOM = 'room0'
+
 # Constants  
 TILE_SIZE = 64
 SCREEN_WIDTH = 15 * TILE_SIZE
@@ -63,7 +65,7 @@ def main(args):
         current_room = state.current_room
         print("Game loaded from ", load_file)
     else:
-        current_room = 'room0'
+        current_room = STARTING_ROOM
         player_dir = Direction.SOUTH
         player_pos = [2, 2]  # Start position (y, x)
         objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
@@ -120,7 +122,7 @@ def main(args):
                     if game_map.is_valid_move(new_pos, state):
                         player_pos = new_pos
 
-                    new_room, new_player_pos = game_map.check_transition(player_pos)
+                    new_room, new_player_pos  = game_map.check_transition(player_pos, state)
                     if new_room:
                         current_room = new_room
                         player_pos = new_player_pos
@@ -133,6 +135,7 @@ def main(args):
         on_render(window, state_vis, state, game_map)
         
         dt = clock.tick(FPS)
+        state.on_tick()
         
 
     pygame.quit()
