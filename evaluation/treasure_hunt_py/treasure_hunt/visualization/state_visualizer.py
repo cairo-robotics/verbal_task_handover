@@ -13,6 +13,9 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
+def within_radius(pos1, pos2, r):
+    return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2 <= r**2
+
 def auto_tile(grid, x, y, key):
     layers = []
 
@@ -74,14 +77,17 @@ def auto_tile(grid, x, y, key):
 
 class StateVisualizer:
     DEFAULT_VALUES = {
+        "use_darkness" : False, # if true: require TM Flash to see
+        "light_radius" : 3, # how far the player can see (if use_darkness is True)
         "tile_size" : 96, # game resolution
         "font_size" : 36,
         "game_surface_fps" : 30,
         "game_width_in_tiles" : 15,
         "game_height_in_tiles" : 15,
+        "config_filename" : "graphics_config.json"
     }
 
-    def __init__(self, config_filename="graphics_config.json", **kwargs):
+    def __init__(self, **kwargs):
 
         params = copy.deepcopy(self.DEFAULT_VALUES)
         params.update(kwargs)
@@ -95,7 +101,7 @@ class StateVisualizer:
         self.SPRITES = {}
         self.MULTI_FRAME_SPRITES = {}
 
-        self.load_sprites_from_config(os.path.join(GRAPHICS_DIR, config_filename))
+        self.load_sprites_from_config(os.path.join(GRAPHICS_DIR, self.config_filename))
 
     def load_sprites_from_config(self, config_filename):
         with open(config_filename, "r") as f:
@@ -285,6 +291,14 @@ class StateVisualizer:
         """
         (x,y) = position
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
+    
+    def _apply_darkness_mask(self, state, game_map, surface):
+        player_pos = state.player_pos
+        
+        for y in range(len(game_map.grid)):
+            for x in range(len(game_map.grid[y])):
+                if not within_radius(player_pos, (x, y), self.light_radius):
+                    pygame.draw.rect(surface, BLACK, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     @property
     def scale_by_factor(self):
@@ -300,8 +314,12 @@ class StateVisualizer:
         self._render_objects(grid_surface, state)
         self._render_player(grid_surface, state)
 
+        if self.use_darkness:
+            self._apply_darkness_mask(state, game_map, grid_surface)
+
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)
+
 
         # import pdb; pdb.set_trace() 
         tiles_width = max(self.game_width_in_tiles, len(game_map.grid[0]))

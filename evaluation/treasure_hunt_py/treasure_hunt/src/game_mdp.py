@@ -332,6 +332,9 @@ class GameState:
                     self.displayed_text = speech
                     self.displayed_icon = None
 
+            elif self.displayed_text:
+                self.displayed_text = None
+                self.displayed_icon = None
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)
                 if res is not None:
@@ -374,9 +377,6 @@ class GameState:
                     self.displayed_text = None
                     self.displayed_icon = None
 
-            elif self.displayed_text:
-                self.displayed_text = None
-                self.displayed_icon = None
 
             else:
                 res = obj.interact()

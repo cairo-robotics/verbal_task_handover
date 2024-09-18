@@ -21,7 +21,7 @@ SAVE_FILENAME = 'test_save.pkl'
 STARTING_ROOM = 'room0'
 
 # Constants  
-TILE_SIZE = 64
+TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
@@ -29,6 +29,14 @@ FPS = 30
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+
+VISUAL_PARAMS = {
+    'tile_size': TILE_SIZE,
+    'font_size' : 36,
+    'game_surface_fps' : FPS,
+    'use_darkness' : True,
+    'light_radius' : 2
+}
 
 def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
@@ -78,7 +86,7 @@ def main(args):
     pygame.init()
 
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),  HWSURFACE | DOUBLEBUF | RESIZABLE)
-    state_vis = StateVisualizer()
+    state_vis = StateVisualizer(**VISUAL_PARAMS)
     surface = state_vis.render_state(state, game_map)
     surface_size = surface.get_size()
     x, y  = (1920 - surface_size[0]) // 2, (1080 - surface_size[1]) // 2
