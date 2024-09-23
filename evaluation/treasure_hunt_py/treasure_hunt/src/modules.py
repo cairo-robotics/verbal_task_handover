@@ -1,4 +1,7 @@
 from numpy import random
+
+# random.seed(0)
+
 class Object:
     def __init__(self, name, type, position, id=None):
         self.name = name
@@ -50,6 +53,7 @@ class WireModule(Object):
         self.serial_no = serial_no
         self.defused = False
         self._sprite = "module"
+        self.cut_wire = None
     
     def random(self):
         COLOR_OPTIONS = ["red", "blue", "yellow", "black", "green"]
@@ -92,7 +96,17 @@ class WireModule(Object):
                 # cut the second wire
                 return cut_wire_index == 1
             
+    def interact(self, *args):
+        return not self.defused
+            
     def on_keypress(self, key):
         # import pdb; pdb.set_trace()
-        if key.isdigit() and int(key) < self.num_wires:
-            return self.check_defuse(int(key))
+        if not self.defused and key.isdigit() and int(key) < self.num_wires:
+            if self.check_defuse(int(key)):
+                self.defused = True
+                self.cut_wire = int(key)
+                return True
+            else:
+                return False
+        return None
+            

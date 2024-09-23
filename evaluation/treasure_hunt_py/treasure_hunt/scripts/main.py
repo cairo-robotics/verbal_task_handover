@@ -148,7 +148,7 @@ def main(args):
         on_render(window, state_vis, state, game_map)
         
         dt = clock.tick(FPS)
-        state.on_tick()
+        state.tick(dt)
         
 
     pygame.quit()

@@ -29,21 +29,31 @@ class WireModuleInterface(ModuleInterface):
     def create_wire_sprites(self, game_width, game_height):
         wire_sprites = []
 
-        x_offset = 0
+        x_offset = 15
         y_interval = game_height // (self.wire_module.num_wires+1)
 
         for i, wire in enumerate(self.wire_module.wires):
             wire_sprites.append(WireSprite(self.COLOR_MAPPING[wire], x_offset, (i+1) * y_interval, game_width-x_offset*2, 5))
         return wire_sprites
 
-    # def click(self, mouse_pos):
-    #     for i, wire_sprite in enumerate(self.wire_sprites):
-    #         if wire_sprite.rect.collidepoint(mouse_pos):
-    #             # wire_sprite.rgb = (
-    #             print("Wire clicked! id: ", i)
-    #             self.wire_module.check_defuse(i)
-
     def render(self, game_surface):
         game_surface.fill((255, 255, 255))
-        for wire_sprite in self.wire_sprites:
+        font = pygame.font.SysFont("Arial", 12)
+        
+        for i, wire_sprite in enumerate(self.wire_sprites):
             pygame.draw.rect(game_surface, wire_sprite.color, wire_sprite.rect)
+            
+            # Render number labels next to each wire
+            label = font.render(str(i), True, (255, 0, 0))
+            label_rect = label.get_rect()
+            label_rect.centery = wire_sprite.rect.centery
+            label_rect.left = game_surface.get_rect().left + 2
+            # label_rect.right = wire_sprite.rect.left - 6
+            game_surface.blit(label, label_rect)
+            
+            if i == self.wire_module.cut_wire:
+                # add a "mask" in the middle of the wire rect to indicate it's cut
+                cut_rect = wire_sprite.rect.copy()
+                cut_rect.width = 30
+                cut_rect.center = wire_sprite.rect.center
+                pygame.draw.rect(game_surface, (255, 255, 255), cut_rect)

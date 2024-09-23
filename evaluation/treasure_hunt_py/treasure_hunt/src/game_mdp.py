@@ -208,8 +208,8 @@ class GameState:
         for name, obj in self._objects[self.current_room].items():
             obj.on_update()
 
-    def on_tick(self):
-        self.cooldown = max(0, self.cooldown - 1)
+    def tick(self, dt):
+        self.cooldown = max(0, self.cooldown - dt)
 
     @property
     def objects(self):
@@ -245,8 +245,17 @@ class GameState:
         return False
     
     def handle_keypress(self, key):
-        if self.player_in_module:
-            self.current_module.on_keypress(key)
+        if self.player_in_module and self.cooldown <= 0:
+            res = self.current_module.on_keypress(key)
+            if res is not None:
+                if res:
+                    self.displayed_text = "You defused the WIRE module!"
+                    self.displayed_icon = None
+                    # TODO add telemetry event calls
+                else:
+                    self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
+                    self.cooldown = 60000
+                    self.displayed_icon = None
 
     def handle_esc(self):
         self.current_module = None
@@ -276,10 +285,12 @@ class GameState:
         details = None
         if obj:
             if "module" in obj.type:
-                self.current_module = obj
-                self.displayed_text = None
-                self.displayed_icon = None
-                print("activating module...")
+                module_trigger = obj.interact()
+                if module_trigger:
+                    self.current_module = obj
+                    self.displayed_text = None
+                    self.displayed_icon = None
+                    print("activating module...")
                 return None, None
 
             elif obj.type == "npc":
@@ -330,7 +341,7 @@ class GameState:
                 if obj.type == "barrel" and not self.displayed_text:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
-                    self.cooldown = 50
+                    self.cooldown = 3000
                     return None, None
                 
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
