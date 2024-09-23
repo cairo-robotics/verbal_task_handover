@@ -1,5 +1,6 @@
 import pygame
 from treasure_hunt.visualization.utils import *
+from treasure_hunt.visualization.module_visualizer import *
 from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
@@ -303,11 +304,20 @@ class StateVisualizer:
     @property
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
+    
+    def render_module(self, game_module, grid_surface):
+        width, height = grid_surface.get_size()
+
+        vis_module = WireModuleInterface(game_module, width, height)
+        vis_module.render(grid_surface)
 
     def render_state(self, state, game_map):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))
 
+
         self._render_grid(grid_surface, game_map.grid)
+        
+
         if game_map.texture_maps:
             self._render_grid_with_textures(grid_surface, game_map)
         
@@ -316,6 +326,9 @@ class StateVisualizer:
 
         if self.use_darkness:
             self._apply_darkness_mask(state, game_map, grid_surface)
+
+        if state.player_in_module:
+           self.render_module(state.current_module, grid_surface)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)

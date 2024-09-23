@@ -9,6 +9,11 @@
         "path": "objects/ladder.png",
         "scaling": 1.0
     },
+    "module" : {
+        "type" : "single",
+        "path": "objects/ibm.png",
+        "scaling": 1.0
+    },
     "chest" : {
         "type" : "multi",
         "path": "objects/chest.png",

@@ -12,7 +12,7 @@ import argparse
 pygame.init()
 
 GAME_DIR = os.path.dirname(os.path.abspath(__file__))
-MAP_DIRECTORY = GAME_DIR + '/../maps/map1/'
+MAP_DIRECTORY = GAME_DIR + '/../maps/map2/'
 SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
@@ -42,7 +42,6 @@ def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
     surface = state_vis.render_state(state, game_map)
     state_vis.scale_blit_to_window(window, surface)
-    # window.blit(surface, (0, 0))
     pygame.display.flip()
 
 # Main game loop
@@ -109,6 +108,12 @@ def main(args):
                     print("Game saved to ", save_file)
 
                 elif event.key == pygame.K_ESCAPE:
+                    state.handle_esc()
+                
+                elif state.player_in_module:
+                    state.handle_keypress(pygame.key.name(event.key))
+
+                elif event.key == pygame.K_q:
                     running = False
                     telemetry.cleanup()
 
@@ -150,7 +155,7 @@ def main(args):
 
 if __name__ == '__main__':
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Your Pygame game with save/load functionality")
+    parser = argparse.ArgumentParser(description="Your Pygame game with save/load and telemetry functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, help='Filename of the save file to write')
     parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')

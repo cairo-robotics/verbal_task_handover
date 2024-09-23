@@ -4,6 +4,7 @@ import pickle
 import time
 
 from .telemetry import Event
+from .modules import *
 
 
 class Direction(object):
@@ -20,48 +21,6 @@ class Direction(object):
     OPPOSITE_DIRECTIONS = { NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST }
     DIRECTION_TO_NAME = { d:name for d, name in zip([NORTH, SOUTH, EAST, WEST], ["NORTH", "SOUTH", "EAST", "WEST"])}
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
-
-class Object:
-    def __init__(self, name, type, position, id=None):
-        self.name = name
-        self.type = type
-        self.position = position
-        self._sprite = id if id is not None else name
-        self._is_passable = True
-        self.is_visible = True
-
-    @property
-    def sprite(self):
-        return self._sprite
-
-    @property
-    def is_passable(self):
-        return self._is_passable
-
-    def interact(self):
-        return None
-
-    def on_update(self):
-        pass
-
-    def make_invisible(self):
-        self.is_visible = False
-    def make_visible(self):
-        self.is_visible = True
-
-class KeyObject(Object):
-    def __init__(self, linked_object, name, type, position, id=None):
-        super().__init__(name, type, position, id)
-        self.interact_count = 0
-        self.linked_object = linked_object
-        self.linked_object.make_invisible()
-
-    def interact(self):
-        self.interact_count += 1
-        if self.interact_count >= 3:
-            self.linked_object.make_visible()
-            return True
-        return None
 
 class Stairs(Object):
     def __init__(self, name, position, id=None):
@@ -228,6 +187,8 @@ class GameState:
         self.score = 0
         self.cooldown = 0
 
+        self.current_module = None
+
     def __getstate__(self):
         # Create a copy of the object's __dict__
         state = self.__dict__.copy()
@@ -258,6 +219,10 @@ class GameState:
     def player_in_interaction(self):
         return self.displayed_text is not None
     
+    @property
+    def player_in_module(self):
+        return self.current_module is not None
+    
     def _get_object_by_name(self, room, name):
         return self._objects[room][name]
 
@@ -278,11 +243,19 @@ class GameState:
         if obj is None or (obj.is_visible and obj.is_passable):
             return True
         return False
+    
+    def handle_keypress(self, key):
+        if self.player_in_module:
+            self.current_module.on_keypress(key)
+
+    def handle_esc(self):
+        self.current_module = None
+        self.displayed_text = None
+        self.displayed_icon = None
 
     def handle_interact(self):
         if self.cooldown > 0:
             return None, None
-
 
         obj = self._get_object_at_position(self.player_pos)
 
@@ -302,7 +275,14 @@ class GameState:
         event_type = None
         details = None
         if obj:
-            if obj.type == "npc":
+            if "module" in obj.type:
+                self.current_module = obj
+                self.displayed_text = None
+                self.displayed_icon = None
+                print("activating module...")
+                return None, None
+
+            elif obj.type == "npc":
                 speech, item= obj.interact(self.player_has_items)
                 if item:
                     details = item
@@ -431,6 +411,8 @@ def start_state(object_filename):
                                 **new_obj_dict["key_object"], 
                                 id=obj_id
                                     )
+            elif obj_type == "wire_module":
+                new_obj = WireModule(new_obj_dict["position"])
             else:
                 new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
 

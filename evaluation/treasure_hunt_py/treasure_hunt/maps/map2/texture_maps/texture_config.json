@@ -1,0 +1,11 @@
+{
+    "walls" : {
+        "sprite" : "walls"
+    },
+    "ground" : {
+        "sprite" : "dirt",
+        "mapping" : {
+            "d" : "default"
+        }
+    }
+}
