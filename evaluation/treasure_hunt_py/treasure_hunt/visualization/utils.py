@@ -55,6 +55,12 @@ def blit_on_new_surface_of_size(surface, size, background_color=None):
 def get_scaled_surface_size(pygame_image, new_size):
     return (new_size[0] * pygame_image.sprite_scaling, new_size[1] * pygame_image.sprite_scaling)
 
+def scale_to_width(pygame_image, new_width):
+    """return scaled input surface to have width equal to new_width, keeping aspect ratio"""
+    width, height = pygame_image.image.get_size()
+    scale_factor = new_width / width
+    return pygame.transform.scale(pygame_image.image, (new_width, int(height * scale_factor)))
+
 class SingleFramePygameImage:
     def __init__(self, img_path, scaling=1.0):
         self.image = pygame.image.load(img_path).convert_alpha()

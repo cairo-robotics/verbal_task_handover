@@ -306,10 +306,19 @@ class StateVisualizer:
         return self.tile_size/self.UNSCALED_TILE_SIZE
     
     def render_module(self, game_module, grid_surface):
-        width, height = grid_surface.get_size()
+        width, height = grid_surface.get_size() 
+        width = int(width * 0.75)
+        height = int(height * 0.75)
 
-        vis_module = WireModuleInterface(game_module, width, height)
-        vis_module.render(grid_surface)
+        if "wire" in game_module.type:
+            vis_module = WireModuleInterface(game_module, width, height)
+        elif "password" in game_module.type:
+            vis_module = PasswordModuleVisualizer(game_module, self.SPRITES["textbox"], width, height)
+        module_surface = vis_module.render()
+
+        # Calculate the position to blit the module_surface in the center of grid_surface
+        module_rect = module_surface.get_rect(center=grid_surface.get_rect().center)
+        grid_surface.blit(module_surface, module_rect)
 
     def render_state(self, state, game_map):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))

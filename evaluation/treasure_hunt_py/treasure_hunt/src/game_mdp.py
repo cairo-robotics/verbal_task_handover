@@ -249,13 +249,16 @@ class GameState:
             res = self.current_module.on_keypress(key)
             if res is not None:
                 if res:
-                    self.displayed_text = "You defused the WIRE module!"
+                    self.displayed_text = "You defused the module!"
                     self.displayed_icon = None
                     # TODO add telemetry event calls
-                else:
+                elif "wire" in self.current_module.type:
                     self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
                     self.cooldown = 60000
                     self.displayed_icon = None
+                elif "password" in self.current_module.type:
+                    self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
+                    self.cooldown = 5000
 
     def handle_esc(self):
         self.current_module = None
@@ -424,6 +427,8 @@ def start_state(object_filename):
                                     )
             elif obj_type == "wire_module":
                 new_obj = WireModule(new_obj_dict["position"])
+            elif obj_type == "password_module":
+                new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
             else:
                 new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
 

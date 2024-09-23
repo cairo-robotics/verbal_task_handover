@@ -99,19 +99,20 @@ def main(args):
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    interact_output = state.handle_interact()
-                    if interact_output:
-                        telemetry.log_event(*interact_output)
+                if event.key == pygame.K_ESCAPE:
+                    state.handle_esc()
+                    
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
                     print("Game saved to ", save_file)
-
-                elif event.key == pygame.K_ESCAPE:
-                    state.handle_esc()
                 
                 elif state.player_in_module:
-                    state.handle_keypress(pygame.key.name(event.key))
+                    state.handle_keypress(event.key)
+                
+                elif event.key == pygame.K_SPACE:
+                    interact_output = state.handle_interact()
+                    if interact_output:
+                        telemetry.log_event(*interact_output)
 
                 elif event.key == pygame.K_q:
                     running = False

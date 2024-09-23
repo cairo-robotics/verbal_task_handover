@@ -1,5 +1,5 @@
 from numpy import random
-
+import pygame
 # random.seed(0)
 
 class Object:
@@ -46,7 +46,7 @@ class KeyObject(Object):
     
 class WireModule(Object):
     def __init__(self, position, serial_no="1234", wires=None):
-        super().__init__("wire_module", "module", position)
+        super().__init__("wire_module", "wire_module", position)
 
         self.wires = wires if wires is not None else self.random()
         self.num_wires = len(self.wires)
@@ -101,6 +101,7 @@ class WireModule(Object):
             
     def on_keypress(self, key):
         # import pdb; pdb.set_trace()
+        key = pygame.key.name(key)
         if not self.defused and key.isdigit() and int(key) < self.num_wires:
             if self.check_defuse(int(key)):
                 self.defused = True
@@ -110,3 +111,28 @@ class WireModule(Object):
                 return False
         return None
             
+class PasswordModule(Object):
+    def __init__(self, position, password="asdf"):
+        super().__init__("password_module", "password_module", position)
+        self.password = password
+        self._sprite = "module"
+        self.input = ""
+        self.defused = False
+    
+    def interact(self, *args):
+        return not self.defused
+    
+    def on_keypress(self, key):
+        if key == pygame.K_BACKSPACE:
+            self.input = self.input[:-1]
+        elif key == pygame.K_RETURN:
+            if self.input == self.password:
+                self.defused = True
+                return True
+            else:
+                self.input = ""
+                return False
+        elif pygame.key.name(key) in "abcdefghijklmnopqrstuvwxyz0123456789":
+            self.input += pygame.key.name(key)
+        
+        return None

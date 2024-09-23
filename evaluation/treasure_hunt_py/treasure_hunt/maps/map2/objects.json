@@ -1,9 +1,10 @@
 {
     "objects" : {
         "room0" : {
-            "wire_module" : {
-                "type" : "wire_module",
-                "position" : [4, 1]
+            "password_module" : {
+                "type" : "password_module",
+                "position" : [4, 1],
+                "password" : "asdf"
             }
         }
     },

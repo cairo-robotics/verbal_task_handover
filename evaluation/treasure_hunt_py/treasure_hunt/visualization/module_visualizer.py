@@ -1,8 +1,10 @@
 import pygame
+from treasure_hunt.visualization.utils import *
 
 class ModuleInterface:
-    def __init__(self):
-        pass
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
 
 class WireSprite:
     def __init__(self, rgb, x, y, width, height):
@@ -11,7 +13,7 @@ class WireSprite:
 
 class WireModuleInterface(ModuleInterface):
     def __init__(self, wire_module, game_width, game_height):
-        super().__init__()
+        super().__init__(game_width, game_height)
 
         self.wire_module = wire_module
 
@@ -36,7 +38,8 @@ class WireModuleInterface(ModuleInterface):
             wire_sprites.append(WireSprite(self.COLOR_MAPPING[wire], x_offset, (i+1) * y_interval, game_width-x_offset*2, 5))
         return wire_sprites
 
-    def render(self, game_surface):
+    def render(self):
+        game_surface = pygame.Surface((self.width, self.height))
         game_surface.fill((255, 255, 255))
         font = pygame.font.SysFont("Arial", 12)
         
@@ -57,3 +60,26 @@ class WireModuleInterface(ModuleInterface):
                 cut_rect.width = 30
                 cut_rect.center = wire_sprite.rect.center
                 pygame.draw.rect(game_surface, (255, 255, 255), cut_rect)
+        return game_surface
+
+class PasswordModuleVisualizer(ModuleInterface):
+    def __init__(self, password_module, textbox_sprite, game_width, game_height):
+        super().__init__(game_width, game_height)
+
+        self.password_module = password_module
+        self.textbox_sprite = scale_to_width(textbox_sprite, game_width)
+        self.font = pygame.font.SysFont("Arial", 12)
+        self.game_width = game_width
+        self.game_height = game_height
+
+    def render(self):
+        game_surface = self.textbox_sprite.copy()
+
+        # Render the text from self.password_module.input onto the textbox sprite
+        text_surface = self.font.render(self.password_module.input, True, (0, 0, 0))
+        text_rect = text_surface.get_rect()
+        text_rect.center = game_surface.get_rect().center
+
+        game_surface.blit(text_surface, text_rect)
+
+        return game_surface
