@@ -332,27 +332,13 @@ class GameState:
                     self.displayed_text = speech
                     self.displayed_icon = None
 
-            elif self.displayed_text:
-                self.displayed_text = None
-                self.displayed_icon = None
-            elif obj.type == "door":
-                res = obj.interact(self.player_has_items)
-                if res is not None:
-                    if res:
-                        self.player_has_items.remove(obj.key)
-                        self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
-                        event_type = Event.DOOR_UNLOCKED
-                        details = "used " + obj.key
-                    else:
-                        self.displayed_text = "Looks like you don't have the key for this door."
-
             elif (obj.type == "chest" or obj.type == "barrel"):
                 if obj.type == "barrel" and not self.displayed_text:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
                     self.cooldown = 50
                     return None, None
-                
+
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
                     if item and "treasure" in item:
@@ -376,6 +362,22 @@ class GameState:
                 else:
                     self.displayed_text = None
                     self.displayed_icon = None
+
+            elif self.displayed_text:
+                self.displayed_text = None
+                self.displayed_icon = None
+
+            elif obj.type == "door":
+                res = obj.interact(self.player_has_items)
+                if res is not None:
+                    if res:
+                        self.player_has_items.remove(obj.key)
+                        self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
+                        event_type = Event.DOOR_UNLOCKED
+                        details = "used " + obj.key
+                    else:
+                        self.displayed_text = "Looks like you don't have the key for this door."
+
 
 
             else:
