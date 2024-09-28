@@ -12,7 +12,7 @@ import argparse
 pygame.init()
 
 GAME_DIR = os.path.dirname(os.path.abspath(__file__))
-MAP_DIRECTORY = GAME_DIR + '/../maps/map2/'
+MAP_DIRECTORY = GAME_DIR + '/../maps/map1/'
 SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 

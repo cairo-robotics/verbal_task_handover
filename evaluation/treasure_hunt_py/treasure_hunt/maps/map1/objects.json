@@ -53,6 +53,14 @@
                 "id" : "torch"
             }
         },
+        "room`" : {
+            "password_module" : {
+                "position" : [2, 1],
+                "type" : "password_module",
+                "password" : "asdf",
+                "contains" : "treasure8"
+            }
+        },
         "room2" : {
             "chest0" : {
                 "position" : [3, 3],
@@ -182,6 +190,13 @@
                 "position" : [5, 4],
                 "type" : "barrel",
                 "contains" : ""
+            }
+        },
+        "room19" : {
+            "wire_module" : {
+                "position" : [6, 2],
+                "type" : "wire_module",
+                "contains" : "treasure7"
             }
         }
     },
