@@ -213,15 +213,13 @@ def save_graph_as_text(graph: TelemetryGraph, filename: str):
         f.write(str(graph))
 
 def test_load_from_text():
-    # g = TelemetryGraph()
-    # g.parse_from_file("llm_telemetry/saves/telemetry/telemetry_test.txt")
-    # save_graph_as_text(g, DEFAULT_SAVE_DIR + "graph.txt")
     with open("data/graph.txt", "r") as f:
         s = f.read()
         s = s.replace("'", '"')
         g = TelemetryGraph()
         g.parse_from_string(s)
         print(g)
+    # save_graph_as_text(g, DEFAULT_SAVE_DIR + "graph.txt")
 
 def test_graph_updates():
     graph = TelemetryGraph()
@@ -246,7 +244,7 @@ def test_graph_updates():
 
 
 class textBot():
-    def __init__(self) -> None:
+    def __init__(self, graph=None) -> None:
         self.model = "gpt-3.5-turbo"
         self.temperature = 0.9
         self.client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
@@ -254,10 +252,9 @@ class textBot():
         self.history = Queue(maxsize=10)
 
         # self.system_role_message = "\nGiven the above networkX graph of the current game states, please provide an answer to the user's questions."
-        self.system_role_message = {
-            "role" : "system",
-            "content" : "You are a helpful assistant."   
-        }
+
+
+        self.graph = graph
 
     def _gpt_response(self, messages):
         response = self.client.chat.completions.create(
@@ -267,8 +264,22 @@ class textBot():
         )
         return response
     
+    @property
+    def system_role_message(self) -> str:
+        if self.graph is None:
+            return "You are a helpful assistant."
+        else:
+            return  "You are an assistant helping the user answer questions about their current state in a video game.\
+                The following is a knowledge graph representing what you know about the current state of the game.\n" \
+                + str(self.graph)
+
+    def _paste_graph_as_text(self):
+        return str(self.graph)
+    
     def _chat_reply_with_history(self, user_message):
-        messages = [self.system_role_message]
+        messages = [
+            {"role": "system", "content": self.system_role_message},
+        ]
         self.append_to_chat({"role": "user", "content": user_message})
         messages.extend(list(self.history.queue))
 
@@ -302,10 +313,10 @@ class textBot():
                 
 
 if __name__ == "__main__":
-    # graph = TelemetryGraph()
-    # graph.parse_from_file("llm_telemetry/saves/telemetry/telemetry_test.txt")
+    graph = TelemetryGraph()
+    graph.parse_from_file("llm_telemetry/saves/telemetry/telemetry_test.txt")
 
-    tt = textBot()
+    tt = textBot(graph)
     tt.bot_loop()
 
     # test_load_from_text()
