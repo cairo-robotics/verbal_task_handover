@@ -6,6 +6,7 @@ import time
 from .telemetry import Event
 from .modules import *
 
+from collections import deque
 
 class Direction(object):
     """
@@ -132,47 +133,21 @@ class NPC(Object):
         self.interact_data = interact_data
         
         self.current_conversation = 0
-        self.current_line = 0
-        self.end_of_interaction = False
-
         self.conditional_interact_data = conditional_interact_data if conditional_interact_data is not None else {}
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
 
     def interact(self, player_has_items):
-        if self.end_of_interaction:
-            self.end_of_interaction = False
-            return None, None
-        
-
-        item_override = False
         for key in self.conditional_interact_data:
             if key in player_has_items:
-                if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
-                    item_override = True
-                    continue
-                else:
-                    speech, item = tuple(self.conditional_interact_data[key][self.conditional_interact_counts[key]])
-                    self.conditional_interact_counts[key] += 1
-                    if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
-                        self.end_of_interaction = True
-                    return speech, item
-                
-        if item_override or self.current_conversation >= len(self.interact_data):
-            self.end_of_interaction = True
-            return "...", None  # No more conversations
+                conversation = self.conditional_interact_data[key]
+                self.conditional_interact_counts[key] += 1
+                return deque(conversation)
 
-        # Return the next line in the conversation
-        conversation = self.interact_data[self.current_conversation]
-        line = conversation[self.current_line]
-        self.current_line += 1
-        if self.current_line == len(conversation):
-            # Conversation is over, end interaction and reset for next conversation
-            self.end_of_interaction = True
-            self.current_conversation += 1
-            self.current_line = 0
-        return line[0], line[1]
-
-
+        # Return the entire conversation
+        conversation = self.interact_data[self.current_conversation] if self.current_conversation < len(self.interact_data) else self.interact_data[-1]
+        self.current_conversation += 1
+        return deque(conversation)
+    
 class GameState:
     def __init__(self, player_pos, player_dir, current_room, objects=None):
         self.player_pos = player_pos
@@ -182,8 +157,11 @@ class GameState:
         self._objects = objects
         self.current_room = current_room
         self.player_has_items = []
+
+        self.text_queue = deque()
         self.displayed_text = None
         self.displayed_icon = None
+
         self.score = 0
         self.cooldown = 0
 
@@ -265,8 +243,44 @@ class GameState:
         self.displayed_text = None
         self.displayed_icon = None
 
+    def got_item(self, item):
+        self.player_has_items.append(item)
+        if "treasure" in item:
+            self.score += 1
+            print("score: ", self.score)
+            event_type = Event.TREASURE_FOUND
+            self.displayed_text = "You received a TREASURE!"
+            self.displayed_icon = "red gem"
+            self.player_has_items.append(item)
+
+        else:
+            self.player_has_items.append(item)
+            self.displayed_text = f"You received the {item.upper()}."
+            self.displayed_icon = item
+            event_type = Event.ITEM_OBTAINED
+
+        return event_type
+
     def handle_interact(self):
+        # check for item cooldowns before continuing
         if self.cooldown > 0:
+            return None, None
+        
+        # continue any ongoing interactions
+        if self.text_queue:
+            next_line, item = self.text_queue.popleft()
+            if next_line:
+                self.displayed_text = next_line
+                return None, None
+            elif item:
+                event_type = self.got_item(item)
+                details = item
+                return event_type, details
+            
+        # end active interaction if there's no data left
+        elif self.displayed_text:
+            self.displayed_text = None
+            self.displayed_icon = None
             return None, None
 
         obj = self._get_object_at_position(self.player_pos)
@@ -279,7 +293,7 @@ class GameState:
                 self.displayed_text = "You found a TREASURE!"
                 self.displayed_icon = "red gem"
                 event_type = Event.TREASURE_FOUND
-                details = "treasure"
+                details = ""
                 self.player_has_items.append(obj.name)
                 return event_type, details    
 
@@ -297,34 +311,13 @@ class GameState:
                 return None, None
 
             elif obj.type == "npc":
-                speech, item= obj.interact(self.player_has_items)
-                if item:
-                    details = item
-                    
-                    if "treasure" in item:
-                        self.score += 1
-                        print("score: ", self.score)
-                        event_type = Event.TREASURE_FOUND
-                        self.displayed_text = "You received a TREASURE!"
-                        self.displayed_icon = "red gem"
-                        self.player_has_items.append(item)
+                conversation = obj.interact(self.player_has_items)
+                if conversation:
+                    event_type = Event.NPC_INTERACT
+                    details = obj.name
 
-                    else:
-                        self.player_has_items.append(item)
-                        self.displayed_text = f"You received the {item.upper()} from {obj.name.upper()}."
-                        self.displayed_icon = item
-                        event_type = Event.ITEM_OBTAINED
-
-                elif speech is None:
-                    self.displayed_text = None
-                    self.displayed_icon = None
-
-                elif speech != self.displayed_text:
-                    if not self.displayed_text:
-                        event_type = Event.NPC_INTERACT
-                        details = obj.name
-                    self.displayed_text = speech
-                    self.displayed_icon = None
+                    self.text_queue = conversation
+                    return self.handle_interact()
 
             elif (obj.type == "chest" or obj.type == "barrel"):
                 if obj.type == "barrel" and not self.displayed_text:
@@ -335,31 +328,12 @@ class GameState:
 
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
-                    if item and "treasure" in item:
-                        self.score += 1
-                        print("score: ", self.score)
-                        event_type = Event.TREASURE_FOUND
+                    if item:
                         details = item
-                        self.displayed_text = "You found a TREASURE!"
-                        self.displayed_icon = "red gem"
-                        self.player_has_items.append(item)
-                    
-                    elif item:
-                        self.player_has_items.append(item)
-                        self.displayed_text = f"You found the {item.upper()} in the {obj.type}."
-                        self.displayed_icon = item
-                        event_type = Event.ITEM_OBTAINED
-                        details = item
+                        event_type = self.got_item(item)
                     else:
                         self.displayed_text = "There's nothing in here."
                         self.displayed_icon = None
-                else:
-                    self.displayed_text = None
-                    self.displayed_icon = None
-
-            elif self.displayed_text:
-                self.displayed_text = None
-                self.displayed_icon = None
 
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)
@@ -371,8 +345,6 @@ class GameState:
                         details = "used " + obj.key
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
-
-
 
             else:
                 res = obj.interact()
@@ -431,6 +403,7 @@ def start_state(object_filename):
                 new_obj = WireModule(new_obj_dict["position"])
             elif obj_type == "password_module":
                 new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
+
             else:
                 new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
 
