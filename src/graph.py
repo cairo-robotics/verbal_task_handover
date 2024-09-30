@@ -8,10 +8,6 @@ from datetime import datetime
 from pprint import PrettyPrinter
 import json
 
-from colorama import Fore, Style
-from queue import Queue
-from openai import OpenAI
-
 DEFAULT_SAVE_DIR = "data/"
 DEFAULT_SAVE_FILENAME = "graph.pkl"
 
@@ -189,24 +185,24 @@ class TelemetryGraph:
         nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
         plt.show()
 
-    def analyze_history(self):
-        # Extract all paths from the "Player" node
-        graph = self.graph
-        paths = nx.shortest_path(graph, source="Player")
+    # def analyze_history(self):
+    #     # Extract all paths from the "Player" node
+    #     graph = self.graph
+    #     paths = nx.shortest_path(graph, source="Player")
         
-        for target, path in paths.items():
-            print(f"Path to {target}: {path}")
+    #     for target, path in paths.items():
+    #         print(f"Path to {target}: {path}")
             
-            # Sort the edges in the path by timestamp
-            edges_in_path = [(path[i], path[i+1]) for i in range(len(path)-1)]
-            sorted_edges = sorted(edges_in_path, key=lambda edge: graph.edges[edge]['time'])
+    #         # Sort the edges in the path by timestamp
+    #         edges_in_path = [(path[i], path[i+1]) for i in range(len(path)-1)]
+    #         sorted_edges = sorted(edges_in_path, key=lambda edge: graph.edges[edge]['time'])
             
-            # Print out the sorted path
-            for edge in sorted_edges:
-                action = graph.edges[edge]['action']
-                time = graph.edges[edge]['time']
-                print(f"At {time}, {action} from {edge[0]} to {edge[1]}")
-            print()
+    #         # Print out the sorted path
+    #         for edge in sorted_edges:
+    #             action = graph.edges[edge]['action']
+    #             time = graph.edges[edge]['time']
+    #             print(f"At {time}, {action} from {edge[0]} to {edge[1]}")
+    #         print()
 
 def save_graph_as_text(graph: TelemetryGraph, filename: str):
     with open(filename, "w") as f:
@@ -242,82 +238,3 @@ def test_graph_updates():
         graph = TelemetryGraph()
         graph.parse_from_string(s)
 
-
-class textBot():
-    def __init__(self, graph=None) -> None:
-        self.model = "gpt-3.5-turbo"
-        self.temperature = 0.9
-        self.client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
-
-        self.history = Queue(maxsize=10)
-
-        # self.system_role_message = "\nGiven the above networkX graph of the current game states, please provide an answer to the user's questions."
-
-
-        self.graph = graph
-
-    def _gpt_response(self, messages):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature
-        )
-        return response
-    
-    @property
-    def system_role_message(self) -> str:
-        if self.graph is None:
-            return "You are a helpful assistant."
-        else:
-            return  "You are an assistant helping the user answer questions about their current state in a video game.\
-                The following is a knowledge graph representing what you know about the current state of the game.\n" \
-                + str(self.graph)
-
-    def _paste_graph_as_text(self):
-        return str(self.graph)
-    
-    def _chat_reply_with_history(self, user_message):
-        messages = [
-            {"role": "system", "content": self.system_role_message},
-        ]
-        self.append_to_chat({"role": "user", "content": user_message})
-        messages.extend(list(self.history.queue))
-
-        print(messages)
-
-        reply = self._gpt_response(messages).choices[0].message.content.strip()
-        self.append_to_chat({"role": "assistant", "content": reply})
-        return reply
-
-    def append_to_chat(self, message):
-        if self.history.full():
-            self.history.get()
-        self.history.put(message)
-        
-    # def paste_context(self, graph):
-        # self.message += "\n" + str(graph)
-
-    def bot_loop(self):
-        self.message = ""
-     
-        # print(Fore.GREEN + reply + Style.RESET_ALL)
-
-        while True:
-            message = input("Enter Your Query: ")
-            reply = self._chat_reply_with_history(message)
-                
-            print(Fore.GREEN + reply + Style.RESET_ALL)
-
-            # save_conversation += "AI response: " + reply + "\n \n"
-            # print('save conversation:', save_conversation)
-                
-
-if __name__ == "__main__":
-    graph = TelemetryGraph()
-    graph.parse_from_file("llm_telemetry/saves/telemetry/telemetry_test.txt")
-
-    tt = textBot(graph)
-    tt.bot_loop()
-
-    # test_load_from_text()
-    # test_graph_updates()W

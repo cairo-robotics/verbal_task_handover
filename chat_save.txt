@@ -1,0 +1,2 @@
+time	role	content
+0	system	You are a helpful assistant.
