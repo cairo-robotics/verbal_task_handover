@@ -24,14 +24,14 @@ class Direction(object):
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
 
 class Stairs(Object):
-    def __init__(self, name, position, id=None):
-        super().__init__(name, "stairs", position, id)
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "stairs", position, id, **kwargs)
         self._sprite = "stairs"
         # self.destination = destination
 
 class Door(Object):
-    def __init__(self, name, position, is_locked, key, id=None):
-        super().__init__(name, "door", position, id)
+    def __init__(self, name, position, is_locked, key, id=None, **kwargs):
+        super().__init__(name, "door", position, id, **kwargs)
         self.is_locked = is_locked
         self.was_unlocked = False
         self.is_open = False
@@ -81,8 +81,8 @@ class Door(Object):
         return None
 
 class Chest(Object):
-    def __init__(self, name, position, contains, id=None):
-        super().__init__(name, "chest", position, id)
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, "chest", position, id, **kwargs)
         self.contains = contains
         self.is_open = False
     
@@ -105,8 +105,8 @@ class Chest(Object):
             return self.contains
         
 class Barrel(Chest):
-    def __init__(self, name, position, contains, id=None):
-        super().__init__(name, position, contains, id)
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, position, contains, id, **kwargs)
         self.type = "barrel"
 
     @property
@@ -114,8 +114,8 @@ class Barrel(Chest):
         return "barrel"
         
 class Treasure(Object):
-    def __init__(self, name, position, id=None):
-        super().__init__(name, "treasure", position, id)
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "treasure", position, id, **kwargs)
         self._sprite = "gem_red"
         self.collected = False
 
@@ -324,8 +324,9 @@ class GameState:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
                     self.cooldown = 3000
-                    return None, None
-
+                    self.text_queue = deque(obj.item_text)
+                    return self.handle_interact()
+                
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
                     if item:
@@ -383,29 +384,30 @@ def start_state(object_filename):
             new_obj_dict = room_objs[obj_name]
             obj_type = new_obj_dict["type"]
             obj_id = new_obj_dict.get("id", None)
+            obj_text = new_obj_dict.get("item text", None)
             if obj_type == "chest":
-                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
+                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
             elif obj_type == "barrel":
-                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
+                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
             elif obj_type == "door":
-                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id)
+                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id, item_text=obj_text)
             elif obj_type == "treasure":
-                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id)
+                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
             elif obj_type == "stairs":
-                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id)
+                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
             elif obj_type == "key object":
                 new_obj = KeyObject(
-                                objects[room][new_obj_dict["linked_object"]],
-                                **new_obj_dict["key_object"], 
-                                id=obj_id
-                                    )
+                    objects[room][new_obj_dict["linked_object"]],
+                    **new_obj_dict["key_object"], 
+                    id=obj_id,
+                    item_text=obj_text
+                        )
             elif obj_type == "wire_module":
                 new_obj = WireModule(new_obj_dict["position"])
             elif obj_type == "password_module":
                 new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
-
             else:
-                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
+                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
 
             objects[room][obj_name] = new_obj
 

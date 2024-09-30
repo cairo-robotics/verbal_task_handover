@@ -25,6 +25,11 @@
         "config": "objects/chest.json",
         "scaling" : 1.0
     },
+    "page" : {
+        "type" : "single",
+        "path": "objects/page.png",
+        "scaling": 1.0
+    },
     "player" : {
         "type" : "multi",
         "path": "chars/player.png",

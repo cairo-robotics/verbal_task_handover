@@ -3,13 +3,15 @@ import pygame
 # random.seed(0)
 
 class Object:
-    def __init__(self, name, type, position, id=None):
+    def __init__(self, name, type, position, id=None, item_text=None):
         self.name = name
         self.type = type
         self.position = position
         self._sprite = id if id is not None else name
         self._is_passable = True
         self.is_visible = True
+
+        self.item_text = item_text if item_text is not None else []
 
     @property
     def sprite(self):
@@ -31,8 +33,8 @@ class Object:
         self.is_visible = True
 
 class KeyObject(Object):
-    def __init__(self, linked_object, name, type, position, id=None):
-        super().__init__(name, type, position, id)
+    def __init__(self, linked_object, name, type, position, id=None, item_text=None):
+        super().__init__(name, type, position, id, item_text)
         self.interact_count = 0
         self.linked_object = linked_object
         self.linked_object.make_invisible()

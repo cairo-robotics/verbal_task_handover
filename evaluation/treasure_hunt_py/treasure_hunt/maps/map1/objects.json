@@ -40,7 +40,11 @@
             "barrel" : {
                 "position" : [6, 9],
                 "type" : "barrel",
-                "contains" : ""
+                "contains" : "page",
+                "item text": [
+                    ["A page from a diary. It reads:", ""],
+                    ["'The password is asdf.'", ""]
+                ]
             },
             "torch1" : {
                 "position" : [9, 0],
@@ -53,7 +57,7 @@
                 "id" : "torch"
             }
         },
-        "room`" : {
+        "room1" : {
             "password_module" : {
                 "position" : [2, 1],
                 "type" : "password_module",
