@@ -94,6 +94,10 @@ def main(args):
     pygame.display.flip()
 
     running = True
+    move_start_time = None
+    move_duration = 200  # Duration of the move in milliseconds
+    move_target_pos = None
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -118,8 +122,9 @@ def main(args):
                     running = False
                     telemetry.cleanup()
 
-                elif not state.player_in_interaction:
+                elif not state.player_in_interaction and move_target_pos is None:
                     new_pos = list(player_pos)
+                    player_dir = state.player_dir
                     if event.key == pygame.K_LEFT:
                         new_pos[0] -= 1
                         player_dir = Direction.WEST
@@ -134,24 +139,34 @@ def main(args):
                         player_dir = Direction.SOUTH
 
                     if game_map.is_valid_move(new_pos, state):
-                        player_pos = new_pos
-
-                    new_room, new_player_pos  = game_map.check_transition(player_pos, state)
-                    if new_room:
-                        current_room = new_room
-                        player_pos = new_player_pos
-                        state.update_current_room(current_room)
-                        telemetry.log_event(Event.ROOM_ENTERED, current_room)
-                    state.player_pos = player_pos
+                        move_target_pos = new_pos
+                        move_start_time = pygame.time.get_ticks()
                     state.player_dir = player_dir
-                    # print(player_pos)
+
+        if move_target_pos is not None:
+            elapsed_time = pygame.time.get_ticks() - move_start_time
+            if elapsed_time >= move_duration:
+                player_pos = move_target_pos
+                move_target_pos = None
+                new_room, new_player_pos = game_map.check_transition(player_pos, state)
+                if new_room:
+                    current_room = new_room
+                    player_pos = new_player_pos
+                    state.update_current_room(current_room)
+                    telemetry.log_event(Event.ROOM_ENTERED, current_room)
+                state.player_pos = player_pos
+            else:
+                progress = elapsed_time / move_duration
+                state.player_pos = [
+                    player_pos[0] + (move_target_pos[0] - player_pos[0]) * progress,
+                    player_pos[1] + (move_target_pos[1] - player_pos[1]) * progress
+                ]
 
         on_render(window, state_vis, state, game_map)
         
         dt = clock.tick(FPS)
         state.tick(dt)
         
-
     pygame.quit()
 
 if __name__ == '__main__':

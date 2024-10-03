@@ -325,8 +325,10 @@ class GameState:
                 if obj.type == "barrel" and not self.displayed_text:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
-                    self.cooldown = 3000
-                
+                    self.cooldown = 2000
+                    if not obj.contains and not obj.item_text:
+                        self.text_queue = deque([("There's nothing in here.", None)])
+
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
                     if item:

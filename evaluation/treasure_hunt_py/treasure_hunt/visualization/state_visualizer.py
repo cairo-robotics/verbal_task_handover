@@ -5,6 +5,7 @@ from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
 import json
+import math
 
 # GRAPHICS_DIR = "./assets/"
 GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
@@ -93,7 +94,6 @@ class StateVisualizer:
         params = copy.deepcopy(self.DEFAULT_VALUES)
         params.update(kwargs)
         self.configure(**params)
-
 
         self.UNSCALED_TILE_SIZE = 32 # sprite resolution
         # Load a font
@@ -262,13 +262,24 @@ class StateVisualizer:
     def _render_player(self, surface, state):
         player_dir = state.player_dir
         dir_name = Direction.DIRECTION_TO_NAME[player_dir]
-        sprite_name = dir_name + "_2.png"
+        
+        # Determine the sprite frame based on the player's position
+        if float(state.player_pos[0]).is_integer() and float(state.player_pos[1]).is_integer():
+            sprite_frame = 2  # Standing still
+        else:
+            # Calculate the frame based on the fractional part of the position
+            fractional_x = state.player_pos[0] % 1
+            fractional_y = state.player_pos[1] % 1
+            frame_index = int((fractional_x + fractional_y) * 3) % 3 + 1
+            sprite_frame = frame_index
+        
+        sprite_name = f"{dir_name}_{sprite_frame}.png"
         x_offset = (self.MULTI_FRAME_SPRITES["player"].sprite_size[1] - self.MULTI_FRAME_SPRITES["player"].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES["player"].sprite_size[1])
-        player_pos = (state.player_pos[0] + x_offset,
-                      state.player_pos[1])
+        player_pos = (state.player_pos[0] + x_offset, state.player_pos[1])
+        
         self.MULTI_FRAME_SPRITES["player"].blit_on_surface(surface,
-                                        self._position_in_unscaled_pixels(player_pos),
-                                        sprite_name)
+                                                           self._position_in_unscaled_pixels(player_pos),
+                                                           sprite_name)
         
     def _render_objects(self, surface, state):
         for obj in state.objects:
@@ -302,11 +313,19 @@ class StateVisualizer:
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
     
     def _apply_darkness_mask(self, state, game_map, surface):
-        player_pos = state.player_pos
+        px, py = state.player_pos
+        if state.player_dir == Direction.NORTH:
+            py = math.floor(py)
+        elif state.player_dir == Direction.SOUTH:
+            py = math.ceil(py)
+        elif state.player_dir == Direction.EAST:
+            px = math.ceil(px)
+        elif state.player_dir == Direction.WEST:
+            px = math.floor(px)
         
         for y in range(len(game_map.grid)):
             for x in range(len(game_map.grid[y])):
-                if not within_radius(player_pos, (x, y), self.light_radius):
+                if not within_radius((px, py), (x, y), self.light_radius):
                     pygame.draw.rect(surface, BLACK, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     @property
