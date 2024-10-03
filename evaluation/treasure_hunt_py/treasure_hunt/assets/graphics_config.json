@@ -9,11 +9,26 @@
         "path": "objects/ladder.png",
         "scaling": 1.0
     },
+    "module" : {
+        "type" : "single",
+        "path": "objects/ibm.png",
+        "scaling": 1.0
+    },
+    "textbox" : {
+        "type" : "single",
+        "path": "modules/textbox.png",
+        "scaling": 1.0
+    },
     "chest" : {
         "type" : "multi",
         "path": "objects/chest.png",
         "config": "objects/chest.json",
         "scaling" : 1.0
+    },
+    "page" : {
+        "type" : "single",
+        "path": "objects/page.png",
+        "scaling": 1.0
     },
     "player" : {
         "type" : "multi",

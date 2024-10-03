@@ -1,8 +1,10 @@
 import pygame
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 from treasure_hunt.src.core import GameMap
+from treasure_hunt.src.modules import WireModule
 from treasure_hunt.visualization.state_visualizer import StateVisualizer
 from treasure_hunt.visualization.utils import run_static_resizeable_window
+from treasure_hunt.visualization.module_visualizer import WireModuleInterface
 import os
 import argparse
 
@@ -56,7 +58,10 @@ def main(args):
     # game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     game_map = GameMap(MAP_DIRECTORY, current_room)
     state_vis = StateVisualizer()
-    surface = state_vis.render_state(state, game_map)
+    # surface = state_vis.render_state(state, game_map)
+
+    wire_module = WireModule.random()
+    surface = state_vis.render_module(wire_module, game_map)
 
     run_static_resizeable_window(surface)
 

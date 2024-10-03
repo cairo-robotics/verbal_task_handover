@@ -42,7 +42,6 @@ def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
     surface = state_vis.render_state(state, game_map)
     state_vis.scale_blit_to_window(window, surface)
-    # window.blit(surface, (0, 0))
     pygame.display.flip()
 
 # Main game loop
@@ -100,15 +99,22 @@ def main(args):
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    interact_output = state.handle_interact()
-                    if interact_output:
-                        telemetry.log_event(*interact_output)
+                if event.key == pygame.K_ESCAPE:
+                    state.handle_esc()
+                    
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
                     print("Game saved to ", save_file)
+                
+                elif state.player_in_module:
+                    state.handle_keypress(event.key)
+                
+                elif event.key == pygame.K_SPACE:
+                    interact_output = state.handle_interact()
+                    if interact_output:
+                        telemetry.log_event(*interact_output)
 
-                elif event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_q:
                     running = False
                     telemetry.cleanup()
 
@@ -143,14 +149,14 @@ def main(args):
         on_render(window, state_vis, state, game_map)
         
         dt = clock.tick(FPS)
-        state.on_tick()
+        state.tick(dt)
         
 
     pygame.quit()
 
 if __name__ == '__main__':
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Your Pygame game with save/load functionality")
+    parser = argparse.ArgumentParser(description="Your Pygame game with save/load and telemetry functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, help='Filename of the save file to write')
     parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')

@@ -4,7 +4,9 @@ import pickle
 import time
 
 from .telemetry import Event
+from .modules import *
 
+from collections import deque
 
 class Direction(object):
     """
@@ -21,57 +23,15 @@ class Direction(object):
     DIRECTION_TO_NAME = { d:name for d, name in zip([NORTH, SOUTH, EAST, WEST], ["NORTH", "SOUTH", "EAST", "WEST"])}
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
 
-class Object:
-    def __init__(self, name, type, position, id=None):
-        self.name = name
-        self.type = type
-        self.position = position
-        self._sprite = id if id is not None else name
-        self._is_passable = True
-        self.is_visible = True
-
-    @property
-    def sprite(self):
-        return self._sprite
-
-    @property
-    def is_passable(self):
-        return self._is_passable
-
-    def interact(self):
-        return None
-
-    def on_update(self):
-        pass
-
-    def make_invisible(self):
-        self.is_visible = False
-    def make_visible(self):
-        self.is_visible = True
-
-class KeyObject(Object):
-    def __init__(self, linked_object, name, type, position, id=None):
-        super().__init__(name, type, position, id)
-        self.interact_count = 0
-        self.linked_object = linked_object
-        self.linked_object.make_invisible()
-
-    def interact(self):
-        self.interact_count += 1
-        if self.interact_count >= 3:
-            self.linked_object.make_visible()
-            return True
-        return None
-
 class Stairs(Object):
-    def __init__(self, name, position, id=None):
-        super().__init__(name, "stairs", position, id)
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "stairs", position, id, **kwargs)
         self._sprite = "stairs"
         # self.destination = destination
 
 class Door(Object):
-    def __init__(self, name, position, is_locked, key, id=None):
-        super().__init__(name, "door", position, id)
+    def __init__(self, name, position, is_locked, key, id=None, **kwargs):
+        super().__init__(name, "door", position, id, **kwargs)
         self.is_locked = is_locked
         self.was_unlocked = False
         self.is_open = False
@@ -79,16 +39,16 @@ class Door(Object):
 
     @property
     def sprite(self):
-        # return "door_open" if not self.is_open else "door_closed"
+        return "door_open" if self.is_open else "door_closed"
 
         # TODO: comment the below during the actual task! This is just for sanity checking during development
-        if self.is_locked:
-            return "door_locked"
-        elif self.is_open:
-            return "door_open"
-        elif self.was_unlocked:
-            return "door_unlocked"
-        return "door_closed"
+        # if self.is_locked:
+        #     return "door_locked"
+        # elif self.is_open:
+        #     return "door_open"
+        # elif self.was_unlocked:
+        #     return "door_unlocked"
+        # return "door_closed"
 
     @property
     def is_passable(self):
@@ -121,8 +81,8 @@ class Door(Object):
         return None
 
 class Chest(Object):
-    def __init__(self, name, position, contains, id=None):
-        super().__init__(name, "chest", position, id)
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, "chest", position, id, **kwargs)
         self.contains = contains
         self.is_open = False
     
@@ -145,8 +105,8 @@ class Chest(Object):
             return self.contains
         
 class Barrel(Chest):
-    def __init__(self, name, position, contains, id=None):
-        super().__init__(name, position, contains, id)
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, position, contains, id, **kwargs)
         self.type = "barrel"
 
     @property
@@ -154,8 +114,8 @@ class Barrel(Chest):
         return "barrel"
         
 class Treasure(Object):
-    def __init__(self, name, position, id=None):
-        super().__init__(name, "treasure", position, id)
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "treasure", position, id, **kwargs)
         self._sprite = "gem_red"
         self.collected = False
 
@@ -173,47 +133,21 @@ class NPC(Object):
         self.interact_data = interact_data
         
         self.current_conversation = 0
-        self.current_line = 0
-        self.end_of_interaction = False
-
         self.conditional_interact_data = conditional_interact_data if conditional_interact_data is not None else {}
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
 
     def interact(self, player_has_items):
-        if self.end_of_interaction:
-            self.end_of_interaction = False
-            return None, None
-        
-
-        item_override = False
         for key in self.conditional_interact_data:
             if key in player_has_items:
-                if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
-                    item_override = True
-                    continue
-                else:
-                    speech, item = tuple(self.conditional_interact_data[key][self.conditional_interact_counts[key]])
-                    self.conditional_interact_counts[key] += 1
-                    if self.conditional_interact_counts[key] >= len(self.conditional_interact_data[key]):
-                        self.end_of_interaction = True
-                    return speech, item
-                
-        if item_override or self.current_conversation >= len(self.interact_data):
-            self.end_of_interaction = True
-            return "...", None  # No more conversations
+                conversation = self.conditional_interact_data[key]
+                self.conditional_interact_counts[key] += 1
+                return deque(conversation)
 
-        # Return the next line in the conversation
-        conversation = self.interact_data[self.current_conversation]
-        line = conversation[self.current_line]
-        self.current_line += 1
-        if self.current_line == len(conversation):
-            # Conversation is over, end interaction and reset for next conversation
-            self.end_of_interaction = True
-            self.current_conversation += 1
-            self.current_line = 0
-        return line[0], line[1]
-
-
+        # Return the entire conversation
+        conversation = self.interact_data[self.current_conversation] if self.current_conversation < len(self.interact_data) else self.interact_data[-1]
+        self.current_conversation += 1
+        return deque(conversation)
+    
 class GameState:
     def __init__(self, player_pos, player_dir, current_room, objects=None):
         self.player_pos = player_pos
@@ -223,10 +157,15 @@ class GameState:
         self._objects = objects
         self.current_room = current_room
         self.player_has_items = []
+
+        self.text_queue = deque()
         self.displayed_text = None
         self.displayed_icon = None
+
         self.score = 0
         self.cooldown = 0
+
+        self.current_module = None
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -247,8 +186,8 @@ class GameState:
         for name, obj in self._objects[self.current_room].items():
             obj.on_update()
 
-    def on_tick(self):
-        self.cooldown = max(0, self.cooldown - 1)
+    def tick(self, dt):
+        self.cooldown = max(0, self.cooldown - dt)
 
     @property
     def objects(self):
@@ -257,6 +196,10 @@ class GameState:
     @property
     def player_in_interaction(self):
         return self.displayed_text is not None
+    
+    @property
+    def player_in_module(self):
+        return self.current_module is not None
     
     def _get_object_by_name(self, room, name):
         return self._objects[room][name]
@@ -278,11 +221,69 @@ class GameState:
         if obj is None or (obj.is_visible and obj.is_passable):
             return True
         return False
+    
+    def handle_keypress(self, key):
+        if self.player_in_module and self.cooldown <= 0:
+            res = self.current_module.on_keypress(key)
+            if res is not None:
+                if res:
+                    self.displayed_text = "You defused the module!"
+                    self.displayed_icon = None
+                    # TODO add telemetry event calls
+                elif "wire" in self.current_module.type:
+                    self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
+                    self.cooldown = 60000
+                    self.displayed_icon = None
+                elif "password" in self.current_module.type:
+                    self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
+                    self.cooldown = 5000
+
+    def handle_esc(self):
+        self.current_module = None
+        self.displayed_text = None
+        self.displayed_icon = None
+
+    def got_item(self, item):
+        self.player_has_items.append(item)
+        if "treasure" in item:
+            self.score += 1
+            print("score: ", self.score)
+            event_type = Event.TREASURE_FOUND
+            self.displayed_text = "You received a TREASURE!"
+            self.displayed_icon = "red gem"
+            self.player_has_items.append(item)
+
+        else:
+            self.player_has_items.append(item)
+            self.displayed_text = f"You received the {item.upper()}."
+            self.displayed_icon = item
+            event_type = Event.ITEM_OBTAINED
+
+        return event_type
 
     def handle_interact(self):
+        # check for item cooldowns before continuing
         if self.cooldown > 0:
             return None, None
-
+        
+        # continue any ongoing interactions
+        if self.text_queue:
+            next_line, item = self.text_queue.popleft()
+            if next_line:
+                self.displayed_text = next_line
+                if "page" in next_line:
+                    self.displayed_icon = "page"
+                return None, None
+            elif item:
+                event_type = self.got_item(item)
+                details = item
+                return event_type, details
+            
+        # end active interaction if there's no data left
+        elif self.displayed_text:
+            self.displayed_text = None
+            self.displayed_icon = None
+            return None, None
 
         obj = self._get_object_at_position(self.player_pos)
 
@@ -294,7 +295,7 @@ class GameState:
                 self.displayed_text = "You found a TREASURE!"
                 self.displayed_icon = "red gem"
                 event_type = Event.TREASURE_FOUND
-                details = "treasure"
+                details = ""
                 self.player_has_items.append(obj.name)
                 return event_type, details    
 
@@ -302,70 +303,38 @@ class GameState:
         event_type = None
         details = None
         if obj:
-            if obj.type == "npc":
-                speech, item= obj.interact(self.player_has_items)
-                if item:
-                    details = item
-                    
-                    if "treasure" in item:
-                        self.score += 1
-                        print("score: ", self.score)
-                        event_type = Event.TREASURE_FOUND
-                        self.displayed_text = "You received a TREASURE!"
-                        self.displayed_icon = "red gem"
-                        self.player_has_items.append(item)
-
-                    else:
-                        self.player_has_items.append(item)
-                        self.displayed_text = f"You received the {item.upper()} from {obj.name.upper()}."
-                        self.displayed_icon = item
-                        event_type = Event.ITEM_OBTAINED
-
-                elif speech is None:
+            if "module" in obj.type:
+                module_trigger = obj.interact()
+                if module_trigger:
+                    self.current_module = obj
                     self.displayed_text = None
                     self.displayed_icon = None
+                    print("activating module...")
+                return None, None
 
-                elif speech != self.displayed_text:
-                    if not self.displayed_text:
-                        event_type = Event.NPC_INTERACT
-                        details = obj.name
-                    self.displayed_text = speech
-                    self.displayed_icon = None
+            elif obj.type == "npc":
+                conversation = obj.interact(self.player_has_items)
+                if conversation:
+                    event_type = Event.NPC_INTERACT
+                    details = obj.name
+
+                    self.text_queue = conversation
+                    return self.handle_interact()
 
             elif (obj.type == "chest" or obj.type == "barrel"):
                 if obj.type == "barrel" and not self.displayed_text:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
-                    self.cooldown = 50
-                    return None, None
-
+                    self.cooldown = 3000
+                
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
-                    if item and "treasure" in item:
-                        self.score += 1
-                        print("score: ", self.score)
-                        event_type = Event.TREASURE_FOUND
+                    if item:
                         details = item
-                        self.displayed_text = "You found a TREASURE!"
-                        self.displayed_icon = "red gem"
-                        self.player_has_items.append(item)
-                    
-                    elif item:
-                        self.player_has_items.append(item)
-                        self.displayed_text = f"You found the {item.upper()} in the {obj.type}."
-                        self.displayed_icon = item
-                        event_type = Event.ITEM_OBTAINED
-                        details = item
+                        event_type = self.got_item(item)
                     else:
                         self.displayed_text = "There's nothing in here."
                         self.displayed_icon = None
-                else:
-                    self.displayed_text = None
-                    self.displayed_icon = None
-
-            elif self.displayed_text:
-                self.displayed_text = None
-                self.displayed_icon = None
 
             elif obj.type == "door":
                 res = obj.interact(self.player_has_items)
@@ -378,12 +347,14 @@ class GameState:
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
 
-
-
             else:
                 res = obj.interact()
                 # if res:
                 #     self.displayed_text = res
+
+            if obj.item_text:
+                self.text_queue = deque(obj.item_text)
+                return self.handle_interact()
 
         else:
             self.displayed_text = None
@@ -417,24 +388,30 @@ def start_state(object_filename):
             new_obj_dict = room_objs[obj_name]
             obj_type = new_obj_dict["type"]
             obj_id = new_obj_dict.get("id", None)
+            obj_text = new_obj_dict.get("item text", None)
             if obj_type == "chest":
-                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
+                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
             elif obj_type == "barrel":
-                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id)
+                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
             elif obj_type == "door":
-                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id)
+                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id, item_text=obj_text)
             elif obj_type == "treasure":
-                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id)
+                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
             elif obj_type == "stairs":
-                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id)
+                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
             elif obj_type == "key object":
                 new_obj = KeyObject(
-                                objects[room][new_obj_dict["linked_object"]],
-                                **new_obj_dict["key_object"], 
-                                id=obj_id
-                                    )
+                    objects[room][new_obj_dict["linked_object"]],
+                    **new_obj_dict["key_object"], 
+                    id=obj_id,
+                    item_text=obj_text
+                        )
+            elif obj_type == "wire_module":
+                new_obj = WireModule(new_obj_dict["position"])
+            elif obj_type == "password_module":
+                new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
             else:
-                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id)
+                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
 
             objects[room][obj_name] = new_obj
 

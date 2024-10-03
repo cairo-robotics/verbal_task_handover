@@ -89,35 +89,17 @@ class GameMap:
     # Check for transition between rooms
     def check_transition(self, player_pos, game_state):
         x, y = player_pos
-        if self.grid[y][x] in self.transitions[self.current_room]:
-            # make sure the transition is not blocked by an object (e.g. hidden stairs)
-            if not game_state.check_available_transition(x, y):
-                return None, None
+        try:
+            if self.grid[y][x] in self.transitions[self.current_room]:
+                # make sure the transition is not blocked by an object (e.g. hidden stairs)
+                if not game_state.check_available_transition(x, y):
+                    return None, None
 
-            new_room, door_id =  self.transitions[self.current_room][self.grid[y][x]]
-            self.update_map(new_room)
-            door_pos = self._find_in_map(str(door_id))
-            new_pos = [door_pos[1], door_pos[0]]
-            return new_room, new_pos
-        return None, None
-
-    # def move_player(self, state, new_pos, new_dir):
-    #     move_success = False
-    #     player_pos = state.player_pos
-    #     if not state.player_in_interaction:
-    #         if self._is_valid_move(new_pos, state):
-    #             print("Player moved to", new_pos)
-    #             player_pos = new_pos
-    #             move_success = True
-
-    #         new_room, new_player_pos = self._check_transition(player_pos)
-    #         if new_room:
-    #             print("Player moved to", new_room, new_player_pos)
-    #             self.update_map(new_room)
-    #             state.update_current_room(new_room)
-    #             move_success = True
-            
-    #         state.player_pos = player_pos
-    #         state.player_dir = new_dir
-
-    #     return move_success, self.current_room, state.player_pos
+                new_room, door_id =  self.transitions[self.current_room][self.grid[y][x]]
+                self.update_map(new_room)
+                door_pos = self._find_in_map(str(door_id))
+                new_pos = [door_pos[1], door_pos[0]]
+                return new_room, new_pos
+            return None, None
+        except KeyError:
+            return None, None

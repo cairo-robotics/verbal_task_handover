@@ -1,5 +1,6 @@
 import pygame
 from treasure_hunt.visualization.utils import *
+from treasure_hunt.visualization.module_visualizer import *
 from treasure_hunt.src.game_mdp import Direction
 import os
 import copy
@@ -236,10 +237,18 @@ class StateVisualizer:
                 mfs = self.MULTI_FRAME_SPRITES["gems"]
             elif "key" in item:
                 mfs = self.MULTI_FRAME_SPRITES["keys"]
-            
-            item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-            item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
-            mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            else:
+                mfs = None
+
+            if mfs:            
+                item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
+                mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            else:
+                sprite = self.SPRITES[item]
+                item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
+                sprite.blit_on_surface_scaled(textbox_surface, item_sprite_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
         # Blit the textbox onto the main surface
         surface.blit(textbox_surface, textbox_position)
@@ -303,11 +312,29 @@ class StateVisualizer:
     @property
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
+    
+    def render_module(self, game_module, grid_surface):
+        width, height = grid_surface.get_size() 
+        width = int(width * 0.75)
+        height = int(height * 0.75)
+
+        if "wire" in game_module.type:
+            vis_module = WireModuleInterface(game_module, width, height)
+        elif "password" in game_module.type:
+            vis_module = PasswordModuleVisualizer(game_module, self.SPRITES["textbox"], width, height)
+        module_surface = vis_module.render()
+
+        # Calculate the position to blit the module_surface in the center of grid_surface
+        module_rect = module_surface.get_rect(center=grid_surface.get_rect().center)
+        grid_surface.blit(module_surface, module_rect)
 
     def render_state(self, state, game_map):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))
 
+
         self._render_grid(grid_surface, game_map.grid)
+        
+
         if game_map.texture_maps:
             self._render_grid_with_textures(grid_surface, game_map)
         
@@ -316,6 +343,9 @@ class StateVisualizer:
 
         if self.use_darkness:
             self._apply_darkness_mask(state, game_map, grid_surface)
+
+        if state.player_in_module:
+           self.render_module(state.current_module, grid_surface)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)

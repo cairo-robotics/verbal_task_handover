@@ -53,6 +53,14 @@
                 "id" : "torch"
             }
         },
+        "room1" : {
+            "password_module" : {
+                "position" : [2, 1],
+                "type" : "password_module",
+                "password" : "asdf",
+                "contains" : "treasure8"
+            }
+        },
         "room2" : {
             "chest0" : {
                 "position" : [3, 3],
@@ -97,6 +105,23 @@
             "torch" : {
                 "position" : [7, 0],
                 "type" : "torch"
+            },
+            "page" : {
+                "position" : [5, 0],
+                "type" : "page",
+                "item text": [
+                    ["A page with a complicated set of wire instructions.", ""],
+                    ["'If there are 3 wires in the module, follow these directions:'", ""],
+                    ["'1. If the first wire is red, cut the second wire.'", ""],
+                    ["'2. Else, if there is more than one blue wire, cut the last blue wire.'", ""],
+                    ["'3. Else, cut the last wire.'", ""],
+                    ["'If there are 4 wires in the module, follow these directions:'", ""],
+                    ["'1. If there is more than one red wire, and the last digit of the SERIAL NUMBER is odd...'", ""],
+                    ["'...cut the last red wire.'", ""],
+                    ["'2. Else, if there is exactly one blue wire, cut the first wire.'", ""],
+                    ["'3. Else, if there is more than one yellow wire, cut the last wire.'", ""],
+                    ["'4. Else, cut the second wire.'", ""]
+                ]
             }
 
         },
@@ -104,6 +129,14 @@
             "treasure1" : {
                 "position" : [6, 6],
                 "type" : "treasure"
+            },
+            "page": {
+                "position" : [4, 2],
+                "type" : "page",
+                "item text": [
+                    ["A ripped up page from a wire module manual.", ""],
+                    ["You can make out the serial number: 'S2411'.", ""]
+                ]
             }
         },
         "room5" : {
@@ -132,6 +165,15 @@
                 "position" : [3, 3],
                 "type" : "barrel",
                 "contains" : "blue key"
+            },
+            "barrel1" : {
+                "position" : [7, 7],
+                "type" : "barrel",
+                "contains" : "page",
+                "item text": [
+                    ["A page from a diary. It reads:", ""],
+                    ["'The password is asdf.'", ""]
+                ]
             }
         },
         "room15" : {
@@ -182,6 +224,13 @@
                 "position" : [5, 4],
                 "type" : "barrel",
                 "contains" : ""
+            }
+        },
+        "room19" : {
+            "wire_module" : {
+                "position" : [6, 2],
+                "type" : "wire_module",
+                "contains" : "treasure7"
             }
         }
     },
