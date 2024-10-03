@@ -129,6 +129,14 @@
             "treasure1" : {
                 "position" : [6, 6],
                 "type" : "treasure"
+            },
+            "page": {
+                "position" : [4, 2],
+                "type" : "page",
+                "item text": [
+                    ["A ripped up page from a wire module manual.", ""],
+                    ["You can make out the serial number: 'S2411'.", ""]
+                ]
             }
         },
         "room5" : {
