@@ -103,24 +103,3 @@ class GameMap:
             return None, None
         except KeyError:
             return None, None
-
-    # def move_player(self, state, new_pos, new_dir):
-    #     move_success = False
-    #     player_pos = state.player_pos
-    #     if not state.player_in_interaction:
-    #         if self._is_valid_move(new_pos, state):
-    #             print("Player moved to", new_pos)
-    #             player_pos = new_pos
-    #             move_success = True
-
-    #         new_room, new_player_pos = self._check_transition(player_pos)
-    #         if new_room:
-    #             print("Player moved to", new_room, new_player_pos)
-    #             self.update_map(new_room)
-    #             state.update_current_room(new_room)
-    #             move_success = True
-            
-    #         state.player_pos = player_pos
-    #         state.player_dir = new_dir
-
-    #     return move_success, self.current_room, state.player_pos

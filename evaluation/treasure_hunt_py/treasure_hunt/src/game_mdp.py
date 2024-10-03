@@ -39,16 +39,16 @@ class Door(Object):
 
     @property
     def sprite(self):
-        # return "door_open" if not self.is_open else "door_closed"
+        return "door_open" if self.is_open else "door_closed"
 
         # TODO: comment the below during the actual task! This is just for sanity checking during development
-        if self.is_locked:
-            return "door_locked"
-        elif self.is_open:
-            return "door_open"
-        elif self.was_unlocked:
-            return "door_unlocked"
-        return "door_closed"
+        # if self.is_locked:
+        #     return "door_locked"
+        # elif self.is_open:
+        #     return "door_open"
+        # elif self.was_unlocked:
+        #     return "door_unlocked"
+        # return "door_closed"
 
     @property
     def is_passable(self):
@@ -271,6 +271,8 @@ class GameState:
             next_line, item = self.text_queue.popleft()
             if next_line:
                 self.displayed_text = next_line
+                if "page" in next_line:
+                    self.displayed_icon = "page"
                 return None, None
             elif item:
                 event_type = self.got_item(item)
@@ -324,8 +326,6 @@ class GameState:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
                     self.cooldown = 3000
-                    self.text_queue = deque(obj.item_text)
-                    return self.handle_interact()
                 
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
@@ -351,6 +351,10 @@ class GameState:
                 res = obj.interact()
                 # if res:
                 #     self.displayed_text = res
+
+            if obj.item_text:
+                self.text_queue = deque(obj.item_text)
+                return self.handle_interact()
 
         else:
             self.displayed_text = None

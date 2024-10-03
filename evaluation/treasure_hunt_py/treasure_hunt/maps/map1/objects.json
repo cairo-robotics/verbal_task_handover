@@ -40,11 +40,7 @@
             "barrel" : {
                 "position" : [6, 9],
                 "type" : "barrel",
-                "contains" : "page",
-                "item text": [
-                    ["A page from a diary. It reads:", ""],
-                    ["'The password is asdf.'", ""]
-                ]
+                "contains" : ""
             },
             "torch1" : {
                 "position" : [9, 0],
@@ -109,6 +105,23 @@
             "torch" : {
                 "position" : [7, 0],
                 "type" : "torch"
+            },
+            "page" : {
+                "position" : [5, 0],
+                "type" : "page",
+                "item text": [
+                    ["A page with a complicated set of wire instructions.", ""],
+                    ["'If there are 3 wires in the module, follow these directions:'", ""],
+                    ["'1. If the first wire is red, cut the second wire.'", ""],
+                    ["'2. Else, if there is more than one blue wire, cut the last blue wire.'", ""],
+                    ["'3. Else, cut the last wire.'", ""],
+                    ["'If there are 4 wires in the module, follow these directions:'", ""],
+                    ["'1. If there is more than one red wire, and the last digit of the SERIAL NUMBER is odd...'", ""],
+                    ["'...cut the last red wire.'", ""],
+                    ["'2. Else, if there is exactly one blue wire, cut the first wire.'", ""],
+                    ["'3. Else, if there is more than one yellow wire, cut the last wire.'", ""],
+                    ["'4. Else, cut the second wire.'", ""]
+                ]
             }
 
         },
@@ -144,6 +157,15 @@
                 "position" : [3, 3],
                 "type" : "barrel",
                 "contains" : "blue key"
+            },
+            "barrel1" : {
+                "position" : [7, 7],
+                "type" : "barrel",
+                "contains" : "page",
+                "item text": [
+                    ["A page from a diary. It reads:", ""],
+                    ["'The password is asdf.'", ""]
+                ]
             }
         },
         "room15" : {
