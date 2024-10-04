@@ -245,10 +245,11 @@ class StateVisualizer:
                 item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
                 mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
             else:
-                sprite = self.SPRITES[item]
-                item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-                item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
-                sprite.blit_on_surface_scaled(textbox_surface, item_sprite_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                if sprite in self.SPRITES:
+                    sprite = self.SPRITES[item]
+                    item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
+                    sprite.blit_on_surface_scaled(textbox_surface, item_sprite_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
         # Blit the textbox onto the main surface
         surface.blit(textbox_surface, textbox_position)

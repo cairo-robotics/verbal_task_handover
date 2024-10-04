@@ -326,8 +326,11 @@ class GameState:
                     self.displayed_text = "You search around inside the barrel..."
                     self.displayed_icon = None
                     self.cooldown = 2000
-                    if not obj.contains and not obj.item_text:
+                    item = obj.interact()
+                    if not item and not obj.item_text:
                         self.text_queue = deque([("There's nothing in here.", None)])
+                    elif item:
+                        self.text_queue = deque([("", item)])
 
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
@@ -348,6 +351,7 @@ class GameState:
                         details = "used " + obj.key
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
+                    return event_type, details
 
             else:
                 res = obj.interact()
@@ -410,6 +414,7 @@ def start_state(object_filename):
                         )
             elif obj_type == "wire_module":
                 new_obj = WireModule(new_obj_dict["position"])
+                new_obj.serial_no = 'S2411'
             elif obj_type == "password_module":
                 new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
             else:

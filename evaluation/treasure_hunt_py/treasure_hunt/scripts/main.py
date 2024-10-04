@@ -25,6 +25,7 @@ TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
+MOVE_DURATION = 200 # time it takes to move from one tile to another in milliseconds
 
 # Colors
 BLACK = (0, 0, 0)
@@ -95,7 +96,7 @@ def main(args):
 
     running = True
     move_start_time = None
-    move_duration = 200  # Duration of the move in milliseconds
+    move_duration = MOVE_DURATION  # Duration of the move in milliseconds
     move_target_pos = None
 
     while running:

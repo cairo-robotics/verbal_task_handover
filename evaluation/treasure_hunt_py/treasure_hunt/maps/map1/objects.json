@@ -17,7 +17,10 @@
                 "position" : [10, 2],
                 "type" : "door",
                 "is_locked" : true,
-                "key": "silver key"
+                "key": "silver key",
+                "item text": [
+                    ["It won't open. There's a silver lock on the door.", ""]
+                ]
             },
             "door_to_room3" : {
                 "position" : [2, 10],
@@ -58,7 +61,7 @@
                 "position" : [2, 1],
                 "type" : "password_module",
                 "password" : "asdf",
-                "contains" : "treasure8"
+                "contains" : "treasure7"
             }
         },
         "room2" : {
@@ -90,7 +93,10 @@
                 "position" : [0, 2],
                 "type" : "door",
                 "is_locked" : true,
-                "key": "blue key"
+                "key": "blue key",
+                "item text": [
+                    ["It won't open. There's a blue lock on the door.", ""]
+                ]
             },
             "barrel0" : {
                 "position" : [8, 1],
@@ -150,24 +156,27 @@
                 "position" : [2, 4],
                 "type" : "door",
                 "is_locked" : true,
-                "key": "gold key"
+                "key": "gold key",
+                "item text": [
+                    ["It won't open. There's a gold lock on the door.", ""]
+                ]
             }
         },
         "room10" : {
             "barrel" : {
                 "position" : [4, 1],
                 "type" : "barrel",
-                "contains" : "treasure6"
+                "contains" : ""
             }
         },
         "room14" : {
             "barrel" : {
-                "position" : [3, 3],
+                "position" : [1, 2],
                 "type" : "barrel",
                 "contains" : "blue key"
             },
             "barrel1" : {
-                "position" : [7, 7],
+                "position" : [6, 5],
                 "type" : "barrel",
                 "contains" : "page",
                 "item text": [
@@ -230,7 +239,7 @@
             "wire_module" : {
                 "position" : [6, 2],
                 "type" : "wire_module",
-                "contains" : "treasure7"
+                "contains" : "treasure6"
             }
         }
     },
@@ -277,13 +286,8 @@
                 "interact_data" : [
                     [
                         ["> Hey, I'm Guy.", ""],
-                        ["> I might have a hint for you.", ""],
-                        ["> It all started when I was a young boy.", ""],
-                        ["> I used to really like this show... What was it called?", ""],
-                        ["> The one with that guy, before he got married to that actress?", ""],
-                        ["> Oh, what was it called?", ""],
-                        ["> ...", ""],
-                        ["> Anyway, you can dig on the tile you're standing on by pressing SPACE.", ""]
+                        ["> Did you know, you can dig on the tile you're standing on by pressing SPACE?", ""],
+                        ["> You can also use SPACE to search barrels and chests, and to open doors.", ""]
                     ]
                 ]
             }
@@ -308,8 +312,11 @@
                     "silver key" : [
                         ["> My friend likes to hang out in locked rooms. He should be able to help.", ""]
                     ],
-                    "treasure2" : [
-                        ["> Oh, looks like you found that treasure. I'm glad I could help.", ""]
+                    "note from steve" : [
+                        ["> Oh, wow! You brought the gem I needed.", ""],
+                        ["> Plus a letter. Thank you.", ""],
+                        ["> Here's a reward.", ""],
+                        ["", "treasure2"]
                     ]
                 }
             }
@@ -341,11 +348,20 @@
                 "interact_data" : [
                     [
                         ["> Hmph. What's this you say about treasure?", ""],
-                        ["> Well. I've been holding onto this for awhile, but it's not like I'm using it...", ""],
-                        ["> Here, take it. Just don't tell anyone you got it from me.", ""],
-                        ["", "treasure2"]
+                        ["> Well. Bring me a GREEN GEM and we can see about that.", ""],
+                        ["> It might be buried somewhere, or rattlin' around a barrel...", ""]
                     ]
-                ]
+                ],
+                "conditional_interacts" : {
+                    "green gem" : [
+                        ["> Excellent, you found the GREEN GEM. Thanks.", ""],
+                        ["> Take that gem back to Mark. The fellow with the glasses who sent you here.", ""],
+                        ["> And take this.", ""],
+                        ["", "note from Steve"],
+                        ["> Trust me, he'll make it worth your while.", ""]
+                    ]
+                }
+                    
             }
         },
         "room18" : {
