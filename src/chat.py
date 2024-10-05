@@ -50,11 +50,12 @@ class ChatBot():
                 + str(self.graph)
         else:
             return "You are an assistant helping the user formulate a written report about their current state and progress\
-                in a video game. Your goal is to help the user write a report that is clear, concise, and informative. \
+                in a video game. Your goal is to help the user write a report that is concise while not omitting any relevant info. \
                 The report will be given to the next user, who will use it to continue playing the game from this point. \
-                The following is a knowledge graph representing what you know about the current state of the game.\n\
-                " + str(self.graph) \
-                + "The following is the report you and the user have written so far:\n" + self.report_text
+                The following is a knowledge graph extracted from the game's telemetry, representing what you currently know about the state of the game.\
+                \n" + str(self.graph) \
+                + "\nThe following is the most current version of the user's report so far:\n" + self.report_text \
+                + "\nYou can ask clarifying questions about the game state, or suggest edits to the report."
     
     def _paste_graph_as_text(self):
         return str(self.graph)
@@ -143,6 +144,7 @@ class ChatGUI(tk.Tk):
         # text_area.delete("1.0", tk.END)  # Clear the text area
         print("Report saved.")  # You can remove or replace this with any feedback mechanism
 
+        self.bot._chat_reply_with_history("I have updated the report.")
 
 def test_chatbot_with_graph():
     from graph import TelemetryGraph
