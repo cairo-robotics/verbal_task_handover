@@ -98,6 +98,7 @@ def main(args):
     move_start_time = None
     move_duration = MOVE_DURATION  # Duration of the move in milliseconds
     move_target_pos = None
+    keys_pressed = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False, pygame.K_DOWN: False}
 
     while running:
         for event in pygame.event.get():
@@ -123,29 +124,60 @@ def main(args):
                     running = False
                     telemetry.cleanup()
 
-                elif not state.player_in_interaction and move_target_pos is None:
-                    new_pos = list(player_pos)
-                    player_dir = state.player_dir
-                    if event.key == pygame.K_LEFT:
-                        new_pos[0] -= 1
-                        player_dir = Direction.WEST
-                    elif event.key == pygame.K_RIGHT:
-                        new_pos[0] += 1
-                        player_dir = Direction.EAST
-                    elif event.key == pygame.K_UP:
-                        new_pos[1] -= 1
-                        player_dir = Direction.NORTH
-                    elif event.key == pygame.K_DOWN:
-                        new_pos[1] += 1
-                        player_dir = Direction.SOUTH
+                elif event.key in keys_pressed:
+                    print("key pressed: ", event.key, "move_target_pos: ", move_target_pos)
+                    keys_pressed[event.key] = True
+                    if move_target_pos is None:
+                        new_pos = list(player_pos)
+                        player_dir = state.player_dir
+                        if keys_pressed[pygame.K_LEFT]:
+                            new_pos[0] -= 1
+                            player_dir = Direction.WEST
+                        elif keys_pressed[pygame.K_RIGHT]:
+                            new_pos[0] += 1
+                            player_dir = Direction.EAST
+                        elif keys_pressed[pygame.K_UP]:
+                            new_pos[1] -= 1
+                            player_dir = Direction.NORTH
+                        elif keys_pressed[pygame.K_DOWN]:
+                            new_pos[1] += 1
+                            player_dir = Direction.SOUTH
 
-                    if game_map.is_valid_move(new_pos, state):
-                        move_target_pos = new_pos
-                        move_start_time = pygame.time.get_ticks()
-                    state.player_dir = player_dir
+                        if game_map.is_valid_move(new_pos, state):
+                            move_target_pos = new_pos
+                            move_start_time = pygame.time.get_ticks()
+                        state.player_dir = player_dir
+
+            elif event.type == pygame.KEYUP:
+                if event.key in keys_pressed:
+                    keys_pressed[event.key] = False
+
+        # handle held arrow keys for movement
+        if move_target_pos is None:
+            new_pos = list(player_pos)
+            player_dir = state.player_dir
+            key_held = (keys_pressed[pygame.K_LEFT] or keys_pressed[pygame.K_RIGHT] or keys_pressed[pygame.K_UP] or keys_pressed[pygame.K_DOWN])
+            if keys_pressed[pygame.K_LEFT]:
+                new_pos[0] -= 1
+                player_dir = Direction.WEST
+            elif keys_pressed[pygame.K_RIGHT]:
+                new_pos[0] += 1
+                player_dir = Direction.EAST
+            elif keys_pressed[pygame.K_UP]:
+                new_pos[1] -= 1
+                player_dir = Direction.NORTH
+            elif keys_pressed[pygame.K_DOWN]:
+                new_pos[1] += 1
+                player_dir = Direction.SOUTH
+
+            if key_held and game_map.is_valid_move(new_pos, state):
+                move_target_pos = new_pos
+                move_start_time = pygame.time.get_ticks()
+                state.player_dir = player_dir
 
         if move_target_pos is not None:
             elapsed_time = pygame.time.get_ticks() - move_start_time
+            print("elapsed_time: ", elapsed_time)
             if elapsed_time >= move_duration:
                 player_pos = move_target_pos
                 move_target_pos = None
