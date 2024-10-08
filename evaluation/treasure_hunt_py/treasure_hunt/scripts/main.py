@@ -5,7 +5,6 @@ from treasure_hunt.visualization.state_visualizer import StateVisualizer
 from treasure_hunt.src.telemetry import Telemetry, DummyTelemetry, Event
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
-import json
 import argparse
 
 # Initialize Pygame
@@ -36,7 +35,8 @@ VISUAL_PARAMS = {
     'font_size' : 36,
     'game_surface_fps' : FPS,
     'use_darkness' : True,
-    'light_radius' : 2
+    'light_radius' : 2,
+    'walk_animation_frames' : 3
 }
 
 def on_render(window, state_vis, state, game_map):
@@ -63,7 +63,7 @@ def main(args):
         telemetry = DummyTelemetry()
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("2D Adventure Game")
+    pygame.display.set_caption("Treasure Hunt Task")
     clock = pygame.time.Clock()
 
     if load_file:

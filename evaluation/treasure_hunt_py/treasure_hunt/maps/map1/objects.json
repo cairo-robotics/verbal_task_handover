@@ -117,11 +117,6 @@
                 "type" : "page",
                 "item text": [
                     ["A page with a complicated set of wire instructions.", ""],
-                    ["'If there are 3 wires in the module, follow these directions:'", ""],
-                    ["'1. If the first wire is red, cut the second wire.'", ""],
-                    ["'2. Else, if there is more than one blue wire, cut the last blue wire.'", ""],
-                    ["'3. Else, cut the last wire.'", ""],
-                    ["'If there are 4 wires in the module, follow these directions:'", ""],
                     ["'1. If there is more than one red wire, and the last digit of the SERIAL NUMBER is odd...'", ""],
                     ["'...cut the last red wire.'", ""],
                     ["'2. Else, if there is exactly one blue wire, cut the first wire.'", ""],
@@ -178,9 +173,9 @@
             "barrel1" : {
                 "position" : [6, 5],
                 "type" : "barrel",
-                "contains" : "page",
+                "contains": "",
                 "item text": [
-                    ["A page from a diary. It reads:", ""],
+                    ["There's a ripped page inside. It reads:", ""],
                     ["'The password is asdf.'", ""]
                 ]
             }
@@ -239,7 +234,9 @@
             "wire_module" : {
                 "position" : [6, 2],
                 "type" : "wire_module",
-                "contains" : "treasure6"
+                "contains" : "treasure6",
+                "wires" : ["blue", "red", "yellow", "blue"],
+                "serial_no" : "S2411"
             }
         }
     },
@@ -251,7 +248,6 @@
                 "interact_data" : [
                     [
                         ["> Hello, I'm Lily.", ""],
-                        ["> I hear you're looking for treasure.", ""],
                         ["> I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
                         ["> I hope that helps!", ""]
                     ]
@@ -262,7 +258,6 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Hey, you.", ""],
                         ["> I've heard about a treasure, but first I need something.", ""],
                         ["> I need a BLUE GEM. If you find one, bring it to me.", ""]
                     ],
@@ -272,11 +267,12 @@
                 ],
                 "conditional_interacts" : {
                     "blue gem" : [
-                        ["> Oh, you found the BLUE GEM. Thanks.", ""],
-                        ["> Okay, here's what I've heard about the treasure...", ""],
-                        ["> 'Find the RED BANNER, then head 3 steps SOUTH and 2 steps EAST.'", ""],
-                        ["> 'Then press SPACE to find what you seek.'", ""],
-                        ["> Lucky for you, I'm more of a blue gem guy, so that treasure's all yours.", ""]
+                        [
+                            ["> Oh, you found the BLUE GEM. Thanks.", ""],
+                            ["> Okay, here's what I've heard about the treasure...", ""],
+                            ["> 'Face the RED BANNER, then head 3 steps SOUTH and 2 steps EAST.'", ""],
+                            ["> 'Then press SPACE to find what you seek.'", ""]
+                        ]
                     ]
                 }
             },
@@ -285,7 +281,6 @@
                 "facing" : "WEST",
                 "interact_data" : [
                     [
-                        ["> Hey, I'm Guy.", ""],
                         ["> Did you know, you can dig on the tile you're standing on by pressing SPACE?", ""],
                         ["> You can also use SPACE to search barrels and chests, and to open doors.", ""]
                     ]
@@ -298,25 +293,26 @@
                 "facing" : "SOUTH", 
                 "interact_data" : [
                     [
-                        ["> Hello.", ""],
                         ["> I'm not sure where to find treasure, but I know someone who might.", ""],
                         ["> He's a bit of a recluse, so he likes to hang out in locked rooms.", ""],
                         ["> Take this. Just tell him Mark sent you.", ""],
                         ["", "silver key"]
                     ],
                     [
-                        ["> I'm glad I could help.", ""]
+                        ["> My friend likes to hang out in locked rooms. He should be able to help.", ""]
                     ]
                 ],
                 "conditional_interacts" : {
-                    "silver key" : [
-                        ["> My friend likes to hang out in locked rooms. He should be able to help.", ""]
-                    ],
-                    "note from steve" : [
-                        ["> Oh, wow! You brought the gem I needed.", ""],
-                        ["> Plus a letter. Thank you.", ""],
-                        ["> Here's a reward.", ""],
-                        ["", "treasure2"]
+                    "note from Steve" : [
+                        [
+                            ["> Oh, wow! You brought the gem I needed.", ""],
+                            ["> Plus a letter. Thank you.", ""],
+                            ["> Here's a reward.", ""],
+                            ["", "treasure2"]
+                        ],
+                        [
+                            ["> Thanks for all your help!", ""]
+                        ]
                     ]
                 }
             }
@@ -327,16 +323,17 @@
                 "facing" : "EAST",
                 "interact_data" : [
                     [
-                        ["> ...Sorry, I'm shy.", ""]
+                        ["> ...Sorry, I'm shy. Can we talk later?", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "blue gem" : [
-                        ["> ...Oh, do you know my brother? He loves blue gems.", ""],
-                        ["> You must be quite the treasure hunter.", ""],
-                        ["> Did he also tell you about the blue banner?", ""],
-                        ["> If you tap it 3 times, you'll find a secret passage.", ""],
-                        ["> I hope that helps.", ""]
+                        [
+                            ["> Oh, you found a blue gem. My brother loves those.", ""],
+                            ["> Did he also tell you about the blue banner?", ""],
+                            ["> If you tap it 3 times, you'll find a secret passage.", ""],
+                            ["> I hope that helps.", ""]
+                        ]
                     ]
                 }
             }
@@ -347,18 +344,19 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Hmph. What's this you say about treasure?", ""],
-                        ["> Well. Bring me a GREEN GEM and we can see about that.", ""],
+                        ["> Bring me a GREEN GEM and we can see about a trade.", ""],
                         ["> It might be buried somewhere, or rattlin' around a barrel...", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "green gem" : [
-                        ["> Excellent, you found the GREEN GEM. Thanks.", ""],
-                        ["> Take that gem back to Mark. The fellow with the glasses who sent you here.", ""],
-                        ["> And take this.", ""],
-                        ["", "note from Steve"],
-                        ["> Trust me, he'll make it worth your while.", ""]
+                        [
+                            ["> Excellent, you found the GREEN GEM. Thanks.", ""],
+                            ["> Take that gem back to Mark. The one with the glasses who sent you here.", ""],
+                            ["> And take this.", ""],
+                            ["", "note from Steve"],
+                            ["> He'll reward you for the delivery.", ""]
+                        ]
                     ]
                 }
                     
@@ -370,13 +368,8 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Hi there.", ""],
                         ["> Did anyone tell you? Sometimes barrels have nice things in them...", ""],
-                        ["> Not always, but sometimes.", ""]
-                    ],
-                    [
-                        ["> Have you been checking the barrels?", ""],
-                        ["> Sorry, I beat you to the ones in here.", ""]
+                        ["> Make sure you use SPACE to check them.", ""]
                     ]
                 ]
             }

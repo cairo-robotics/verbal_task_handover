@@ -245,7 +245,7 @@ class StateVisualizer:
                 item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
                 mfs.blit_on_surface_scaled(textbox_surface, item_sprite_pos, item + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
             else:
-                if sprite in self.SPRITES:
+                if item in self.SPRITES:
                     sprite = self.SPRITES[item]
                     item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                     item_sprite_pos = (textbox_surface.get_width() // 2 - item_sprite_size[0] // 2, textbox_surface.get_height() - item_sprite_size[1] - 10)
@@ -268,12 +268,13 @@ class StateVisualizer:
         if float(state.player_pos[0]).is_integer() and float(state.player_pos[1]).is_integer():
             sprite_frame = 2  # Standing still
         else:
-            # Calculate the frame based on the fractional part of the position
-            fractional_x = state.player_pos[0] % 1
-            fractional_y = state.player_pos[1] % 1
-            frame_index = int((fractional_x + fractional_y) * 3) % 3 + 1
-            sprite_frame = frame_index
-        
+            # Calculate the frame based on the walk animation cycle
+            move_progress = max(state.player_pos[0] % 1, state.player_pos[1] % 1)
+            cycle_frame   = int(move_progress * self.walk_animation_frames)
+            sprite_frame = (cycle_frame % 4) + 1 # 4 frames per walk cycle - 1, 2, 3, 2
+            if sprite_frame == 4:
+                sprite_frame = 2
+
         sprite_name = f"{dir_name}_{sprite_frame}.png"
         x_offset = (self.MULTI_FRAME_SPRITES["player"].sprite_size[1] - self.MULTI_FRAME_SPRITES["player"].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES["player"].sprite_size[1])
         player_pos = (state.player_pos[0] + x_offset, state.player_pos[1])

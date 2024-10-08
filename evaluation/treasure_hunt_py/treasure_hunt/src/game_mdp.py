@@ -139,7 +139,11 @@ class NPC(Object):
     def interact(self, player_has_items):
         for key in self.conditional_interact_data:
             if key in player_has_items:
-                conversation = self.conditional_interact_data[key]
+                if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
+                    conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
+                else:
+                    conversation = self.conditional_interact_data[key][-1]
+                
                 self.conditional_interact_counts[key] += 1
                 return deque(conversation)
 
@@ -179,7 +183,7 @@ class GameState:
     def __setstate__(self, state):
         # Restore the defaultdict
         self.__dict__.update(state)
-        self._objects = defaultdict(list, state['_objects'])
+        self._objects = defaultdict(dict, state['_objects'])
 
     def update_current_room(self, new_room):
         self.current_room = new_room
@@ -223,20 +227,21 @@ class GameState:
         return False
     
     def handle_keypress(self, key):
-        if self.player_in_module and self.cooldown <= 0:
+        if self.player_in_module and not self.current_module.on_cooldown:
             res = self.current_module.on_keypress(key)
             if res is not None:
                 if res:
-                    self.displayed_text = "You defused the module!"
-                    self.displayed_icon = None
+                    self.got_item(self.current_module.contains)
+                    self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
+                    self.current_module = None
+
                     # TODO add telemetry event calls
                 elif "wire" in self.current_module.type:
                     self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
-                    self.cooldown = 60000
                     self.displayed_icon = None
                 elif "password" in self.current_module.type:
                     self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
-                    self.cooldown = 5000
+                    self.displayed_icon = None
 
     def handle_esc(self):
         self.current_module = None
@@ -268,6 +273,7 @@ class GameState:
         
         # continue any ongoing interactions
         if self.text_queue:
+            print(self.text_queue)
             next_line, item = self.text_queue.popleft()
             if next_line:
                 self.displayed_text = next_line
@@ -304,13 +310,18 @@ class GameState:
         details = None
         if obj:
             if "module" in obj.type:
-                module_trigger = obj.interact()
-                if module_trigger:
-                    self.current_module = obj
-                    self.displayed_text = None
+                if not obj.on_cooldown:
+                    module_trigger = obj.interact()
+                    if module_trigger:
+                        self.current_module = obj
+                        self.displayed_text = obj.item_text
+                        self.displayed_icon = None
+                        print("activating module...")
+                    return None, None
+                else:
+                    self.displayed_text = "The module is locked. Wait before trying again."
                     self.displayed_icon = None
-                    print("activating module...")
-                return None, None
+                    return None, None
 
             elif obj.type == "npc":
                 conversation = obj.interact(self.player_has_items)
@@ -349,18 +360,21 @@ class GameState:
                         self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
                         event_type = Event.DOOR_UNLOCKED
                         details = "used " + obj.key
+                        return event_type, details
+                    elif obj.item_text:
+                        self.text_queue = deque(obj.item_text)
+                        return self.handle_interact()
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
-                    return event_type, details
 
             else:
                 res = obj.interact()
                 # if res:
                 #     self.displayed_text = res
 
-            if obj.item_text:
-                self.text_queue = deque(obj.item_text)
-                return self.handle_interact()
+                if obj.item_text:
+                    self.text_queue = deque(obj.item_text)
+                    return self.handle_interact()
 
         else:
             self.displayed_text = None
@@ -413,10 +427,9 @@ def start_state(object_filename):
                     item_text=obj_text
                         )
             elif obj_type == "wire_module":
-                new_obj = WireModule(new_obj_dict["position"])
-                new_obj.serial_no = 'S2411'
+                new_obj = WireModule(new_obj_dict["position"], new_obj_dict["contains"], new_obj_dict["serial_no"], new_obj_dict["wires"])
             elif obj_type == "password_module":
-                new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["password"])
+                new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["contains"], new_obj_dict["password"])
             else:
                 new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
 

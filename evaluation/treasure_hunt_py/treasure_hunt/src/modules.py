@@ -47,7 +47,7 @@ class KeyObject(Object):
         return None
     
 class WireModule(Object):
-    def __init__(self, position, serial_no="1234", wires=None):
+    def __init__(self, position, contains, serial_no="1234", wires=None):
         super().__init__("wire_module", "wire_module", position)
 
         self.wires = wires if wires is not None else self.random()
@@ -56,6 +56,18 @@ class WireModule(Object):
         self.defused = False
         self._sprite = "module"
         self.cut_wire = None
+        self.contains = contains
+
+        self.COOLDOWN = 30000 # 30 seconds
+        self.cooldown_start = None
+
+        self.item_text = "[Press the number key of the correct wire to defuse the panel. Press ESC to exit.]"
+
+    @property
+    def on_cooldown(self):
+        if self.cooldown_start is not None:
+            return pygame.time.get_ticks() - self.cooldown_start < self.COOLDOWN
+        return False
     
     def random(self):
         COLOR_OPTIONS = ["red", "blue", "yellow", "black", "green"]
@@ -110,17 +122,30 @@ class WireModule(Object):
                 self.cut_wire = int(key)
                 return True
             else:
+                self.cooldown_start = pygame.time.get_ticks()
                 return False
         return None
             
 class PasswordModule(Object):
-    def __init__(self, position, password="asdf"):
+    def __init__(self, position, contains, password="asdf"):
         super().__init__("password_module", "password_module", position)
         self.password = password
         self._sprite = "module"
         self.input = ""
         self.defused = False
-    
+        self.contains = contains
+
+        self.COOLDOWN = 5000 # 5 seconds
+        self.cooldown_start = None
+
+        self.item_text = "[Type the correct password and press ENTER to defuse the panel. Press ESC to exit.]"
+
+    @property
+    def on_cooldown(self):
+        if self.cooldown_start is not None:
+            return pygame.time.get_ticks() - self.cooldown_start < self.COOLDOWN
+        return False
+
     def interact(self, *args):
         return not self.defused
     
