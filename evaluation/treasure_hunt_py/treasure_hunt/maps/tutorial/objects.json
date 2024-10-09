@@ -1,0 +1,51 @@
+{
+    "objects" : {
+        "room0" : {
+            "chest0" : {
+                "position" : [3, 3],
+                "type" : "chest",
+                "contains" : "gold key"
+            },
+            "door_to_room1" : {
+                "position" : [4, 0],
+                "type" : "door",
+                "is_locked" : true,
+                "key": "gold key"
+            }
+        },
+        "room1" : {
+            "barrel" : {
+                "position" : [3, 3],
+                "type" : "barrel",
+                "contains" : ""
+            },
+            "page" : {
+                "position" : [7, 0],
+                "type" : "page",
+                "item text": [
+                    ["A piece of paper with a message on it.", ""],
+                    ["'Pages may have important hints on them!'", ""],
+                    ["'For example, if you stand in the top-right corner of this room and press SPACE...", ""],
+                    ["'...you can get a treasure!'", ""]
+                ]
+            },
+            "treasure0" : {
+                "position" : [10, 1],
+                "type" : "treasure"
+            }
+        }
+    },
+    "npcs" : {
+        "room1" : {
+            "lily" : {
+                "position" : [5, 1],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["> Hi there! How are you?", ""]
+                    ]
+                ]
+            }
+        }
+    }
+}

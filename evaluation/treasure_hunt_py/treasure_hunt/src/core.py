@@ -36,8 +36,11 @@ class GameMap:
         return sprite_type, frame_name
 
     def _load_texture_config(self, filename):
-        with open(filename, 'r') as f:
-            return json.load(f)
+        try:
+            with open(filename, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
 
     def _find_in_map(self, char):
         for y, row in enumerate(self.grid):
