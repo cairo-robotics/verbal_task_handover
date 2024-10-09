@@ -145,6 +145,8 @@ def main(args):
                         if game_map.is_valid_move(new_pos, state):
                             move_target_pos = new_pos
                             move_start_time = pygame.time.get_ticks()
+                        else:
+                            move_target_pos = list(player_pos)
                         state.player_dir = player_dir
 
             elif event.type == pygame.KEYUP:
