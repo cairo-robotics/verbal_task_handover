@@ -47,7 +47,7 @@ class WireModuleInterface(ModuleInterface):
             pygame.draw.rect(game_surface, wire_sprite.color, wire_sprite.rect)
             
             # Render number labels next to each wire
-            label = font.render(str(i), True, (255, 0, 0))
+            label = font.render(str(i+1), True, (255, 0, 0))
             label_rect = label.get_rect()
             label_rect.centery = wire_sprite.rect.centery
             label_rect.left = game_surface.get_rect().left + 2

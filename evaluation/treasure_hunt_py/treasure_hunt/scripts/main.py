@@ -24,7 +24,7 @@ TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-MOVE_DURATION = 200 # time it takes to move from one tile to another in milliseconds
+MOVE_DURATION = 150 # time it takes to move from one tile to another in milliseconds
 
 # Colors
 BLACK = (0, 0, 0)
@@ -124,8 +124,7 @@ def main(args):
                     running = False
                     telemetry.cleanup()
 
-                elif event.key in keys_pressed:
-                    print("key pressed: ", event.key, "move_target_pos: ", move_target_pos)
+                elif event.key in keys_pressed and not state.player_in_interaction:
                     keys_pressed[event.key] = True
                     if move_target_pos is None:
                         new_pos = list(player_pos)
@@ -177,7 +176,6 @@ def main(args):
 
         if move_target_pos is not None:
             elapsed_time = pygame.time.get_ticks() - move_start_time
-            print("elapsed_time: ", elapsed_time)
             if elapsed_time >= move_duration:
                 player_pos = move_target_pos
                 move_target_pos = None

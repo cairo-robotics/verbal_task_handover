@@ -117,9 +117,9 @@ class WireModule(Object):
         # import pdb; pdb.set_trace()
         key = pygame.key.name(key)
         if not self.defused and key.isdigit() and int(key) < self.num_wires:
-            if self.check_defuse(int(key)):
+            if self.check_defuse(int(key)-1):
                 self.defused = True
-                self.cut_wire = int(key)
+                self.cut_wire = int(key) - 1
                 return True
             else:
                 self.cooldown_start = pygame.time.get_ticks()

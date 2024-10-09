@@ -167,7 +167,9 @@ class GameState:
         self.displayed_icon = None
 
         self.score = 0
+        
         self.cooldown = 0
+        self.cooldown_time_elapsed = 0
 
         self.current_module = None
 
@@ -191,7 +193,18 @@ class GameState:
             obj.on_update()
 
     def tick(self, dt):
+        prior_cooldown = self.cooldown
         self.cooldown = max(0, self.cooldown - dt)
+        if prior_cooldown > 0 and self.cooldown == 0:
+            self.cooldown_time_elapsed = 0
+            self.displayed_text += " [done]"
+
+        if self.cooldown > 0:
+            self.cooldown_time_elapsed += dt
+            if self.cooldown_time_elapsed >= 500 and self.displayed_text:
+                self.cooldown_time_elapsed = 0
+                self.displayed_text += " ."
+
 
     @property
     def objects(self):
@@ -235,7 +248,7 @@ class GameState:
                     self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
                     self.current_module = None
 
-                    # TODO add telemetry event calls
+                    # TODO add telemetry event calls (if needed?)
                 elif "wire" in self.current_module.type:
                     self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
                     self.displayed_icon = None
@@ -267,6 +280,8 @@ class GameState:
         return event_type
 
     def handle_interact(self):
+        print("handling interact: ", self.displayed_text, self.text_queue)
+
         # check for item cooldowns before continuing
         if self.cooldown > 0:
             return None, None
@@ -334,7 +349,7 @@ class GameState:
 
             elif (obj.type == "chest" or obj.type == "barrel"):
                 if obj.type == "barrel" and not self.displayed_text:
-                    self.displayed_text = "You search around inside the barrel..."
+                    self.displayed_text = "You search around inside the barrel."
                     self.displayed_icon = None
                     self.cooldown = 2000
                     item = obj.interact()
