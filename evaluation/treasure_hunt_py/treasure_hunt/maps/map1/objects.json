@@ -205,7 +205,7 @@
         },
         "room17" : {
             "secret stairs" : {
-                "position" : [5, 3],
+                "position" : [5, 1],
                 "type" : "stairs"
             },
             "secret key" : {

@@ -80,6 +80,8 @@ def main(args):
         state = GameState(player_pos, player_dir, current_room, objects)
         print("Initializing new game...")
 
+    state.set_telemetry(telemetry)
+
     # transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
     # game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     game_map = GameMap(MAP_DIRECTORY, current_room)
@@ -117,8 +119,8 @@ def main(args):
                 
                 elif event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact()
-                    if interact_output:
-                        telemetry.log_event(*interact_output)
+                    # if interact_output:
+                    #     telemetry.log_event(*interact_output)
 
                 elif event.key == pygame.K_q:
                     running = False
@@ -186,7 +188,7 @@ def main(args):
                     current_room = new_room
                     player_pos = new_player_pos
                     state.update_current_room(current_room)
-                    telemetry.log_event(Event.ROOM_ENTERED, current_room)
+                    # telemetry.log_event(Event.ROOM_ENTERED, current_room)
                 state.player_pos = player_pos
             else:
                 progress = elapsed_time / move_duration

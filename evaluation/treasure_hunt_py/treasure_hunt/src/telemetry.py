@@ -4,7 +4,9 @@ class Event:
     # define implemented event types
     NPC_INTERACT = "NPC interact"
     DOOR_UNLOCKED = "Door unlocked"
+    DOOR_LOCKED = "Tried locked door"
     ITEM_OBTAINED = "Item obtained"
+    ITEM_INTERACTED = "Item interacted"
     ITEM_LOST = "Item lost"
     ROOM_ENTERED = "Room entered"
     PLAYER_MOVED = "Player moved"

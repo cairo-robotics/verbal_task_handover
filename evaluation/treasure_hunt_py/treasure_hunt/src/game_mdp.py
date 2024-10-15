@@ -180,6 +180,9 @@ class GameState:
         # Convert the defaultdict to a regular dict
         state['_objects'] = dict(self._objects)
 
+        # Get rid of telemetry pointer
+        state['telemetry'] = None
+
         return state
 
     def __setstate__(self, state):
@@ -187,8 +190,14 @@ class GameState:
         self.__dict__.update(state)
         self._objects = defaultdict(dict, state['_objects'])
 
+    def set_telemetry(self, telemetry):
+        self.telemetry = telemetry
+
     def update_current_room(self, new_room):
         self.current_room = new_room
+        player_dir = self.player_dir
+        details = Direction.DIRECTION_TO_NAME[player_dir] + " to " + new_room
+        self.telemetry.log_event(Event.ROOM_ENTERED, details)
         for name, obj in self._objects[self.current_room].items():
             obj.on_update()
 
@@ -204,7 +213,6 @@ class GameState:
             if self.cooldown_time_elapsed >= 500 and self.displayed_text:
                 self.cooldown_time_elapsed = 0
                 self.displayed_text += " ."
-
 
     @property
     def objects(self):
@@ -318,6 +326,8 @@ class GameState:
                 event_type = Event.TREASURE_FOUND
                 details = ""
                 self.player_has_items.append(obj.name)
+
+                self.telemetry.log_event(event_type, details)
                 return event_type, details    
 
         obj = self._get_facing_object()
@@ -344,6 +354,8 @@ class GameState:
                     event_type = Event.NPC_INTERACT
                     details = obj.name
 
+                    self.telemetry.log_event(event_type, details)
+
                     self.text_queue = conversation
                     return self.handle_interact()
 
@@ -352,11 +364,14 @@ class GameState:
                     self.displayed_text = "You search around inside the barrel."
                     self.displayed_icon = None
                     self.cooldown = 2000
+                    self.telemetry.log_event(Event.ITEM_INTERACTED, "barrel")
                     item = obj.interact()
                     if not item and not obj.item_text:
                         self.text_queue = deque([("There's nothing in here.", None)])
                     elif item:
                         self.text_queue = deque([("", item)])
+                    elif obj.item_text:
+                        self.text_queue = deque(obj.item_text)
 
                 elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
                     item = obj.interact()
@@ -375,13 +390,19 @@ class GameState:
                         self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
                         event_type = Event.DOOR_UNLOCKED
                         details = "used " + obj.key
+                        self.telemetry.log_event(event_type, details)
                         return event_type, details
                     elif obj.item_text:
                         self.text_queue = deque(obj.item_text)
+                        event_type = Event.DOOR_LOCKED
+                        details = obj.name
+                        self.telemetry.log_event(event_type, details)
                         return self.handle_interact()
                     else:
                         self.displayed_text = "Looks like you don't have the key for this door."
-
+                        event_type = Event.DOOR_LOCKED
+                        details = ""
+                        # self.telemetry.log_event(event_type, details)
             else:
                 res = obj.interact()
                 # if res:
@@ -395,6 +416,7 @@ class GameState:
             self.displayed_text = None
             self.displayed_icon = None
         
+        self.telemetry.log_event(event_type, details)
         return event_type, details
 
     def save(self, filename="save.pkl"):
