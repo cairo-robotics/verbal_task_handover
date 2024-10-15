@@ -125,17 +125,22 @@ class TelemetryGraph:
             # Process different types of events
             if event.startswith("Player moved"):
                 coords = event.split(": ")[1].strip("[]")
-                # location_name = self.get_node_name_from_position(current_room, coords)
+                location_name = self.get_node_name_from_position(current_room, coords)
                 # G.add_node(location_name)
                 # G.add_edge(last_added_position_node, location_name, action="Moved to", time=timestamp)
                 last_position = coords
                 # last_added_position_node = location_name
             
             elif event.startswith("Room entered"):
-                room_name = event.split(": ")[1]
+                details = event.split(": ")[1]
+                direction = details.split(" ")[0]
+                room_name = details.split(" ")[2]
+
                 G.add_node(room_name)
                 G.add_edge("Player", room_name, action="Entered", time=timestamp)
-                G.add_edge(current_room, room_name, action="Connected_to")
+
+                if not G.has_edge(current_room, room_name):
+                    G.add_edge(current_room, room_name, action=direction)
                 if last_position is not None and last_added_position_node != current_room:
                     G.add_edge(last_added_position_node, room_name, action="Moved_to", time=timestamp)
                 current_room = room_name
@@ -153,7 +158,9 @@ class TelemetryGraph:
                 #     if position_node != last_added_position_node:
                 #         G.add_edge(last_added_position_node, position_node, action="Moved to", time=timestamp)
                 #     last_added_position_node = position_node
-                G.add_edge(last_added_position_node, npc_name, action="Contains")
+
+                if not G.has_edge(last_added_position_node, npc_name):
+                    G.add_edge(last_added_position_node, npc_name, action="Contains")
                 G.add_edge("Player", npc_name, action="Interacted", time=timestamp)
 
             elif event.startswith("Item obtained"):
@@ -165,18 +172,36 @@ class TelemetryGraph:
                 #     if position_node != last_added_position_node:
                 #         G.add_edge(last_added_position_node, position_node, action="Moved to", time=timestamp)
 
-                G.add_edge(last_added_position_node, item_name, action="Contains")
+                if not G.has_edge(last_added_position_node, item_name):
+                    G.add_edge(last_added_position_node, item_name, action="Contains")
                 G.add_edge("Player", item_name, action="Obtained", time=timestamp)
 
+            elif event.startswith("Item interacted"):
+                item_name = event.split(": ")[1]
+                G.add_node(item_name)
+
+                if not G.has_edge(last_added_position_node, item_name):
+                    G.add_edge(last_added_position_node, item_name, action="Contains")
+                G.add_edge("Player", item_name, action="Interacted", time=timestamp)
+
             elif event.startswith("Door unlocked"):
-                door_name = "Door"
-                G.add_node(door_name)
+                item_name = event.split(": ")[1]
+                G.add_node(item_name)
                 # if last_position and current_room:
                 #     position_node = self.get_node_name_from_position(current_room, last_position)
                 #     G.add_edge(position_node, door_name, action="Contains")
                 #     if position_node != last_added_position_node:
                 #         G.add_edge(last_added_position_node, position_node, action="Moved to", time=timestamp)
-                G.add_edge("Player", door_name, action="Unlocked", time=timestamp)
+                if not G.has_edge(last_added_position_node, item_name):
+                    G.add_edge(last_added_position_node, item_name, action="Contains")
+                G.add_edge("Player", item_name, action="Unlocked", time=timestamp)
+
+            elif event.startswith("Tried locked door"):
+                item_name = event.split(": ")[1]
+                G.add_node(item_name)
+                if not G.has_edge(last_added_position_node, item_name):
+                    G.add_edge(last_added_position_node, item_name, action="Contains")
+                G.add_edge("Player", item_name, action="Tried", time=timestamp)
 
     def visualize(self):
         pos = nx.spring_layout(self.graph)
@@ -238,3 +263,8 @@ def test_graph_updates():
         graph = TelemetryGraph()
         graph.parse_from_string(s)
 
+if __name__ == "__main__":
+    g = TelemetryGraph()
+    g.parse_from_file("/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/test_telemetry.txt")
+    print(g)
+    g.visualize()
