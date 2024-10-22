@@ -40,7 +40,7 @@
                 "is_locked" : false,
                 "key": ""
             },
-            "barrel" : {
+            "barrel9" : {
                 "position" : [6, 9],
                 "type" : "barrel",
                 "contains" : ""
@@ -112,7 +112,7 @@
                 "position" : [7, 0],
                 "type" : "torch"
             },
-            "page" : {
+            "page1" : {
                 "position" : [5, 0],
                 "type" : "page",
                 "item text": [
@@ -131,7 +131,7 @@
                 "position" : [6, 6],
                 "type" : "treasure"
             },
-            "page": {
+            "page2": {
                 "position" : [4, 2],
                 "type" : "page",
                 "item text": [
@@ -147,7 +147,7 @@
             }
         },
         "room7" : {
-            "door" : {
+            "door_10" : {
                 "position" : [2, 4],
                 "type" : "door",
                 "is_locked" : true,
@@ -158,7 +158,7 @@
             }
         },
         "room10" : {
-            "barrel" : {
+            "barrel8" : {
                 "position" : [4, 1],
                 "type" : "barrel",
                 "contains" : ""
@@ -190,7 +190,7 @@
                 "type" : "chest",
                 "contains" : "treasure5"
             },
-            "barrel" : {
+            "barrel6" : {
                 "position" : [7, 3],
                 "type" : "barrel",
                 "contains" : ""
@@ -217,14 +217,14 @@
                 },
                 "linked_object" : "secret stairs"
             },
-            "barrel" : {
+            "barrel5" : {
                 "position" : [1, 2],
                 "type" : "barrel",
                 "contains" : ""
             }
         },
         "room18" : {
-            "barrel" : {
+            "barrel4" : {
                 "position" : [5, 4],
                 "type" : "barrel",
                 "contains" : ""

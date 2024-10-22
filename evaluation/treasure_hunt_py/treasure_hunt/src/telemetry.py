@@ -11,6 +11,9 @@ class Event:
     ROOM_ENTERED = "Room entered"
     PLAYER_MOVED = "Player moved"
     TREASURE_FOUND = "Treasure collected"
+    MODULE_DEFUSED = "Module defused"
+    MODULE_ATTEMPTED = "Module attempted"
+    MODULE_INTERACTED = "Module interacted"
 
     def __init__(self, event_type, details=""):
         self.event_type = event_type

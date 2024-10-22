@@ -257,12 +257,15 @@ class GameState:
                     self.current_module = None
 
                     # TODO add telemetry event calls (if needed?)
+                    self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
+                    return
                 elif "wire" in self.current_module.type:
                     self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
                     self.displayed_icon = None
                 elif "password" in self.current_module.type:
                     self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
                     self.displayed_icon = None
+                self.telemetry.log_event(Event.MODULE_ATTEMPTED, self.current_module.name)
 
     def handle_esc(self):
         self.current_module = None
@@ -342,6 +345,7 @@ class GameState:
                         self.displayed_text = obj.item_text
                         self.displayed_icon = None
                         print("activating module...")
+                        self.telemetry.log_event(Event.MODULE_INTERACTED, obj.name)
                     return None, None
                 else:
                     self.displayed_text = "The module is locked. Wait before trying again."
