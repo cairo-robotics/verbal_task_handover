@@ -28,7 +28,12 @@ You may also update the knowledge graph based on the user's input; if you update
 If you do not identify any contradictions, include the text "No contradictions found" in your response.
 
 Knowledge graph:
+```
 $graph
+```
+
+User's report:
+$user_report
 """)
 
 QUESTION_GENERATION_PROMPT = Template("""
@@ -125,6 +130,8 @@ class ChatBot():
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\t[USER REPORT UPDATED]\t{text}\n")
 
+        print(f"Report updated: {text}")
+
     def update_graph(self, graph):
         self.graph = graph
         print(self.graph)
@@ -136,8 +143,10 @@ class ChatBot():
             {"role": "user", "content": self.report_text}
         ]
 
-        reply = self._gpt_response(messages).choices[0].message.content.strip()
-        
+        # reply = self._gpt_response(messages).choices[0].message.content.strip()
+        print("System prompt:", prompt)
+        reply = "This is a test reply from check_graph_consistency."
+
         # log this prompt and initial reply
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\tsystem\t{prompt}\n")
@@ -180,10 +189,12 @@ class ChatBot():
         messages = [
             {"role": "system", "content": self.system_role_message},
         ]
+        print("System prompt:", messages[0]["content"])
         self.append_to_chat({"role": "user", "content": user_message})
         messages.extend(list(self.history.queue))
 
-        reply = self._gpt_response(messages).choices[0].message.content.strip()
+        # reply = self._gpt_response(messages).choices[0].message.content.strip()
+        reply = "This is a test reply from chat_reply_with_history."
 
         # write to chat log file
         with open(self.chat_file, "a") as file:
@@ -204,9 +215,8 @@ class ChatBot():
             self.history.get()
         self.history.put(message)
 
-    def interaction_loop(self):
+    def interaction_loop(self, user_message):
         # TODO finish and make actually work
-        user_message = self.report_text
         while True:
             if self.state == HandoverState.CHECK_CONSISTENCY:
                 reply = self.check_graph_consistency_with_report()
@@ -285,11 +295,14 @@ class ChatGUI(tk.Tk):
 def test_chatbot_with_graph():
     from graph import TelemetryGraph
     g = TelemetryGraph()
-    g.parse_from_file("/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/test_telemetry.txt")
+    g.parse_from_file("/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/kb_test_run.txt")
 
     print(g)
     tt = ChatBot(g)
-    tt.bot_loop()
+    # tt.bot_loop()
+
+    gui = ChatGUI(tt)
+    gui.mainloop()
 
     # test_load_from_text()
     # test_graph_updates()

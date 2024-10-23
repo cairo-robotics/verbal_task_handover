@@ -8,6 +8,8 @@ from .modules import *
 
 from collections import deque
 
+MAX_SCORE = 7
+
 class Direction(object):
     """
     The four possible directions a player can be facing.
@@ -254,10 +256,9 @@ class GameState:
                 if res:
                     self.got_item(self.current_module.contains)
                     self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
+                    self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
                     self.current_module = None
 
-                    # TODO add telemetry event calls (if needed?)
-                    self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
                     return
                 elif "wire" in self.current_module.type:
                     self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
@@ -281,6 +282,9 @@ class GameState:
             self.displayed_text = "You received a TREASURE!"
             self.displayed_icon = "red gem"
             self.player_has_items.append(item)
+
+            if self.score == MAX_SCORE:
+                self.displayed_text = "You found all the treasures! Please let the experimenter know."
 
         else:
             self.player_has_items.append(item)
@@ -326,6 +330,8 @@ class GameState:
                 print("score: ", self.score)
                 self.displayed_text = "You found a TREASURE!"
                 self.displayed_icon = "red gem"
+                if self.score == MAX_SCORE:
+                    self.displayed_text = "You found all the treasures! Please let the experimenter know."
                 event_type = Event.TREASURE_FOUND
                 details = ""
                 self.player_has_items.append(obj.name)

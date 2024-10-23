@@ -1,0 +1,144 @@
+2024-10-23 11:53:51 - NPC interact: lily
+2024-10-23 11:54:01 - Room entered: SOUTH to room9
+2024-10-23 11:54:02 - Room entered: NORTH to room0
+2024-10-23 11:54:05 - Item interacted: barrel
+2024-10-23 11:54:09 - Item interacted: barrel
+2024-10-23 11:54:17 - NPC interact: guy
+2024-10-23 11:54:28 - NPC interact: jay
+2024-10-23 11:54:39 - Room entered: SOUTH to room9
+2024-10-23 11:54:45 - Room entered: SOUTH to room3
+2024-10-23 11:54:50 - Item interacted: barrel
+2024-10-23 11:55:02 - Item interacted: barrel
+2024-10-23 11:55:17 - Tried locked door: locked_door
+2024-10-23 11:55:23 - Item interacted: barrel
+2024-10-23 11:55:29 - Room entered: NORTH to room9
+2024-10-23 11:55:34 - Room entered: NORTH to room0
+2024-10-23 11:55:39 - Room entered: SOUTH to room12
+2024-10-23 11:55:41 - Room entered: SOUTH to room4
+2024-10-23 11:55:58 - Treasure collected: 
+2024-10-23 11:56:14 - Room entered: NORTH to room12
+2024-10-23 11:56:16 - Room entered: NORTH to room0
+2024-10-23 11:56:19 - NPC interact: lily
+2024-10-23 11:56:31 - Room entered: EAST to room10
+2024-10-23 11:56:35 - Item interacted: barrel
+2024-10-23 11:56:45 - Room entered: EAST to room5
+2024-10-23 11:56:46 - NPC interact: eliza
+2024-10-23 11:56:56 - Room entered: WEST to room2
+2024-10-23 11:56:58 - Item obtained: blue gem
+2024-10-23 11:57:02 - Room entered: EAST to room5
+2024-10-23 11:57:04 - Room entered: NORTH to room13
+2024-10-23 11:57:10 - Room entered: EAST to room14
+2024-10-23 11:57:10 - Room entered: WEST to room13
+2024-10-23 11:57:12 - Room entered: EAST to room14
+2024-10-23 11:57:14 - Item interacted: barrel
+2024-10-23 11:57:20 - Item interacted: barrel
+2024-10-23 11:57:32 - Item interacted: barrel
+2024-10-23 11:57:43 - Room entered: WEST to room13
+2024-10-23 11:57:44 - Room entered: SOUTH to room5
+2024-10-23 11:57:48 - Room entered: WEST to room10
+2024-10-23 11:57:48 - Room entered: EAST to room5
+2024-10-23 11:57:49 - NPC interact: eliza
+2024-10-23 11:57:56 - Room entered: WEST to room10
+2024-10-23 11:57:58 - Item interacted: barrel
+2024-10-23 11:58:03 - Room entered: WEST to room0
+2024-10-23 11:58:06 - NPC interact: jay
+2024-10-23 11:58:22 - Room entered: SOUTH to room12
+2024-10-23 11:58:25 - Room entered: SOUTH to room4
+2024-10-23 11:58:32 - Room entered: NORTH to room12
+2024-10-23 11:58:34 - Room entered: NORTH to room0
+2024-10-23 11:58:38 - NPC interact: jay
+2024-10-23 11:58:46 - Room entered: SOUTH to room9
+2024-10-23 11:58:52 - Room entered: SOUTH to room3
+2024-10-23 11:59:01 - Treasure collected: 
+2024-10-23 11:59:06 - Door unlocked: used blue key
+2024-10-23 11:59:09 - Room entered: WEST to room16
+2024-10-23 11:59:10 - Room entered: EAST to room3
+2024-10-23 11:59:13 - Room entered: WEST to room16
+2024-10-23 11:59:16 - Treasure collected: treasure4
+2024-10-23 12:00:11 - Room entered: EAST to room3
+2024-10-23 12:00:29 - Item interacted: barrel
+2024-10-23 12:00:33 - Room entered: NORTH to room9
+2024-10-23 12:00:39 - Room entered: NORTH to room0
+2024-10-23 12:00:41 - Room entered: NORTH to room19
+2024-10-23 12:00:42 - Room entered: SOUTH to room0
+2024-10-23 12:00:43 - Room entered: WEST to room7
+2024-10-23 12:00:46 - Tried locked door: door_10
+2024-10-23 12:00:50 - Room entered: EAST to room0
+2024-10-23 12:00:51 - Room entered: NORTH to room19
+2024-10-23 12:00:55 - Module interacted: wire_module
+2024-10-23 12:01:02 - Module defused: wire_module
+2024-10-23 12:01:14 - Room entered: SOUTH to room0
+2024-10-23 12:01:20 - NPC interact: guy
+2024-10-23 12:01:26 - NPC interact: lily
+2024-10-23 12:01:38 - Room entered: NORTH to room19
+2024-10-23 12:01:43 - Room entered: SOUTH to room0
+2024-10-23 12:01:50 - Tried locked door: door_to_room6
+2024-10-23 12:01:55 - Room entered: EAST to room10
+2024-10-23 12:02:00 - Room entered: EAST to room5
+2024-10-23 12:02:06 - Room entered: NORTH to room13
+2024-10-23 12:02:12 - Room entered: EAST to room14
+2024-10-23 12:02:25 - Room entered: WEST to room13
+2024-10-23 12:02:27 - Room entered: SOUTH to room5
+2024-10-23 12:02:29 - Room entered: SOUTH to room2
+2024-10-23 12:02:33 - Room entered: EAST to room5
+2024-10-23 12:02:39 - NPC interact: eliza
+2024-10-23 12:02:44 - Room entered: WEST to room10
+2024-10-23 12:02:50 - Room entered: WEST to room0
+2024-10-23 12:02:53 - Item interacted: barrel
+2024-10-23 12:03:02 - Room entered: SOUTH to room12
+2024-10-23 12:03:04 - Room entered: SOUTH to room4
+2024-10-23 12:03:15 - Room entered: NORTH to room12
+2024-10-23 12:03:17 - Room entered: NORTH to room0
+2024-10-23 12:03:22 - Room entered: SOUTH to room9
+2024-10-23 12:03:23 - Room entered: NORTH to room0
+2024-10-23 12:03:26 - Room entered: SOUTH to room9
+2024-10-23 12:03:31 - Room entered: SOUTH to room3
+2024-10-23 12:03:59 - Room entered: WEST to room16
+2024-10-23 12:04:04 - Room entered: EAST to room3
+2024-10-23 12:04:08 - Room entered: NORTH to room9
+2024-10-23 12:04:14 - Room entered: NORTH to room0
+2024-10-23 12:04:19 - Room entered: WEST to room8
+2024-10-23 12:04:22 - Room entered: WEST to room2
+2024-10-23 12:04:25 - Item obtained: gold key
+2024-10-23 12:04:34 - Room entered: EAST to room8
+2024-10-23 12:04:37 - Room entered: EAST to room0
+2024-10-23 12:04:41 - Room entered: WEST to room7
+2024-10-23 12:04:44 - Door unlocked: used gold key
+2024-10-23 12:04:49 - Room entered: WEST to room18
+2024-10-23 12:04:51 - Item interacted: barrel
+2024-10-23 12:05:03 - NPC interact: marie
+2024-10-23 12:05:09 - Room entered: EAST to room7
+2024-10-23 12:05:10 - Room entered: NORTH to room1
+2024-10-23 12:05:13 - Module interacted: password_module
+2024-10-23 12:05:20 - Module defused: password_module
+2024-10-23 12:05:26 - NPC interact: mark
+2024-10-23 12:05:37 - Room entered: SOUTH to room7
+2024-10-23 12:05:37 - Room entered: NORTH to room1
+2024-10-23 12:05:42 - Room entered: SOUTH to room7
+2024-10-23 12:05:46 - Room entered: EAST to room0
+2024-10-23 12:05:48 - Room entered: NORTH to room19
+2024-10-23 12:05:53 - Room entered: SOUTH to room0
+2024-10-23 12:05:56 - NPC interact: guy
+2024-10-23 12:05:59 - Door unlocked: used silver key
+2024-10-23 12:06:01 - Room entered: EAST to room11
+2024-10-23 12:06:03 - Room entered: EAST to room6
+2024-10-23 12:06:10 - NPC interact: steve
+2024-10-23 12:06:23 - Room entered: WEST to room11
+2024-10-23 12:06:24 - Room entered: NORTH to room17
+2024-10-23 12:06:26 - Item interacted: barrel
+2024-10-23 12:06:36 - Room entered: SOUTH to room11
+2024-10-23 12:06:37 - Room entered: WEST to room0
+2024-10-23 12:06:40 - Room entered: WEST to room7
+2024-10-23 12:06:45 - Room entered: NORTH to room1
+2024-10-23 12:06:46 - NPC interact: mark
+2024-10-23 12:06:52 - Room entered: SOUTH to room7
+2024-10-23 12:06:56 - Room entered: EAST to room0
+2024-10-23 12:07:03 - Room entered: EAST to room11
+2024-10-23 12:07:04 - Room entered: NORTH to room17
+2024-10-23 12:07:07 - Room entered: EAST to room15
+2024-10-23 12:07:10 - Treasure collected: treasure5
+2024-10-23 12:07:14 - Item interacted: barrel
+2024-10-23 12:07:23 - Room entered: NORTH to room17
+2024-10-23 12:07:25 - Room entered: SOUTH to room11
+2024-10-23 12:07:26 - Room entered: WEST to room0
+2024-10-23 12:07:30 - NPC interact: lily

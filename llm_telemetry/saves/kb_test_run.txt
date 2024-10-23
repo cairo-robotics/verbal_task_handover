@@ -1,0 +1,43 @@
+2024-10-22 14:18:21 - Room entered: NORTH to room19
+2024-10-22 14:18:23 - Module interacted: wire_module
+2024-10-22 14:18:26 - Room entered: SOUTH to room0
+2024-10-22 14:18:28 - NPC interact: lily
+2024-10-22 14:18:33 - NPC interact: jay
+2024-10-22 14:18:36 - NPC interact: guy
+2024-10-22 14:18:40 - Item interacted: barrel
+2024-10-22 14:19:34 - NPC interact: guy
+2024-10-22 14:19:38 - Room entered: EAST to room10
+2024-10-22 14:19:39 - Item interacted: barrel
+2024-10-22 14:19:45 - Room entered: EAST to room5
+2024-10-22 14:19:46 - NPC interact: eliza
+2024-10-22 14:19:48 - Room entered: NORTH to room2
+2024-10-22 14:19:49 - Item obtained: blue gem
+2024-10-22 14:19:51 - Room entered: EAST to room5
+2024-10-22 14:19:52 - Room entered: NORTH to room13
+2024-10-22 14:19:54 - Room entered: EAST to room14
+2024-10-22 14:19:55 - Item interacted: barrel
+2024-10-22 14:20:01 - Item interacted: barrel
+2024-10-22 14:20:07 - Room entered: WEST to room13
+2024-10-22 14:20:09 - Room entered: SOUTH to room5
+2024-10-22 14:20:10 - Room entered: WEST to room2
+2024-10-22 14:20:12 - Room entered: EAST to room5
+2024-10-22 14:20:16 - Room entered: WEST to room10
+2024-10-22 14:20:20 - Room entered: EAST to room5
+2024-10-22 14:20:21 - NPC interact: eliza
+2024-10-22 14:20:24 - Room entered: WEST to room10
+2024-10-22 14:20:26 - Room entered: WEST to room0
+2024-10-22 14:20:28 - NPC interact: jay
+2024-10-22 14:20:35 - Room entered: SOUTH to room9
+2024-10-22 14:20:41 - Room entered: SOUTH to room3
+2024-10-22 14:20:42 - Item interacted: barrel
+2024-10-22 14:20:47 - Item interacted: barrel
+2024-10-22 14:21:06 - Treasure collected: 
+2024-10-22 14:21:08 - Door unlocked: used blue key
+2024-10-22 14:21:10 - Room entered: WEST to room16
+2024-10-22 14:21:12 - Treasure collected: treasure4
+2024-10-22 14:21:14 - Room entered: EAST to room3
+2024-10-22 14:21:17 - Room entered: NORTH to room9
+2024-10-22 14:21:22 - Room entered: NORTH to room0
+2024-10-22 14:21:27 - Room entered: WEST to room7
+2024-10-22 14:21:30 - Tried locked door: door
+2024-10-22 14:21:33 - Room entered: EAST to room0

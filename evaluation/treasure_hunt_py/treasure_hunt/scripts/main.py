@@ -106,6 +106,7 @@ def main(args):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                telemetry.cleanup()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     state.handle_esc()
@@ -122,9 +123,9 @@ def main(args):
                     # if interact_output:
                     #     telemetry.log_event(*interact_output)
 
-                elif event.key == pygame.K_q:
-                    running = False
-                    telemetry.cleanup()
+                # elif event.key == pygame.K_F4:
+                #     running = False
+                #     telemetry.cleanup()
 
                 elif event.key in keys_pressed and not state.player_in_interaction:
                     keys_pressed[event.key] = True

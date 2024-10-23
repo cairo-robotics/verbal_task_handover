@@ -62,6 +62,7 @@ def main(args):
     else:
         telemetry = DummyTelemetry()
 
+
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Treasure Hunt Task")
     clock = pygame.time.Clock()
@@ -80,6 +81,7 @@ def main(args):
         state = GameState(player_pos, player_dir, current_room, objects)
         print("Initializing new game...")
 
+    state.set_telemetry(telemetry)
     # transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
     # game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     game_map = GameMap(MAP_DIRECTORY, current_room)
