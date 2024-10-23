@@ -112,7 +112,7 @@
                 "position" : [7, 0],
                 "type" : "torch"
             },
-            "page1" : {
+            "page" : {
                 "position" : [5, 0],
                 "type" : "page",
                 "item text": [
@@ -131,7 +131,7 @@
                 "position" : [6, 6],
                 "type" : "treasure"
             },
-            "page2": {
+            "page": {
                 "position" : [4, 2],
                 "type" : "page",
                 "item text": [
