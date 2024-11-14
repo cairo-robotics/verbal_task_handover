@@ -11,19 +11,16 @@ from tkinter import scrolledtext, font
 # import threading
 import re
 
-class HandoverState(Enum):
-    CHECK_CONSISTENCY = 1
-    QUESTION_GENERATION = 2
-    UPDATE_GRAPH_DATA = 3
-    IDENTIFY_MISSING_INFO = 4
+from pprint import pprint
 
 CHAT_SAVE_FILE = "chat_save.txt"
 
-CHECK_CONSISTENCY_PROMPT = Template("""
+CHECK_CONSISTENCY_PROMPT = Template("""\
 You are an assistant with access to a knowledge graph about a player's progress in a video game.
 The user has provided a text description about their progress as well.
 Check for specific, direct contradictions between the user's report and the knowledge graph. Missing info in the report is not a contradiction and can be addressed later.
-If there are any contradictions with the graph, ask for clarification.
+If there are any contradictions with the graph, ask for clarification. Be aware the user might have forgotten certain information, so be polite and nonconfrontational in your response.
+In your response, refer to the knowledge graph as "the data I have access to."
 You may also update the knowledge graph based on the user's input; if you update the knowledge graph, include the text "Update graph" in your response.
 If you do not identify any contradictions, include the text "No contradictions found" in your response.
 
@@ -31,12 +28,9 @@ Knowledge graph:
 ```
 $graph
 ```
-
-User's report:
-$user_report
 """)
 
-QUESTION_GENERATION_PROMPT = Template("""
+QUESTION_GENERATION_PROMPT = Template("""\
 You are an assistant developing a knowledge graph representing the relevant information of a player's progress in a video game.
 The purpose of this graph is to eventually to help another player, or the same player at a later time, understand the current state of the game \
     and complete the game from the state where it was left off.
@@ -59,7 +53,7 @@ You may also update the knowledge graph based on the user's input; if you update
 Else, if you decide the graph contains all relevant information, include the text "No updates required" in your response.
 """)
 
-UPDATE_GRAPH_DATA_PROMPT = Template("""
+UPDATE_GRAPH_DATA_PROMPT = Template("""\
 Given the following existing knowledge graph in dictionary format: 
 ```
 $graph
@@ -67,7 +61,7 @@ $graph
 Isolate and return only the updates to the graph, in the format of the existing graph, from the last message."
 """)
 
-IDENTIFY_MISSING_INFO_PROMPT = Template("""
+IDENTIFY_MISSING_INFO_PROMPT = Template("""\
 You are an assistant helping the user develop a text report about their current state in a video game.
 The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game \
     and complete the game from the state where it was left off.
@@ -85,6 +79,19 @@ Please identify any missing information from the user's text that is present in 
     If you do not identify any missing relevant information, include the text "No missing information found" in your response.
 """)
 
+class HandoverState(Enum):
+    CHECK_CONSISTENCY = 1
+    QUESTION_GENERATION = 2
+    UPDATE_GRAPH_DATA = 3
+    IDENTIFY_MISSING_INFO = 4
+
+    # PROMPT_MAPPING = {
+    #     CHECK_CONSISTENCY : CHECK_CONSISTENCY_PROMPT,
+    #     QUESTION_GENERATION : QUESTION_GENERATION_PROMPT,
+    #     UPDATE_GRAPH_DATA : UPDATE_GRAPH_DATA_PROMPT,
+    #     IDENTIFY_MISSING_INFO : IDENTIFY_MISSING_INFO_PROMPT
+    # }
+
 class ChatBot():
     def __init__(self, graph=None) -> None:
         self.model = "gpt-4o-mini"
@@ -96,6 +103,7 @@ class ChatBot():
         self.history = Queue(maxsize=10) # NOTE: does NOT include the system role message(s)
         self.graph = graph
         self.report_text = ""
+        self.initial_report_saved = False
 
         self.state = HandoverState.CHECK_CONSISTENCY # this is our default starting state
 
@@ -130,7 +138,7 @@ class ChatBot():
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\t[USER REPORT UPDATED]\t{text}\n")
 
-        print(f"Report updated: {text}")
+        print(f"DEBUG: Report updated: {text}")
 
     def update_graph(self, graph):
         self.graph = graph
@@ -143,9 +151,8 @@ class ChatBot():
             {"role": "user", "content": self.report_text}
         ]
 
-        # reply = self._gpt_response(messages).choices[0].message.content.strip()
-        print("System prompt:", prompt)
-        reply = "This is a test reply from check_graph_consistency."
+        reply = self._gpt_response(messages).choices[0].message.content.strip()
+        # reply = "This is a test reply from check_graph_consistency."
 
         # log this prompt and initial reply
         with open(self.chat_file, "a") as file:
@@ -194,6 +201,7 @@ class ChatBot():
         messages.extend(list(self.history.queue))
 
         # reply = self._gpt_response(messages).choices[0].message.content.strip()
+        pprint(messages)
         reply = "This is a test reply from chat_reply_with_history."
 
         # write to chat log file
@@ -202,8 +210,8 @@ class ChatBot():
             file.write(f"{datetime.now().isoformat()}\tassistant\t{reply}\n")
 
             if "Update graph" in reply:
-                new_graph = self.isolate_graph_data(reply)
-                self.update_graph(new_graph)
+                # new_graph = self.isolate_graph_data(reply)
+                # self.update_graph(new_graph)
                 # reply = "I have updated my knowledge base accordingly."
                 file.write(f"{datetime.now().isoformat()}\tsystem\t[GRAPH UPDATED]\n")
   
@@ -215,20 +223,24 @@ class ChatBot():
             self.history.get()
         self.history.put(message)
 
-    def interaction_loop(self, user_message):
+    def interact(self, user_message):
         # TODO finish and make actually work
-        while True:
-            if self.state == HandoverState.CHECK_CONSISTENCY:
-                reply = self.check_graph_consistency_with_report()
+        if self.state == HandoverState.CHECK_CONSISTENCY:
+            reply = self.check_graph_consistency_with_report()
 
-                if "No contradictions found" in reply:
-                    self.state = HandoverState.QUESTION_GENERATION
-                elif "Update graph" in reply:
-                    new_graph = self.update_graph_from_msg(reply)
-                    self.update_graph(new_graph)
-                else:
-                    print(Fore.GREEN + reply + Style.RESET_ALL)
-
+            if "No contradictions found" in reply:
+                self.state = HandoverState.QUESTION_GENERATION
+                reply = "I've updated my knowledge base based on your report."
+            elif "Update graph" in reply:
+                new_graph = self.update_graph_from_msg(reply)
+                print("updating graph...")
+                self.update_graph(new_graph)
+                return self.interact("")
+            return reply
+        
+        else:
+            return self._chat_reply_with_history(user_message)
+        
     # def bot_loop(self):
     #     # if you want to run in terminal
     #     self.message = ""
@@ -266,7 +278,8 @@ class ChatGUI(tk.Tk):
         user_input = self.entry_field.get().strip()
         self.entry_field.delete(0, tk.END)
 
-        reply = self.bot._chat_reply_with_history(user_input)
+        # reply = self.bot._chat_reply_with_history(user_input)
+        reply = self.bot.interact(user_input)
 
         self.chat_display.configure(state='normal')
         self.chat_display.insert(tk.END, f"User: {user_input}\n")
@@ -290,7 +303,13 @@ class ChatGUI(tk.Tk):
         self.bot.update_report(text_area.get("1.0", tk.END).strip())  # Get all text from the text area
         print("Report saved.")  # You can remove or replace this with any feedback mechanism
 
-        self.bot._chat_reply_with_history("I have updated the report.")
+        reply = self.bot.interact("(Report updated.)")
+        self.chat_display.configure(state='normal')
+        self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
+        self.chat_display.configure(state='disabled')
+        self.chat_display.see(tk.END)
+
+
 
 def test_chatbot_with_graph():
     from graph import TelemetryGraph
