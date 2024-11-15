@@ -16,13 +16,19 @@ from pprint import pprint
 CHAT_SAVE_FILE = "chat_save.txt"
 
 CHECK_CONSISTENCY_PROMPT = Template("""\
-You are an assistant with access to a knowledge graph about a player's progress in a video game.
-The user has provided a text description about their progress as well.
-Check for specific, direct contradictions between the user's report and the knowledge graph. Missing info in the report is not a contradiction and can be addressed later.
-If there are any contradictions with the graph, ask for clarification. Be aware the user might have forgotten certain information, so be polite and nonconfrontational in your response.
-In your response, refer to the knowledge graph as "the data I have access to."
+You are an assistant with access to a knowledge graph about a player's progress in a video game. This knowledge graph is incomplete and is extracted from the game's telemetry.
+The user has provided a text description about their progress as well. The goal of this description is to summarize the current state of the game for another player to continue from where they left off.
+Assume the knowledge graph is incomplete and the user's report may contain information not present in the graph.
+Assume the user's report is correct unless the knowledge graph specifically contradicts it.
+                                    
+You have two goals:
+1. If there's information in the user's report that is not in the graph, update the knowledge graph accordingly or ask for more clarification if needed. If you update the knowledge graph, include the text "Update graph" in your response.
+2. Check for specific, direct contradictions between the user's report and the knowledge graph. Missing or extra info in the report is not a contradiction and can be addressed later.
+If there are any contradictions with the graph, ask for clarification. The user might have forgotten certain information or purposely chose not to include it, so be polite and nonconfrontational in your response.
+
+Assume the user cannot see the knowledge graph. In your response, refer to the knowledge graph as "the data I have access to."
 You may also update the knowledge graph based on the user's input; if you update the knowledge graph, include the text "Update graph" in your response.
-If you do not identify any contradictions, include the text "No contradictions found" in your response.
+If you do not identify any contradictions and don't require further updates to the knowledge graph, include the text "No contradictions found" in your response.
 
 Knowledge graph:
 ```
@@ -33,7 +39,7 @@ $graph
 QUESTION_GENERATION_PROMPT = Template("""\
 You are an assistant developing a knowledge graph representing the relevant information of a player's progress in a video game.
 The purpose of this graph is to eventually to help another player, or the same player at a later time, understand the current state of the game \
-    and complete the game from the state where it was left off.
+    and complete the game from where it was left off.
 The user cannot view this graph directly. The graph is below:
 ```
 $graph
@@ -107,6 +113,8 @@ class ChatBot():
         self.initial_report_saved = False
 
         self.state = HandoverState.CHECK_CONSISTENCY # this is our default starting state
+        # FOR DEBUGGING ONLY
+        # self.state = HandoverState.QUESTION_GENERATION  
 
         self.system_prompts = {
             HandoverState.CHECK_CONSISTENCY: CHECK_CONSISTENCY_PROMPT,
@@ -162,17 +170,17 @@ class ChatBot():
 
         return reply
 
-    def update_graph_from_msg(self, text):
+    def update_graph_from_msg(self, response):
         # prompt = "Given the following existing networkx directed graph:\n" + str(self.graph) + "\nIsolate and return only the updated networkx graph, in the format of the existing graph, from the last message."
-        prompt = self.system_role_message
+        # prompt = self.system_role_message
 
-        messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": text}
-        ]
+        # messages = [
+        #     {"role": "system", "content": prompt},
+        #     {"role": "user", "content": text}
+        # ]
 
         # import pdb; pdb.set_trace()
-        response = self._gpt_response(messages).choices[0].message.content.strip()
+        # response = self._gpt_response(messages).choices[0].message.content.strip()
         match = re.search(r'```(?:python\s+)?([\S\s]*?)```', response, re.DOTALL)
         if match:
             graph_data = match.group(1).strip()
@@ -201,9 +209,8 @@ class ChatBot():
         self.append_to_chat({"role": "user", "content": user_message})
         messages.extend(list(self.history.queue))
 
-        # reply = self._gpt_response(messages).choices[0].message.content.strip()
+        reply = self._gpt_response(messages).choices[0].message.content.strip()
         pprint(messages)
-        reply = "This is a test reply from chat_reply_with_history."
 
         # write to chat log file
         with open(self.chat_file, "a") as file:
@@ -231,8 +238,9 @@ class ChatBot():
 
             if "No contradictions found" in reply:
                 self.state = HandoverState.QUESTION_GENERATION
-                self.clear_history()
+                # self.clear_history()
                 reply = "I've updated my knowledge base based on your report."
+                return reply + "\n" + self.interact("")
             elif "Update graph" in reply:
                 new_graph = self.update_graph_from_msg(reply)
                 print("DEBUG: updating graph...")
@@ -244,7 +252,7 @@ class ChatBot():
             reply = self._chat_reply_with_history(user_message)
             if "No updates required" in reply:
                 self.state = HandoverState.IDENTIFY_MISSING_INFO
-                self.clear_history()
+                # self.clear_history()
                 return self.interact("")
             elif "Update graph" in reply:
                 new_graph = self.update_graph_from_msg(reply)
@@ -284,6 +292,8 @@ class ChatGUI(tk.Tk):
         self.chat_display = scrolledtext.ScrolledText(self, wrap=tk.WORD, state='disabled')
         self.chat_display.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
+        self.chat_display.tag_config("user", foreground="blue")
+
         entry_frame = tk.Frame(self)
         entry_frame.pack(padx=10, pady=10, fill=tk.X, expand=False)
 
@@ -305,7 +315,7 @@ class ChatGUI(tk.Tk):
             reply = self.bot.interact(user_input)
 
             self.chat_display.configure(state='normal')
-            self.chat_display.insert(tk.END, f"User: {user_input}\n")
+            self.chat_display.insert(tk.END, f"User: {user_input}\n", "user")
             self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
             self.chat_display.configure(state='disabled')
             self.chat_display.see(tk.END)
