@@ -13,115 +13,48 @@ import re
 
 from pprint import pprint
 
+import argparse
+
 CHAT_SAVE_FILE = "chat_save.txt"
 
-CHECK_CONSISTENCY_PROMPT = Template("""\
-You are an assistant with access to a knowledge graph about a player's progress in a video game. This knowledge graph is incomplete and is extracted from the game's telemetry.
-The user has provided a text description about their progress as well. The goal of this description is to summarize the current state of the game for another player to continue from where they left off.
-Assume the knowledge graph is incomplete and the user's report may contain information not present in the graph.
-Assume the user's report is correct unless the knowledge graph specifically contradicts it.
-                                    
-You have two goals:
-1. If there's information in the user's report that is not in the graph, update the knowledge graph accordingly or ask for more clarification if needed. If you update the knowledge graph, include the text "Update graph" in your response.
-2. Check for specific, direct contradictions between the user's report and the knowledge graph. Missing or extra info in the report is not a contradiction and can be addressed later.
-If there are any contradictions with the graph, ask for clarification. The user might have forgotten certain information or purposely chose not to include it, so be polite and nonconfrontational in your response.
-
-Assume the user cannot see the knowledge graph. In your response, refer to the knowledge graph as "the data I have access to."
-You may also update the knowledge graph based on the user's input; if you update the knowledge graph, include the text "Update graph" in your response.
-If you do not identify any contradictions and don't require further updates to the knowledge graph, include the text "No contradictions found" in your response.
-
-Knowledge graph:
-```
-$graph
-```
-""")
-
-QUESTION_GENERATION_PROMPT = Template("""\
-You are an assistant developing a knowledge graph representing the relevant information of a player's progress in a video game.
-The purpose of this graph is to eventually to help another player, or the same player at a later time, understand the current state of the game \
-    and complete the game from where it was left off.
-The user cannot view this graph directly. The graph is below:
-```
-$graph
-```
-Your goal is to ensure the knowledge graph contains all the information that would be helpful or relevant to the next player.
-Identify areas, if any, where the graph might be missing relevant information.
-If you identify any such areas, ask specific questions to build on the information available in the graph.
-
-Examples:
-* If a player has interacted with a non-player character (NPC), but did not provide information about what they said, you could ask "I see you spoke with <NPC>; what did they say?"
-* If a player has seen a locked door, you could ask "I see you found a locked door; did you get any info about how it was locked?" 
-* If a player has found a key but not used it yet, and they have seen a locked door they haven't unlocked yet, you could ask if they tried the key on that door.
-* Other questions in this vein could be about items they have obtained, rooms they have entered, or treasures they have found.
-
-You may also update the knowledge graph based on the user's input; if you update the knowledge graph, include the text "Update graph" in your response.
-
-Else, if you decide the graph contains all relevant information, include the text "No updates required" in your response.
-""")
-
-UPDATE_GRAPH_DATA_PROMPT = Template("""\
-Given the following existing knowledge graph in dictionary format: 
-```
-$graph
-```
-Isolate and return only the updates to the graph, in the format of the existing graph, from the last message."
-""")
-
-IDENTIFY_MISSING_INFO_PROMPT = Template("""\
-You are an assistant helping the user develop a text report about their current state in a video game.
+GENERAL_PROMPT = Template("""\
+You are an assistant helping the user develop a text "handover report" about their current state in a video game.
 The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game \
-    and complete the game from the state where it was left off.
-You have access to a knowledge graph representing what you know about the current state of the game; the user cannot see this graph.
-The user cannot view this graph directly. The graph is below:
+and complete the game from the state where it was left off as efficiently as possible..
+You have access to a knowledge graph representing what you know about the current state of the game.
+Your role is to help the user compose a complete and accurate report. You can assist in any of the following ways:
+- Check if the report and your knowledge graph have conflicting information. For example, if the report states they didn't use a key If so, ask the user to clarify which is correct.
+- Suggest additional information from your knowledge graph that could be included in the report.
+- Update the knowledge graph based on the user's report or input. If you update the knowledge graph, include the text "Update graph" in your response. 
+- Provide feedback on the user's report, such as pointing out missing or inconsistent information.
+- If you believe the report is complete and requires no further edits, include the text "Report complete" in your response.
+                                                    
+Assume the knowledge graph is incomplete and the user's report may contain information not present in the graph.
+Assume the user cannot see the knowledge graph. In your responses, refer to the knowledge graph as "the data I have access to."
+Avoid referring to specific rooms by name or number, as the user does not know these identifiers. Instead, refer to rooms by their contents or locations (e.g. South of the starting room.).
+The user may have forgetten certain information or purposely chosen not to include it, so be polite and nonconfrontational in your responses.
+
+The current knowledge graph is:
 ```
 $graph
 ```
-The most recent version of the user's report is:
+                          
+The user's most recent report is:
 $user_report
-
-Please identify any missing information from the user's text that is present in the knowledge graph AND may be relevant to the next player. \
-    If you identify any missing information, ask the user to clarify; they may provide further information or clarify that this data is irrelevant.
-    You may also update the knowledge graph based on the user's input; if you update the knowledge graph, include the text "Update graph" in your response.
-    If you do not identify any missing relevant information, include the text "No missing information found" in your response.
 """)
-
-class HandoverState(Enum):
-    CHECK_CONSISTENCY = 1
-    QUESTION_GENERATION = 2
-    UPDATE_GRAPH_DATA = 3
-    IDENTIFY_MISSING_INFO = 4
-    DONE = 5
-
-    # PROMPT_MAPPING = {
-    #     CHECK_CONSISTENCY : CHECK_CONSISTENCY_PROMPT,
-    #     QUESTION_GENERATION : QUESTION_GENERATION_PROMPT,
-    #     UPDATE_GRAPH_DATA : UPDATE_GRAPH_DATA_PROMPT,
-    #     IDENTIFY_MISSING_INFO : IDENTIFY_MISSING_INFO_PROMPT
-    # }
 
 class ChatBot():
-    def __init__(self, graph=None) -> None:
+    def __init__(self, graph=None, save_file=None) -> None:
         self.model = "gpt-4o-mini"
-        self.temperature = 0.9
+        self.temperature = 0.2
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-        self.chat_file = CHAT_SAVE_FILE
+        self.chat_file = save_file
 
-        self.history = Queue(maxsize=10) # NOTE: does NOT include the system role message(s)
+        self.history = Queue(maxsize=15) # NOTE: does NOT include the system role message(s)
         self.graph = graph
         self.report_text = ""
         self.initial_report_saved = False
-
-        self.state = HandoverState.CHECK_CONSISTENCY # this is our default starting state
-        # FOR DEBUGGING ONLY
-        # self.state = HandoverState.QUESTION_GENERATION  
-
-        self.system_prompts = {
-            HandoverState.CHECK_CONSISTENCY: CHECK_CONSISTENCY_PROMPT,
-            HandoverState.QUESTION_GENERATION: QUESTION_GENERATION_PROMPT,
-            HandoverState.UPDATE_GRAPH_DATA: UPDATE_GRAPH_DATA_PROMPT,
-            HandoverState.IDENTIFY_MISSING_INFO: IDENTIFY_MISSING_INFO_PROMPT
-        }
 
         with open(self.chat_file, "w") as file:
             file.write("time\trole\tcontent\n")
@@ -129,7 +62,8 @@ class ChatBot():
 
     @property
     def system_role_message(self):
-        return self.system_prompts[self.state].substitute(graph=self._paste_graph_as_text(), user_report=self.report_text)
+        # return self.system_prompts[self.state].substitute(graph=self._paste_graph_as_text(), user_report=self.report_text)
+        return GENERAL_PROMPT.substitute(graph=self._paste_graph_as_text(), user_report=self.report_text)
 
     def _gpt_response(self, messages):
         response = self.client.chat.completions.create(
@@ -140,7 +74,7 @@ class ChatBot():
         return response
     
     def clear_history(self):
-        self.history = Queue(maxsize=10)
+        self.history = Queue(maxsize=15)
     
     def update_report(self, text):
         self.report_text = text
@@ -232,44 +166,7 @@ class ChatBot():
         self.history.put(message)
 
     def interact(self, user_message):
-        # TODO finish and make actually work
-        if self.state == HandoverState.CHECK_CONSISTENCY:
-            reply = self.check_graph_consistency_with_report()
-
-            if "No contradictions found" in reply:
-                self.state = HandoverState.QUESTION_GENERATION
-                # self.clear_history()
-                reply = "I've updated my knowledge base based on your report."
-                return reply + "\n" + self.interact("")
-            elif "Update graph" in reply:
-                new_graph = self.update_graph_from_msg(reply)
-                print("DEBUG: updating graph...")
-                self.update_graph(new_graph)
-                return self.interact("")
-            return reply
-        
-        elif self.state == HandoverState.QUESTION_GENERATION:
-            reply = self._chat_reply_with_history(user_message)
-            if "No updates required" in reply:
-                self.state = HandoverState.IDENTIFY_MISSING_INFO
-                # self.clear_history()
-                return self.interact("")
-            elif "Update graph" in reply:
-                new_graph = self.update_graph_from_msg(reply)
-                print("DEBUG: updating graph...")
-                self.update_graph(new_graph)
-                return self.interact("")
-            return reply
-            
-        elif self.state == HandoverState.IDENTIFY_MISSING_INFO:
-            reply = self._chat_reply_with_history(user_message)
-            if "No missing information found" in reply:
-                self.state = HandoverState.DONE
-                reply += " The report looks good to me. Thank you! You can feel free to edit more if you choose, or save the report and exit."
-            return reply
-        
-        else:
-            return self._chat_reply_with_history(user_message)
+        return self._chat_reply_with_history(user_message)
         
     # def bot_loop(self):
     #     # if you want to run in terminal
@@ -307,18 +204,17 @@ class ChatGUI(tk.Tk):
         self.launch_report_window()
 
     def send_message(self):
-        if not self.bot.state == HandoverState.DONE:
-            user_input = self.entry_field.get().strip()
-            self.entry_field.delete(0, tk.END)
+        user_input = self.entry_field.get().strip()
+        self.entry_field.delete(0, tk.END)
 
-            # reply = self.bot._chat_reply_with_history(user_input)
-            reply = self.bot.interact(user_input)
+        # reply = self.bot._chat_reply_with_history(user_input)
+        reply = self.bot.interact(user_input)
 
-            self.chat_display.configure(state='normal')
-            self.chat_display.insert(tk.END, f"User: {user_input}\n", "user")
-            self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
-            self.chat_display.configure(state='disabled')
-            self.chat_display.see(tk.END)
+        self.chat_display.configure(state='normal')
+        self.chat_display.insert(tk.END, f"User: {user_input}\n", "user")
+        self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
+        self.chat_display.configure(state='disabled')
+        self.chat_display.see(tk.END)
 
     def launch_report_window(self):
         report_window = tk.Toplevel(self)
@@ -332,9 +228,11 @@ class ChatGUI(tk.Tk):
         save_button.pack(pady=5)
 
     def save_report(self, text_area):
-        # TODO: save to file?
         self.bot.update_report(text_area.get("1.0", tk.END).strip())  # Get all text from the text area
         print("Report saved.")  # You can remove or replace this with any feedback mechanism
+
+        with open("user_report.txt", "w") as file:
+            file.write(self.bot.report_text)
 
         reply = self.bot.interact("(Report updated.)")
         self.chat_display.configure(state='normal')
@@ -358,9 +256,28 @@ def test_chatbot_with_graph():
     # test_load_from_text()
     # test_graph_updates()
 
+
+def main(args):
+    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/{}.txt".format(args.pid)
+    from graph import TelemetryGraph
+    g = TelemetryGraph()
+    g.parse_from_file(telem_file)
+    save_filename = "{}_chat_save.txt".format(args.pid)
+    tt = ChatBot(g, save_filename)
+
+    gui = ChatGUI(tt)
+    gui.mainloop()
+
 if __name__ == "__main__":
     # tt = ChatBot()
     # gui = ChatGUI(tt)
     # gui.mainloop()
 
-    test_chatbot_with_graph()
+    # test_chatbot_with_graph()
+
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Chatbot for handover support project")
+    parser.add_argument('--pid', type=str, help='participant ID for telemetry and chat logs')
+    args = parser.parse_args()
+
+    main(args)

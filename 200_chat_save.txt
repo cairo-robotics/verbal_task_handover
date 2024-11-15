@@ -3,8 +3,8 @@ time	role	content
 The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game and complete the game from the state where it was left off as efficiently as possible..
 You have access to a knowledge graph representing what you know about the current state of the game.
 Your role is to help the user compose a complete and accurate report. You can assist in any of the following ways:
-- Check if the report and your knowledge graph have conflicting information. If so, ask the user to clarify which is correct.
-- Ask the user for additional information to complete the report.
+- Check if the report and your knowledge graph have conflicting information. For example, if the report states they didn't use a key If so, ask the user to clarify which is correct.
+- Suggest additional information from your knowledge graph that could be included in the report.
 - Update the knowledge graph based on the user's report or input. If you update the knowledge graph, include the text "Update graph" in your response. 
 - Provide feedback on the user's report, such as pointing out missing or inconsistent information.
 - If you believe the report is complete and requires no further edits, include the text "Report complete" in your response.
@@ -73,19 +73,10 @@ The current knowledge graph is:
 The user's most recent report is:
 
 
-2024-11-15T13:06:59.039074	[USER REPORT UPDATED]	I talked to a few NPCs but didn't elarn anything useful. I also got a blue key somewhere but I haven't used it yet.
-2024-11-15T13:07:01.283756	user	(Report updated.)
-2024-11-15T13:07:01.283766	assistant	Thank you for the update! I see that you've mentioned talking to a few NPCs and obtaining a blue key, which aligns with the data I have access to. However, I noticed that you mentioned not learning anything useful from the NPCs, while the interactions with them are recorded in the player history.
+2024-11-15T13:19:40.846775	[USER REPORT UPDATED]	I talked to a few NPCs, but I didn't learn anything useful.
+2024-11-15T13:19:42.545585	user	(Report updated.)
+2024-11-15T13:19:42.545596	assistant	Thank you for the update! I see that you mentioned talking to a few NPCs but not learning anything useful. 
 
-To ensure the report is complete and accurate, could you clarify if you indeed found the interactions with the NPCs unhelpful, or if there was any specific information you received that you would like to include? Additionally, would you like to mention the status of the blue key in your report? 
+From the data I have access to, you interacted with the following NPCs: lily, jay, guy, and eliza. Would you like to include any specific details about these interactions, or clarify if any of them provided information that you found useful? 
 
-Let me know if there's anything else you'd like to add!
-2024-11-15T13:07:48.390599	user	Did I use the blue key? I can't remember
-2024-11-15T13:07:48.390610	assistant	According to the data I have access to, you unlocked something using the blue key, but it does not specify what you unlocked or if you used it in a particular location. 
-
-Would you like to include in your report that you have used the blue key to unlock something, or would you prefer to mention that you are unsure about its usage? Let me know how you would like to proceed!
-2024-11-15T13:08:38.117514	[USER REPORT UPDATED]	I talked to a few NPCs but didn't learn anything useful.
-2024-11-15T13:08:39.383071	user	(Report updated.)
-2024-11-15T13:08:39.383083	assistant	Thank you for the update! To ensure the report is comprehensive, could you please confirm if you would like to include any additional details about your interactions with the NPCs, the blue key usage, or any other relevant information? 
-
-If everything is covered, I can finalize the report for you. Please let me know!
+Additionally, if there are any other aspects of your current state in the game that you would like to include in the report, please let me know!
