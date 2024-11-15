@@ -84,6 +84,7 @@ class HandoverState(Enum):
     QUESTION_GENERATION = 2
     UPDATE_GRAPH_DATA = 3
     IDENTIFY_MISSING_INFO = 4
+    DONE = 5
 
     # PROMPT_MAPPING = {
     #     CHECK_CONSISTENCY : CHECK_CONSISTENCY_PROMPT,
@@ -230,12 +231,33 @@ class ChatBot():
 
             if "No contradictions found" in reply:
                 self.state = HandoverState.QUESTION_GENERATION
+                self.clear_history()
                 reply = "I've updated my knowledge base based on your report."
             elif "Update graph" in reply:
                 new_graph = self.update_graph_from_msg(reply)
-                print("updating graph...")
+                print("DEBUG: updating graph...")
                 self.update_graph(new_graph)
                 return self.interact("")
+            return reply
+        
+        elif self.state == HandoverState.QUESTION_GENERATION:
+            reply = self._chat_reply_with_history(user_message)
+            if "No updates required" in reply:
+                self.state = HandoverState.IDENTIFY_MISSING_INFO
+                self.clear_history()
+                return self.interact("")
+            elif "Update graph" in reply:
+                new_graph = self.update_graph_from_msg(reply)
+                print("DEBUG: updating graph...")
+                self.update_graph(new_graph)
+                return self.interact("")
+            return reply
+            
+        elif self.state == HandoverState.IDENTIFY_MISSING_INFO:
+            reply = self._chat_reply_with_history(user_message)
+            if "No missing information found" in reply:
+                self.state = HandoverState.DONE
+                reply += " The report looks good to me. Thank you! You can feel free to edit more if you choose, or save the report and exit."
             return reply
         
         else:
@@ -275,17 +297,18 @@ class ChatGUI(tk.Tk):
         self.launch_report_window()
 
     def send_message(self):
-        user_input = self.entry_field.get().strip()
-        self.entry_field.delete(0, tk.END)
+        if not self.bot.state == HandoverState.DONE:
+            user_input = self.entry_field.get().strip()
+            self.entry_field.delete(0, tk.END)
 
-        # reply = self.bot._chat_reply_with_history(user_input)
-        reply = self.bot.interact(user_input)
+            # reply = self.bot._chat_reply_with_history(user_input)
+            reply = self.bot.interact(user_input)
 
-        self.chat_display.configure(state='normal')
-        self.chat_display.insert(tk.END, f"User: {user_input}\n")
-        self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
-        self.chat_display.configure(state='disabled')
-        self.chat_display.see(tk.END)
+            self.chat_display.configure(state='normal')
+            self.chat_display.insert(tk.END, f"User: {user_input}\n")
+            self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
+            self.chat_display.configure(state='disabled')
+            self.chat_display.see(tk.END)
 
     def launch_report_window(self):
         report_window = tk.Toplevel(self)
@@ -308,7 +331,6 @@ class ChatGUI(tk.Tk):
         self.chat_display.insert(tk.END, f"Assistant: {reply}\n")
         self.chat_display.configure(state='disabled')
         self.chat_display.see(tk.END)
-
 
 
 def test_chatbot_with_graph():
