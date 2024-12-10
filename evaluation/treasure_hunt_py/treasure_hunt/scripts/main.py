@@ -209,7 +209,7 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Your Pygame game with save/load and telemetry functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
-    parser.add_argument('--save', type=str, help='Filename of the save file to write')
+    parser.add_argument('--save', type=str, default="test_save", help='Filename of the save file to write')
     parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')
     parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
     args = parser.parse_args()

@@ -1,4 +1,5 @@
 import json
+import jsons
 from collections import defaultdict
 import pickle
 import time
@@ -174,6 +175,18 @@ class GameState:
         self.cooldown_time_elapsed = 0
 
         self.current_module = None
+    
+    def get_human_readable_state(self):
+        # this doesn't cover 100% of the relevant state info, but it's a start
+        printable_json = {}
+        printable_json["current_room"] = self.current_room
+        printable_json["player_has_items"] = self.player_has_items
+        printable_json["score"] = self.score
+        for room in self._objects:
+            printable_json[room] = {}
+            for obj in self._objects[room]:
+                printable_json[room][obj] = self._objects[room][obj].__dict__
+        return printable_json
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -429,9 +442,11 @@ class GameState:
         self.telemetry.log_event(event_type, details)
         return event_type, details
 
-    def save(self, filename="save.pkl"):
-        with open(filename, "wb") as file:
+    def save(self, filename="save"):
+        with open(filename + ".pkl", "wb") as file:
             pickle.dump(self, file)
+        with open(filename + ".json", "w") as file:
+            json.dump(self.get_human_readable_state(), file, indent=4)
 
     @classmethod
     def load(cls, filename="save.pkl"):

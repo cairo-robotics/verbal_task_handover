@@ -39,6 +39,12 @@ class KeyObject(Object):
         self.linked_object = linked_object
         self.linked_object.make_invisible()
 
+    @property
+    def __dict__(self):
+        d = super().__dict__.copy()
+        print(d)
+        d["linked_object"] = self.linked_object.__dict__
+
     def interact(self):
         self.interact_count += 1
         if self.interact_count >= 3:
