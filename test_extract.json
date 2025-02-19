@@ -72,30 +72,37 @@
     ],
     "npcs": [
         {
+            "name": "lily",
             "location": "room0",
             "interacted": false
         },
         {
+            "name": "jay",
             "location": "room0",
             "interacted": false
         },
         {
+            "name": "guy",
             "location": "room0",
             "interacted": false
         },
         {
+            "name": "mark",
             "location": "room1",
             "interacted": false
         },
         {
+            "name": "eliza",
             "location": "room5",
             "interacted": false
         },
         {
+            "name": "marie",
             "location": "room18",
             "interacted": false
         },
         {
+            "name": "steve",
             "location": "room6",
             "interacted": false
         }

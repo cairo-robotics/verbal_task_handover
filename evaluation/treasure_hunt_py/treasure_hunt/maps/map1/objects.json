@@ -293,8 +293,8 @@
                 "facing" : "SOUTH", 
                 "interact_data" : [
                     [
-                        ["> I'm not sure where to find treasure, but I know someone who might.", ""],
-                        ["> He's a bit of a recluse, so he likes to hang out in locked rooms.", ""],
+                        ["> I could give you a TREASURE, but I need something from you first.", ""],
+                        ["> Go talk to my friend. He likes to hang out in locked rooms.", ""],
                         ["> Take this. Just tell him Mark sent you.", ""],
                         ["", "silver key"]
                     ],
@@ -345,7 +345,7 @@
                 "interact_data" : [
                     [
                         ["> Bring me a GREEN GEM and we can see about a trade.", ""],
-                        ["> It might be buried somewhere, or rattlin' around a barrel...", ""]
+                        ["> It might be buried somewhere, or inside a barrel...", ""]
                     ]
                 ],
                 "conditional_interacts" : {

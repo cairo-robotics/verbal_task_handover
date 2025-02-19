@@ -3,7 +3,7 @@ import json
 
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 
-def extract_quest_data(state):
+def extract_state_data(state):
     json_data = {
         "player_items" : state.player_has_items,
         "doors" : [],
@@ -56,6 +56,7 @@ def extract_quest_data(state):
 
             elif obj.type == "npc":
                 npc = {
+                    "name" : obj.name,
                     "location" : room,
                     "interacted" : (obj.current_conversation > 0)
                 }
@@ -75,6 +76,6 @@ if __name__ == "__main__":
     output_file = sys.argv[2]
 
     state = GameState.load(filename)
-    json_data = extract_quest_data(state)
+    json_data = extract_state_data(state)
     with open(output_file, 'w') as f:
         json.dump(json_data, f, indent=4)
