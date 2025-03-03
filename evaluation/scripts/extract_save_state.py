@@ -65,8 +65,6 @@ def extract_state_data(state):
 
     return json_data
 
-    
-
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:

@@ -34,7 +34,7 @@ VISUAL_PARAMS = {
     'tile_size': TILE_SIZE,
     'font_size' : 36,
     'game_surface_fps' : FPS,
-    'use_darkness' : True,
+    'use_darkness' : False,
     'light_radius' : 2,
     'walk_animation_frames' : 3
 }
