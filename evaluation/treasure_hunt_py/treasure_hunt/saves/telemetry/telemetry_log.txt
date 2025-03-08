@@ -1,8 +1,0 @@
-2024-09-03 14:43:04 - Room entered: room2
-2024-09-03 14:43:05 - Item obtained: ['key0']
-2024-09-03 14:43:07 - Room entered: room0
-2024-09-03 14:43:08 - Door unlocked: door_to_room1 using key0
-2024-09-03 14:43:08 - Room entered: room1
-2024-09-03 14:43:09 - NPC interact: mark
-2024-09-03 14:43:09 - Item obtained: key1
-2024-09-03 14:43:10 - Room entered: room0
