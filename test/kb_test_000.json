@@ -1,0 +1,104 @@
+{
+    "player_items": [
+        "blue key"
+    ],
+    "doors": [
+        {
+            "is_locked": true,
+            "key": "silver key",
+            "location": "room0"
+        },
+        {
+            "is_locked": true,
+            "key": "blue key",
+            "location": "room3"
+        },
+        {
+            "is_locked": true,
+            "key": "gold key",
+            "location": "room7"
+        }
+    ],
+    "treasure": [
+        {
+            "found": false,
+            "location": "room3"
+        },
+        {
+            "found": false,
+            "location": "room4"
+        }
+    ],
+    "chests": [
+        {
+            "is_open": false,
+            "location": "room2"
+        },
+        {
+            "is_open": false,
+            "location": "room2"
+        },
+        {
+            "is_open": false,
+            "location": "room15"
+        },
+        {
+            "is_open": false,
+            "location": "room16"
+        }
+    ],
+    "npcs": [
+        {
+            "name": "lily",
+            "location": "room0",
+            "interacted": false
+        },
+        {
+            "name": "jay",
+            "location": "room0",
+            "interacted": false
+        },
+        {
+            "name": "guy",
+            "location": "room0",
+            "interacted": true
+        },
+        {
+            "name": "mark",
+            "location": "room1",
+            "interacted": false
+        },
+        {
+            "name": "eliza",
+            "location": "room5",
+            "interacted": false
+        },
+        {
+            "name": "marie",
+            "location": "room18",
+            "interacted": false
+        },
+        {
+            "name": "steve",
+            "location": "room6",
+            "interacted": false
+        }
+    ],
+    "password_module": {
+        "password": "asdf",
+        "defused": false,
+        "location": "room1"
+    },
+    "wire_module": {
+        "num_wires": 4,
+        "wires": [
+            "blue",
+            "red",
+            "yellow",
+            "blue"
+        ],
+        "serial_no": "S2411",
+        "defused": false,
+        "location": "room19"
+    }
+}

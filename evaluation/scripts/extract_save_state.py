@@ -3,7 +3,13 @@ import json
 
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 
+"""
+For extracting the "ground truth" game state in json format.
+Restricted mainly to strictly task-relevant aspects, like rooms entered, NPCs interacted, and so on.
+"""
+
 def extract_state_data(state):
+    print(state.player_has_items)
     json_data = {
         "player_items" : state.player_has_items,
         "doors" : [],
@@ -14,7 +20,7 @@ def extract_state_data(state):
 
     for room in state._objects:
         for obj in state._objects[room].values():
-            if obj.type == "door":
+            if obj.type == "door" and (obj.is_locked or obj.was_unlocked):
                 door = {
                     "is_locked" : obj.is_locked,
                     "key" : obj.key,
