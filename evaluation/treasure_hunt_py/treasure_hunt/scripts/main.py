@@ -56,11 +56,8 @@ def main(args):
 
     save_file = os.path.join(SAVE_DIRECTORY, save_file)
     
-    if args.telemetry:
-        telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, args.telemetry)
-        telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
-    else:
-        telemetry = DummyTelemetry()
+    telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, save_file + '.txt')
+    telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Treasure Hunt Task")
@@ -210,7 +207,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Your Pygame game with save/load and telemetry functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, default="test_save", help='Filename of the save file to write')
-    parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')
     parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
     args = parser.parse_args()
 
