@@ -1,36 +1,16 @@
 import json
 
+"""
+Needs to be rewritten -- I got confused at some point between recording player quest progress vs. tracking knowable info.
+This is a mess.
+"""
+
 START_STATE_JSON = """{
     "player_items": [],
     "doors": [
         {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
             "is_locked": true,
             "key": "silver key",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
             "location": "room0"
         },
         {

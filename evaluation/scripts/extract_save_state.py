@@ -4,11 +4,11 @@ import json
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 
 """
-For extracting the "ground truth" game state in json format.
+For extracting the "ground truth" game state in json format, regardless of player knowledge.
 Restricted mainly to strictly task-relevant aspects, like rooms entered, NPCs interacted, and so on.
 """
 
-def extract_state_data(state):
+def extract_ground_truth_data(state):
     print(state.player_has_items)
     json_data = {
         "player_items" : state.player_has_items,
@@ -71,6 +71,10 @@ def extract_state_data(state):
 
     return json_data
 
+def extract_player_knowable_data(state):
+    # TODO: implement this
+    raise NotImplementedError
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
@@ -80,6 +84,6 @@ if __name__ == "__main__":
     output_file = sys.argv[2]
 
     state = GameState.load(filename)
-    json_data = extract_state_data(state)
+    json_data = extract_ground_truth_data(state)
     with open(output_file, 'w') as f:
         json.dump(json_data, f, indent=4)
