@@ -1,7 +1,3 @@
-2025-03-08 16:40:57 - NPC interact: guy
-2025-03-08 16:40:59 - Room entered: EAST to room10
-2025-03-08 16:41:01 - Room entered: EAST to room5
-2025-03-08 16:41:03 - Room entered: NORTH to room13
-2025-03-08 16:41:05 - Room entered: EAST to room14
-2025-03-08 16:41:06 - Item interacted: barrel
-2025-03-08 16:41:11 - Item interacted: barrel
+2025-03-12 17:05:11 - Room entered: SOUTH to room9
+2025-03-12 17:05:16 - Room entered: SOUTH to room3
+2025-03-12 17:05:18 - Item interacted: page

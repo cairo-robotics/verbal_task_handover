@@ -15,7 +15,8 @@ def extract_ground_truth_data(state):
         "doors" : [],
         "treasure" : [],
         "chests" : [],
-        "npcs": []
+        "npcs": [],
+        "pages": []
     }
 
     for room in state._objects:
@@ -68,6 +69,13 @@ def extract_ground_truth_data(state):
                 }
                 # TODO: will this cause issues if regular interaction did not occur before conditional interaction?
                 json_data["npcs"].append(npc)
+
+            elif obj.type == "page":
+                page = {
+                    "text" : obj.text,
+                    "location" : room                    
+                }
+                json_data["pages"].append(page)
 
     return json_data
 

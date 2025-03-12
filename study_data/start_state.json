@@ -2,33 +2,8 @@
     "player_items": [],
     "doors": [
         {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
             "is_locked": true,
             "key": "silver key",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
-            "location": "room0"
-        },
-        {
-            "is_locked": false,
-            "key": "",
             "location": "room0"
         },
         {
