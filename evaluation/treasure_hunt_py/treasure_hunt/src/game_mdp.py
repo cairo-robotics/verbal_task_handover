@@ -426,6 +426,7 @@ class GameState:
                         # self.telemetry.log_event(event_type, details)
             else:
                 res = obj.interact()
+                self.telemetry.log_event(Event.ITEM_INTERACTED, obj.name)
                 # if res:
                 #     self.displayed_text = res
 
