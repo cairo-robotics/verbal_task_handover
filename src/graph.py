@@ -184,6 +184,23 @@ class TelemetryGraph:
                     G.add_edge(last_added_position_node, item_name, action="Contains")
                 G.add_edge("Player", item_name, action="Interacted", time=timestamp)
 
+            # TODO: add nodes for module interacts
+            elif event.startswith("Module interacted"):
+                module_name = event.split(": ")[1]
+                G.add_node(module_name)
+
+                if not G.has_edge(last_added_position_node, module_name):
+                    G.add_edge(last_added_position_node, module_name, action="Contains")
+                G.add_edge("Player", module_name, action="Interacted", time=timestamp)
+
+            elif event.startswith("Module defused"):
+                module_name = event.split(": ")[1]
+                G.add_node(module_name)
+
+                if not G.has_edge(last_added_position_node, module_name):
+                    G.add_edge(last_added_position_node, module_name, action="Contains")
+                G.add_edge("Player", module_name, action="Defused", time=timestamp)
+
             elif event.startswith("Door unlocked"):
                 item_name = event.split(": ")[1]
                 G.add_node(item_name)
