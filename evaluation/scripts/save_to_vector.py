@@ -12,14 +12,18 @@ def extract_ground_truth_data(state):
     print(state.player_has_items)
     json_data = {
         "player_items" : state.player_has_items,
+        "rooms" : [], # mostly for record-keeping -- this way we can compare later to see which rooms were/weren't enetered
         "doors" : [],
         "treasure" : [],
         "chests" : [],
-        "npcs": [],
-        "pages": []
+        "npcs": {}, # dict - names as unique identifiers
+        "pages": [],
+        "wire_module": {},
+        "password_module": {}
     }
 
     for room in state._objects:
+        json_data["rooms"].append(room)
         for obj in state._objects[room].values():
             if obj.type == "door" and (obj.is_locked or obj.was_unlocked):
                 door = {
@@ -63,12 +67,11 @@ def extract_ground_truth_data(state):
 
             elif obj.type == "npc":
                 npc = {
-                    "name" : obj.name,
                     "location" : room,
                     "interacted" : (obj.current_conversation > 0)
                 }
                 # TODO: will this cause issues if regular interaction did not occur before conditional interaction?
-                json_data["npcs"].append(npc)
+                json_data["npcs"][obj.name] = npc
 
             elif obj.type == "page":
                 page = {
@@ -78,10 +81,6 @@ def extract_ground_truth_data(state):
                 json_data["pages"].append(page)
 
     return json_data
-
-def extract_player_knowable_data(state):
-    # TODO: implement this
-    raise NotImplementedError
 
 if __name__ == "__main__":
 
@@ -95,3 +94,4 @@ if __name__ == "__main__":
     json_data = extract_ground_truth_data(state)
     with open(output_file, 'w') as f:
         json.dump(json_data, f, indent=4)
+    print(f"Ground truth data saved to {output_file}")
