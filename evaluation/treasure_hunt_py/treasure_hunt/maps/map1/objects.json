@@ -247,9 +247,9 @@
                 "facing" : "NORTH",
                 "interact_data" : [
                     [
-                        ["> Hello, I'm Lily.", ""],
-                        ["> I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
-                        ["> I hope that helps!", ""]
+                        ["> LILY: Hello, I'm Lily.", ""],
+                        ["> LILY: I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
+                        ["> LILY: I hope that helps!", ""]
                     ]
                 ]
             },
@@ -258,20 +258,20 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> I've heard about a treasure, but first I need something.", ""],
-                        ["> I need a BLUE GEM. If you find one, bring it to me.", ""]
+                        ["> JAY: I've heard about a treasure, but first I need something.", ""],
+                        ["> JAY: I need a BLUE GEM. If you find one, bring it to me.", ""]
                     ],
                     [
-                        ["> I need the BLUE GEM, sorry. I can't help you until you bring it to me.", ""]
+                        ["> JAY: I need the BLUE GEM, sorry. I can't help you until you bring it to me.", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "blue gem" : [
                         [
-                            ["> Oh, you found the BLUE GEM. Thanks.", ""],
-                            ["> Okay, here's what I've heard about the treasure...", ""],
-                            ["> 'Face the RED BANNER, then head 3 steps SOUTH and 2 steps EAST.'", ""],
-                            ["> 'Then press SPACE to find what you seek.'", ""]
+                            ["> JAY: Oh, you found the BLUE GEM. Thanks.", ""],
+                            ["> JAY: Okay, here's what I've heard about the treasure...", ""],
+                            ["> JAY: 'Face the RED BANNER, then head 3 steps SOUTH and 2 steps EAST.'", ""],
+                            ["> JAY: 'Then press SPACE to find what you seek.'", ""]
                         ]
                     ]
                 }
@@ -281,8 +281,8 @@
                 "facing" : "WEST",
                 "interact_data" : [
                     [
-                        ["> Did you know, you can dig on the tile you're standing on by pressing SPACE?", ""],
-                        ["> You can also use SPACE to search barrels and chests, and to open doors.", ""]
+                        ["> GUY: Did you know, you can dig on the tile you're standing on by pressing SPACE?", ""],
+                        ["> GUY: You can also use SPACE to search barrels and chests, and to open doors.", ""]
                     ]
                 ]
             }
@@ -293,25 +293,25 @@
                 "facing" : "SOUTH", 
                 "interact_data" : [
                     [
-                        ["> I could give you a TREASURE, but I need something from you first.", ""],
-                        ["> Go talk to my friend. He likes to hang out in locked rooms.", ""],
-                        ["> Take this. Just tell him Mark sent you.", ""],
+                        ["> MARK: I could give you a TREASURE, but I need something from you first.", ""],
+                        ["> MARK: Go talk to my friend. He likes to hang out in locked rooms.", ""],
+                        ["> MARK: Take this. Just tell him Mark sent you.", ""],
                         ["", "silver key"]
                     ],
                     [
-                        ["> My friend likes to hang out in locked rooms. He should be able to help.", ""]
+                        ["> MARK: My friend likes to hang out in locked rooms. He should be able to help.", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "note from Steve" : [
                         [
-                            ["> Oh, wow! You brought the gem I needed.", ""],
-                            ["> Plus a letter. Thank you.", ""],
-                            ["> Here's a reward.", ""],
+                            ["> MARK: Oh, wow! You brought the gem I needed.", ""],
+                            ["> MARK: Plus a letter. Thank you.", ""],
+                            ["> MARK: Here's a reward.", ""],
                             ["", "treasure2"]
                         ],
                         [
-                            ["> Thanks for all your help!", ""]
+                            ["> MARK: Thanks for all your help!", ""]
                         ]
                     ]
                 }
@@ -323,16 +323,16 @@
                 "facing" : "EAST",
                 "interact_data" : [
                     [
-                        ["> ...Sorry, I'm shy. Can we talk later?", ""]
+                        ["> ELIZA: ...Sorry, I'm shy. Can we talk later?", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "blue gem" : [
                         [
-                            ["> Oh, you found a blue gem. My brother loves those.", ""],
-                            ["> Did he also tell you about the blue banner?", ""],
-                            ["> If you tap it 3 times, you'll find a secret passage.", ""],
-                            ["> I hope that helps.", ""]
+                            ["> ELIZA: Oh, you found a blue gem. My brother loves those.", ""],
+                            ["> ELIZA: Did he also tell you about the blue banner?", ""],
+                            ["> ELIZA: If you tap it 3 times, you'll find a secret passage.", ""],
+                            ["> ELIZA: I hope that helps.", ""]
                         ]
                     ]
                 }
@@ -344,18 +344,18 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Bring me a GREEN GEM and we can see about a trade.", ""],
-                        ["> It might be buried somewhere, or inside a barrel...", ""]
+                        ["> STEVE: Bring me a GREEN GEM and we can see about a trade.", ""],
+                        ["> STEVE: It might be buried somewhere, or inside a barrel...", ""]
                     ]
                 ],
                 "conditional_interacts" : {
                     "green gem" : [
                         [
-                            ["> Excellent, you found the GREEN GEM. Thanks.", ""],
-                            ["> Take that gem back to Mark. The one with the glasses who sent you here.", ""],
-                            ["> And take this.", ""],
+                            ["> STEVE: Excellent, you found the GREEN GEM. Thanks.", ""],
+                            ["> STEVE: Take that gem back to Mark. The one with the glasses who sent you here.", ""],
+                            ["> STEVE: And take this.", ""],
                             ["", "note from Steve"],
-                            ["> He'll reward you for the delivery.", ""]
+                            ["> STEVE: He'll reward you for the delivery.", ""]
                         ]
                     ]
                 }
@@ -368,8 +368,8 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Did anyone tell you? Sometimes barrels have nice things in them...", ""],
-                        ["> Make sure you use SPACE to check them.", ""]
+                        ["> MARIE: Did anyone tell you? Sometimes barrels have nice things in them...", ""],
+                        ["> MARIE: Make sure you use SPACE to check them.", ""]
                     ]
                 ]
             }

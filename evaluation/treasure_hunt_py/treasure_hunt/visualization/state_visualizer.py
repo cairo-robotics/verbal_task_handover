@@ -255,10 +255,16 @@ class StateVisualizer:
         surface.blit(textbox_surface, textbox_position)
 
     def _render_hud(self, surface, state):
-        # for now: just render the score
+        # Render the score in the top-left corner
         score_text = "Score: " + str(state.score)
         score_surface = self.font.render(score_text, True, WHITE)
         surface.blit(score_surface, (10, 10))
+
+        # Render the current room name in the top-right corner
+        room_name_text = "Room: " + state.current_room
+        room_name_surface = self.font.render(room_name_text, True, WHITE)
+        room_name_rect = room_name_surface.get_rect(topright=(surface.get_width() - 10, 10))
+        surface.blit(room_name_surface, room_name_rect)
 
     def _render_player(self, surface, state):
         player_dir = state.player_dir
