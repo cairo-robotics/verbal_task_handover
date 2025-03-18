@@ -105,6 +105,8 @@ def main(args):
     TUTORIAL_TEXT = [
         [
             "Welcome to the tutorial for the Treasure Hunt task! (Press SPACE to continue)",
+            "Your goal for this task is to find all of the TREASURES hidden in the map, which look like red gems.",
+            "You'll find an example in just a moment."
             "You can move around using the arrow keys.",
             "You can also interact with objects by pressing the SPACE bar.",
             "Try opening the chest in front of you by pressing SPACE."
@@ -112,7 +114,7 @@ def main(args):
         [
             "Great job! You found a key.",
             "Keys can be used to open locked doors.",
-            "Try opening the door to the right."
+            "Try opening the door to at the top of the room."
         ],
         [
             "The SPACE bar can also be used to talk to other characters and interact with other objects.",

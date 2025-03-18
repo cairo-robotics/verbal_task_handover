@@ -221,7 +221,7 @@ class GameState:
         self.cooldown = max(0, self.cooldown - dt)
         if prior_cooldown > 0 and self.cooldown == 0:
             self.cooldown_time_elapsed = 0
-            self.displayed_text += " [done]"
+            self.displayed_text += " [SPACE to continue]"
 
         if self.cooldown > 0:
             self.cooldown_time_elapsed += dt
