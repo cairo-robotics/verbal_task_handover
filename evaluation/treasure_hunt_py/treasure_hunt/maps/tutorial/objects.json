@@ -42,7 +42,7 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> Hi there! How are you?", ""]
+                        ["> LILY: Hi there! How are you?", ""]
                     ]
                 ]
             }

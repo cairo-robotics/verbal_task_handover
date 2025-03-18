@@ -247,7 +247,6 @@
                 "facing" : "NORTH",
                 "interact_data" : [
                     [
-                        ["> LILY: Hello, I'm Lily.", ""],
                         ["> LILY: I've heard a rumor that there's a treasure buried in some DIRT, in one of the rooms SOUTH of here...", ""],
                         ["> LILY: I hope that helps!", ""]
                     ]
@@ -258,7 +257,7 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> JAY: I've heard about a treasure, but first I need something.", ""],
+                        ["> JAY: I have a hint about the treasure you need, but first...", ""],
                         ["> JAY: I need a BLUE GEM. If you find one, bring it to me.", ""]
                     ],
                     [
@@ -295,7 +294,7 @@
                     [
                         ["> MARK: I could give you a TREASURE, but I need something from you first.", ""],
                         ["> MARK: Go talk to my friend. He likes to hang out in locked rooms.", ""],
-                        ["> MARK: Take this. Just tell him Mark sent you.", ""],
+                        ["> MARK: Take this and find him.", ""],
                         ["", "silver key"]
                     ],
                     [
@@ -305,8 +304,7 @@
                 "conditional_interacts" : {
                     "note from Steve" : [
                         [
-                            ["> MARK: Oh, wow! You brought the gem I needed.", ""],
-                            ["> MARK: Plus a letter. Thank you.", ""],
+                            ["> MARK: Oh, wow! You brought the letter I needed.", ""],
                             ["> MARK: Here's a reward.", ""],
                             ["", "treasure2"]
                         ],
@@ -351,9 +349,8 @@
                 "conditional_interacts" : {
                     "green gem" : [
                         [
-                            ["> STEVE: Excellent, you found the GREEN GEM. Thanks.", ""],
-                            ["> STEVE: Take that gem back to Mark. The one with the glasses who sent you here.", ""],
-                            ["> STEVE: And take this.", ""],
+                            ["> STEVE: Excellent, you found the GREEN GEM.", ""],
+                            ["> STEVE: Now, take this back to Mark. The one with the glasses who sent you here.", ""],
                             ["", "note from Steve"],
                             ["> STEVE: He'll reward you for the delivery.", ""]
                         ]
@@ -368,7 +365,7 @@
                 "facing" : "SOUTH",
                 "interact_data" : [
                     [
-                        ["> MARIE: Did anyone tell you? Sometimes barrels have nice things in them...", ""],
+                        ["> MARIE: Did anyone tell you? Sometimes barrels have useful things in them...", ""],
                         ["> MARIE: Make sure you use SPACE to check them.", ""]
                     ]
                 ]
