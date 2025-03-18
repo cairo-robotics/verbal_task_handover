@@ -1,0 +1,41 @@
+2025-03-18 11:15:32 - Room entered: WEST to room7
+2025-03-18 11:15:34 - Tried locked door: door_10
+2025-03-18 11:15:35 - Room entered: EAST to room0
+2025-03-18 11:15:37 - Room entered: WEST to room8
+2025-03-18 11:15:38 - Room entered: WEST to room2
+2025-03-18 11:15:39 - Item obtained: gold key
+2025-03-18 11:15:41 - Room entered: EAST to room8
+2025-03-18 11:15:42 - Room entered: EAST to room0
+2025-03-18 11:15:46 - Room entered: SOUTH to room9
+2025-03-18 11:15:48 - Room entered: NORTH to room0
+2025-03-18 11:15:49 - Room entered: WEST to room7
+2025-03-18 11:15:50 - Door unlocked: used gold key
+2025-03-18 11:15:52 - Room entered: NORTH to room1
+2025-03-18 11:15:53 - NPC interact: mark
+2025-03-18 11:15:57 - Room entered: SOUTH to room7
+2025-03-18 11:16:00 - Room entered: WEST to room18
+2025-03-18 11:16:02 - Room entered: EAST to room7
+2025-03-18 11:16:02 - Room entered: WEST to room18
+2025-03-18 11:16:03 - Item interacted: barrel
+2025-03-18 11:16:06 - Room entered: EAST to room7
+2025-03-18 11:16:08 - Room entered: EAST to room0
+2025-03-18 11:16:13 - Room entered: EAST to room10
+2025-03-18 11:16:14 - Room entered: EAST to room5
+2025-03-18 11:16:15 - Room entered: NORTH to room13
+2025-03-18 11:16:15 - Room entered: EAST to room14
+2025-03-18 11:16:17 - Room entered: WEST to room13
+2025-03-18 11:16:18 - Room entered: SOUTH to room5
+2025-03-18 11:16:19 - Room entered: WEST to room10
+2025-03-18 11:16:20 - Room entered: WEST to room0
+2025-03-18 11:16:23 - Door unlocked: used silver key
+2025-03-18 11:16:24 - Room entered: EAST to room11
+2025-03-18 11:16:24 - Room entered: EAST to room6
+2025-03-18 11:16:26 - Room entered: WEST to room11
+2025-03-18 11:16:27 - Room entered: NORTH to room17
+2025-03-18 11:16:29 - Item interacted: blue banner
+2025-03-18 11:16:29 - Item interacted: blue banner
+2025-03-18 11:16:30 - Item interacted: blue banner
+2025-03-18 11:16:32 - Room entered: WEST to room15
+2025-03-18 11:16:33 - Treasure collected: treasure5
+2025-03-18 11:16:34 - Item interacted: barrel
+2025-03-18 11:16:38 - Room entered: NORTH to room17
