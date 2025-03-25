@@ -1,14 +1,19 @@
 import sys
 import os
+import json
+
 from openai import OpenAI
 
-VECTOR_PROMPT = """\
-prompt text goes here!
+from vector_schema import GameStateSchema
+
+VECTOR_PROMPT = """You are an AI assistant for a text-based adventure game.\
+The user has given a verbal description of the current game state.\
+Please convert any information included in the description into the given JSON schema.
 """
 
-def main():
-    raise NotImplementedError("TODO: provide info in VECTOR_PROMPT")
+# TEST_TEXT = """I have a silver key and a blue key. I found a door with a gold lock, but I don't remember where. I also talked to an NPC named Lily and learned a password 'asdf'. """
 
+def main():
     if len(sys.argv) != 3:
         print("Usage: python report_to_vector.py <text_filename> <output_filename>")
         return
@@ -23,21 +28,28 @@ def main():
         print(f"File {text_filename} not found.")
         return
 
-    model = "gpt-4o-mini"
+    model = "gpt-4o-mini-2024-07-18"
     temperature = 0.2
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-    response = client.chat.completions.create(
+    response = client.beta.chat.completions.parse(
         model=model,
         messages=[
             {"role": "system", "content": VECTOR_PROMPT},
             {"role": "user", "content": prompt}
         ],
-        temperature=temperature
+        temperature=temperature,
+        response_format = GameStateSchema
     )
 
-    with open(output_filename, 'w') as output_file:
-        output_file.write(response.choices[0].choices[0].message.content.strip())
+    message = response.choices[0].message
+    if message.parsed:
+        with open(output_filename, 'w') as output_file:
+            # output_file.write(response.choices[0].choices[0].message.content.strip())
+            json.dump(message.parsed.dict(), output_file, indent=2)
+    else:
+        print("Failed to parse response.")
+        print(message.refusal)
 
 if __name__ == "__main__":
     main()

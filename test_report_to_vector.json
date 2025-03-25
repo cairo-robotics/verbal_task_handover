@@ -1,0 +1,34 @@
+{
+  "player_items": [
+    "silver key",
+    "blue key"
+  ],
+  "doors": [
+    {
+      "is_locked": true,
+      "key": "gold",
+      "location": "unknown"
+    }
+  ],
+  "treasure": [],
+  "chests": [],
+  "npcs": [
+    {
+      "name": "Lily",
+      "location": "unknown",
+      "interacted": true
+    }
+  ],
+  "password_module": {
+    "password": "asdf",
+    "defused": false,
+    "location": "unknown"
+  },
+  "wire_module": {
+    "num_wires": 0,
+    "wires": [],
+    "serial_no": "",
+    "defused": false,
+    "location": "unknown"
+  }
+}
