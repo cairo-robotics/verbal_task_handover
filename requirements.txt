@@ -5,3 +5,6 @@ pyparsing==3.1.4
 python-dateutil==2.9.0.post0
 openai==1.42.0
 pyyaml==6.0
+openapi-schema-pydantic==1.2.4
+pydantic==1.10.18
+pydantic_core==2.23.2

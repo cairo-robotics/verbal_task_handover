@@ -6,6 +6,8 @@ from openai import OpenAI
 
 from vector_schema import GameStateSchema
 
+# see https://openai.com/index/introducing-structured-outputs-in-the-api/
+
 VECTOR_PROMPT = """You are an AI assistant for a text-based adventure game.\
 The user has given a verbal description of the current game state.\
 Please convert any information included in the description into the given JSON schema.
