@@ -191,6 +191,11 @@ class ChatGUI(tk.Tk):
 
         self.chat_display.tag_config("user", foreground="blue")
 
+        # Add initial startup instruction
+        self.chat_display.configure(state='normal')
+        self.chat_display.insert(tk.END, f"Assistant: Hello! Please write a draft of your notes in the 'Report' window and press 'Save Report' when you're done.\n")
+        self.chat_display.insert(tk.END, f"Assistant: Then, I can review your notes and add any data that I can contribute.\n")
+
         entry_frame = tk.Frame(self)
         entry_frame.pack(padx=10, pady=10, fill=tk.X, expand=False)
 
@@ -253,12 +258,8 @@ def test_chatbot_with_graph():
     gui = ChatGUI(tt)
     gui.mainloop()
 
-    # test_load_from_text()
-    # test_graph_updates()
-
-
 def main(args):
-    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/{}.txt".format(args.pid)
+    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/{}.txt".format(args.pid)
     from graph import TelemetryGraph
     g = TelemetryGraph()
     g.parse_from_file(telem_file)
