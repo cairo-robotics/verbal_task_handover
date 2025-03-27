@@ -306,7 +306,7 @@ class GameState:
         return event_type
 
     def handle_interact(self):
-        print("handling interact: ", self.displayed_text, self.text_queue)
+        # print("handling interact: ", self.displayed_text, self.text_queue)
 
         # check for item cooldowns before continuing
         if self.cooldown > 0:
@@ -332,7 +332,15 @@ class GameState:
             self.displayed_icon = None
             return None, None
 
-        obj = self._get_object_at_position(self.player_pos)
+        if any(isinstance(coord, float) for coord in self.player_pos):
+            rounded_pos = (
+                round(self.player_pos[0] + 0.5 * self.player_dir[0]),
+                round(self.player_pos[1] + 0.5 * self.player_dir[1])
+            )
+            obj = self._get_object_at_position(rounded_pos)
+        else:
+            obj = self._get_object_at_position(self.player_pos)
+        print("interacting with object: ", obj)
 
         if obj is not None and obj.type == "treasure":
             res = obj.interact()

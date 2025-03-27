@@ -19,12 +19,14 @@ SAVE_FILENAME = 'test_save.pkl'
 
 STARTING_ROOM = 'room0'
 
+DISTRACTOR_START_TIME = 5
+
 # Constants  
 TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-MOVE_DURATION = 150 # time it takes to move from one tile to another in milliseconds
+MOVE_DURATION = 350 # time it takes to move from one tile to another in milliseconds
 # MOVE_DURATION = 10
 
 # Colors
@@ -54,7 +56,7 @@ class DistractorTaskManager:
     def launch_distractor(self):
         print("Launching distractor task...")
         self.task_active = True
-        webbrowser.open(self.distractor_url)
+        webbrowser.open(self.distractor_url, new=1)
 
     def wait_for_completion(self):
         print("Waiting for distractor task completion...")
@@ -140,7 +142,7 @@ def main(args):
     keys_pressed = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False, pygame.K_DOWN: False}
 
     distractor_manager = DistractorTaskManager()
-    distractor_manager.start_timer_and_launch()
+    distractor_manager.start_timer_and_launch(start_time_minutes=DISTRACTOR_START_TIME)
 
     while running:
         for event in pygame.event.get():

@@ -24,7 +24,8 @@ TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-MOVE_DURATION = 150 # time it takes to move from one tile to another in milliseconds
+# MOVE_DURATION = 150 # time it takes to move from one tile to another in milliseconds
+MOVE_DURATION = 10
 
 # Colors
 BLACK = (0, 0, 0)
