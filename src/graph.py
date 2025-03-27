@@ -140,7 +140,7 @@ class TelemetryGraph:
                 G.add_edge("Player", room_name, action="Entered", time=timestamp)
 
                 if not G.has_edge(current_room, room_name):
-                    G.add_edge(current_room, room_name, action=direction)
+                    G.add_edge(current_room, room_name, action=direction + " to")
                 if last_position is not None and last_added_position_node != current_room:
                     G.add_edge(last_added_position_node, room_name, action="Moved_to", time=timestamp)
                 current_room = room_name
@@ -218,7 +218,7 @@ class TelemetryGraph:
                 G.add_node(item_name)
                 if not G.has_edge(last_added_position_node, item_name):
                     G.add_edge(last_added_position_node, item_name, action="Contains")
-                G.add_edge("Player", item_name, action="Tried", time=timestamp)
+                G.add_edge("Player", item_name, action="Tried (locked)", time=timestamp)
 
     def visualize(self):
         pos = nx.spring_layout(self.graph)
