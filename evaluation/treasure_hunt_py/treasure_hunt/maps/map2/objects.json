@@ -4,7 +4,150 @@
         }
     },
     "npcs" : {
-        "room0" : {
+        "room1" : {
+            "lily" : {
+                "position" : [2, 1],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["Hello, I'm Lily.", ""],
+                        ["The item I need is item 1.", ""]
+                    ]
+                ],
+                "conditional_interacts": {
+                    "item_1" : [
+                        [
+                            ["Thank you, that's the item I needed!", ""],
+                            ["", "request to f_1"]
+                        ]
+                    ],
+                    "letter from f_1" : [
+                        [
+                            ["Letter from f_1 obtained! Talk to d_1 next", ""],
+                            ["", "request to d_1"]
+                        ]
+                    ],
+                    "letter from d_1" : [
+                        [
+                            ["Letter from d_1 obtained!", ""],
+                            ["Player 2 can collect the treasure using the password 'carrot'", ""],
+                            ["", "password 'carrot' for player2"]
+                        ]
+                    ],
+                    "default" : [
+                        [
+                            ["No, that's not what I needed.", ""]
+                        ]
+                    ]
+                }
+            }
+        },
+        "room2" : {
+            "mark" : {
+                "position": [1, 2],
+                "facing" : "EAST",
+                "interact_data" : [
+                    [
+                        ["Hello, I'm Mark.", ""],
+                        ["The item I need is item_2.", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "item_2" : [
+                        ["Thank you, that's what I needed!", ""],
+                        ["Now please get in touch with d_2", ""],
+                        ["", "request to d_2"]
+                    ],
+                    "letter from d_2" : [
+                        ["Thank you! The password hint for player 2 is 'shoe'", ""],
+                        ["", "password 'shoe' for player 2"]
+                    ],
+                    "default" : [
+                        ["No, that's not what I needed.", ""]
+                    ]
+                }
+            }
+        },
+        "room3" : {
+            "jay" : {
+                "position" : [3, 2],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["Hi, I'm Jay.", ""],
+                        ["The item I need is item_3", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "item_3" : [
+                        ["Thank you, that's what I needed!", ""],
+                        ["Now please consult d_1.", ""],
+                        ["", "request to d_1"]
+                    ],
+                    "letter from d_1" : [
+                        ["Thank you, you did it!", ""],
+                        ["The password for player 2 is 'chicken'"],
+                        ["", "password for player 2 'chicken'"]
+                    ],
+                    "default" : [
+                        ["No, that's not what I needed", ""]
+                    ]
+                }
+            }
+        },
+        "room4" : {
+            "marie" : {
+                "position": [3, 4],
+                "facing" : "WEST",
+                "interact_data" : [
+                    [
+                        ["Hi, I'm Marie.", ""],
+                        ["The item I need is item_4", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "item_4" : [
+                        ["Thank you, that's what I needed!", ""],
+                        ["Now please talk to f_2", ""],
+                        ["", "request to f_2"]
+                    ],
+                    "letter from f_2" : [
+                        ["Thanks!", ""],
+                        ["The password for player 2 is 'zero'", ""],
+                        ["", "password for player 2 'zero'"]
+                    ],
+                    "default" : [
+                        ["No, that's not what I needed", ""]
+                    ]
+                }
+            }
+        },
+        "room5" : {
+            "guy" : {
+                "position" : [3, 1],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["Hi, I'm Guy.", ""],
+                        ["The item I need is item_5", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "item_5" : [
+                        ["Thank you, that's what I needed!", ""],
+                        ["Now please talk to d_2", ""],
+                        ["", "request to d_2"]
+                    ],
+                    "letter from d_2" : [
+                        ["Thanks!", ""],
+                        ["The password for player 2 is 'triangle'", ""],
+                        ["", "password for player 2 'triangle'"]
+                    ],
+                    "default" : [
+                        ["No, that's not what I needed", ""]
+                    ]
+                }
+            }
         }
     }
 } 
