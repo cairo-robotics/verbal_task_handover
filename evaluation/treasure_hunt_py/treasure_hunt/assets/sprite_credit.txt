@@ -3,4 +3,4 @@ Ishtar Pixels Top Down pack (itch.io)
 character sprites: 2D Top-down pixel art characters (https://gamebetweenthelines.itch.io/top-down-pixel-art-characters)
 icons https://randallcurtis.itch.io/16-bit-rpg-icons
 top down dungeon sprites https://redsteve.itch.io/top-down-dungeon-tileset
-
+potions https://no-x-it.itch.io/360-potion-sprites-full-half-full-and-empty

@@ -1,0 +1,29 @@
+{
+    "sheet size": [22, 1],
+    "sprite size": [16, 16],
+    "frames" : [
+        "ruby",
+        "pale_blue",
+        "gold",
+        "teal_blue",
+        "light_purple",
+        "light_pink",
+        "green",
+        "teal_green",
+        "orange",
+        "purple",
+        "light_blue",
+        "red",
+        "yellow",
+        "dark_green",
+        "dark_red",
+        "blue",
+        "magenta",
+        "dark_purple",
+        "fuschia",
+        "brown",
+        "crimson",
+        "blackish",
+        "empty"
+    ]
+}

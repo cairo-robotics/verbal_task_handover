@@ -125,5 +125,11 @@
         "type": "single",
         "path": "objects/barrel.png",
         "scaling": 1.0
+    },
+    "potions" : {
+        "type" : "multi",
+        "path" : "objects/potions.png",
+        "config": "objects/potions.json",
+        "scaling": 1.0
     }
 }
