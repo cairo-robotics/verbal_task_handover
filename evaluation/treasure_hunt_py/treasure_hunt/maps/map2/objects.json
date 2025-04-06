@@ -1,13 +1,10 @@
 {
     "objects" : {
         "room0" : {
-            "password_module" : {
-                "type" : "password_module",
-                "position" : [4, 1],
-                "password" : "asdf"
-            }
         }
     },
-
-    "npcs" : {}
-}
+    "npcs" : {
+        "room0" : {
+        }
+    }
+} 
