@@ -288,7 +288,32 @@ class StateVisualizer:
         self.MULTI_FRAME_SPRITES["player"].blit_on_surface(surface,
                                                            self._position_in_unscaled_pixels(player_pos),
                                                            sprite_name)
+    
+    def _render_player_held_item(self, surface, state):
+        """
+        Render the player's held item (if any) on the player sprite.
+        This is typically used for displaying items like gems or keys.
+        """
+        if not state.player_held_item:
+            return
         
+        item = state.player_held_item
+        if item.type in self.MULTI_FRAME_SPRITES:
+            mfs = self.MULTI_FRAME_SPRITES[item.type]
+            item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            item_pos = (state.player_pos[0] + 0.25, state.player_pos[1] - 0.5)
+            item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
+            mfs.blit_on_surface_scaled(surface, item_pixel_pos, item.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+        elif item.sprite in self.SPRITES:
+            sprite = self.SPRITES[item.sprite]
+            item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            player_pos = (state.player_pos[0], state.player_pos[1] - 0.5)
+            item_pos = (player_pos[0], player_pos[1] - 1)  # One tile above the player's position
+            item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
+            sprite.blit_on_surface_scaled(surface, item_pixel_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+
+
+
     def _render_objects(self, surface, state):
         for obj in state.objects:
             if not obj.is_visible:
@@ -367,6 +392,7 @@ class StateVisualizer:
         
         self._render_objects(grid_surface, state)
         self._render_player(grid_surface, state)
+        self._render_player_held_item(grid_surface, state)
 
         if self.use_darkness:
             self._apply_darkness_mask(state, game_map, grid_surface)
