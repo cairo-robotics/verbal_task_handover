@@ -267,15 +267,15 @@ class StateVisualizer:
         surface.blit(room_name_surface, room_name_rect)
 
     def _render_player(self, surface, state):
-        player_dir = state.player_dir
+        player_dir = state.player.dir
         dir_name = Direction.DIRECTION_TO_NAME[player_dir]
         
         # Determine the sprite frame based on the player's position
-        if float(state.player_pos[0]).is_integer() and float(state.player_pos[1]).is_integer():
+        if float(state.player.pos[0]).is_integer() and float(state.player.pos[1]).is_integer():
             sprite_frame = 2  # Standing still
         else:
             # Calculate the frame based on the walk animation cycle
-            move_progress = max(state.player_pos[0] % 1, state.player_pos[1] % 1)
+            move_progress = max(state.player.pos[0] % 1, state.player.pos[1] % 1)
             cycle_frame   = int(move_progress * self.walk_animation_frames)
             sprite_frame = (cycle_frame % 4) + 1 # 4 frames per walk cycle - 1, 2, 3, 2
             if sprite_frame == 4:
@@ -283,7 +283,7 @@ class StateVisualizer:
 
         sprite_name = f"{dir_name}_{sprite_frame}.png"
         x_offset = (self.MULTI_FRAME_SPRITES["player"].sprite_size[1] - self.MULTI_FRAME_SPRITES["player"].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES["player"].sprite_size[1])
-        player_pos = (state.player_pos[0] + x_offset, state.player_pos[1])
+        player_pos = (state.player.pos[0] + x_offset, state.player.pos[1])
         
         self.MULTI_FRAME_SPRITES["player"].blit_on_surface(surface,
                                                            self._position_in_unscaled_pixels(player_pos),
@@ -294,20 +294,20 @@ class StateVisualizer:
         Render the player's held item (if any) on the player sprite.
         This is typically used for displaying items like gems or keys.
         """
-        if not state.player_held_item:
+        if not state.player.held_item:
             return
         
-        item = state.player_held_item
+        item = state.player.held_item
         if item.type in self.MULTI_FRAME_SPRITES:
             mfs = self.MULTI_FRAME_SPRITES[item.type]
             item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-            item_pos = (state.player_pos[0] + 0.25, state.player_pos[1] - 0.5)
+            item_pos = (state.player.pos[0] + 0.25, state.player.pos[1] - 0.5)
             item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
             mfs.blit_on_surface_scaled(surface, item_pixel_pos, item.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
         elif item.sprite in self.SPRITES:
             sprite = self.SPRITES[item.sprite]
             item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
-            player_pos = (state.player_pos[0], state.player_pos[1] - 0.5)
+            player_pos = (state.player.pos[0], state.player.pos[1] - 0.5)
             item_pos = (player_pos[0], player_pos[1] - 1)  # One tile above the player's position
             item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
             sprite.blit_on_surface_scaled(surface, item_pixel_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
@@ -346,14 +346,14 @@ class StateVisualizer:
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
     
     def _apply_darkness_mask(self, state, game_map, surface):
-        px, py = state.player_pos
-        if state.player_dir == Direction.NORTH:
+        px, py = state.player.pos
+        if state.player.dir == Direction.NORTH:
             py = math.floor(py)
-        elif state.player_dir == Direction.SOUTH:
+        elif state.player.dir == Direction.SOUTH:
             py = math.ceil(py)
-        elif state.player_dir == Direction.EAST:
+        elif state.player.dir == Direction.EAST:
             px = math.ceil(px)
-        elif state.player_dir == Direction.WEST:
+        elif state.player.dir == Direction.WEST:
             px = math.floor(px)
         
         for y in range(len(game_map.grid)):

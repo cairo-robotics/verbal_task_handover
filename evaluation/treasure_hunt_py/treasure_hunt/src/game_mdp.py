@@ -129,42 +129,76 @@ class Treasure(Object):
         return False
 
 class NPC(Object):
-    def __init__(self, name, position, facing, interact_data, conditional_interact_data=None):
+    def __init__(self, name, position, facing, interact_data, held_item_interact_data={}, conditional_interact_data={}):
         super().__init__(name, "npc", position)
         # self._sprite = name
         self.orientation = Direction.NAME_TO_DIRECTION[facing]
         self.interact_data = interact_data
+        self.held_item_interact_data = held_item_interact_data
+        self.held_item_interact_complete = False
         
         self.current_conversation = 0
-        self.conditional_interact_data = conditional_interact_data if conditional_interact_data is not None else {}
+        self.conditional_interact_data = conditional_interact_data
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
 
-    def interact(self, player_has_items):
+    def interact(self, player):
+        conversation = None
+        event = None
+        details = None
+
+        if not self.held_item_interact_complete and player.held_item is not None:
+            if player.held_item.name in self.held_item_interact_data:
+                conversation = self.held_item_interact_data[player.held_item.name]
+                # Mark this as complete to avoid repeating the same interaction
+                self.held_item_interact_complete = True
+                event = Event.GAVE_ITEM_TO_NPC  # Log the event of giving an item to the NPC
+                details = player.held_item.name
+
+                player.held_item = None  # Clear the held item after interaction
+                return deque(conversation), player, event, details
+            
+            elif "default" in self.held_item_interact_data:
+                # Fallback to a default interaction if the specific held item interaction is not found
+                conversation = self.held_item_interact_data["default"]
+                return deque(conversation), player, event, details        
+
         for key in self.conditional_interact_data:
-            if key in player_has_items:
+            if key in player.flags:
                 if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
                     conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
+                    event = Event.NPC_INTERACT
+                    details = ""                
                 else:
                     conversation = self.conditional_interact_data[key][-1]
                 
                 self.conditional_interact_counts[key] += 1
-                return deque(conversation)
+                return deque(conversation), player, event, details
 
         # Return the entire conversation
         conversation = self.interact_data[self.current_conversation] if self.current_conversation < len(self.interact_data) else self.interact_data[-1]
         self.current_conversation += 1
-        return deque(conversation)
+        return deque(conversation), player, Event.NPC_INTERACT, details
+    
+
+class Player:
+    def __init__(self, pos=(0, 0), dir=Direction.NORTH):
+        """
+        Initialize the player with a starting position and direction.
+        """
+        self.pos = pos
+        self.dir = dir
+
+        self.held_item = None
+        self.flags = []
     
 class GameState:
     def __init__(self, player_pos, player_dir, current_room, objects=None):
-        self.player_pos = player_pos
-        self.player_dir = player_dir
+        self.player = Player(pos=player_pos, dir=player_dir)
+
         if not objects:
             self._objects = defaultdict(lambda: {})
         self._objects = objects
         self.current_room = current_room
-        self.player_has_items = []
-        self.player_held_item = None # for aspects that require an item to be held (like potions)
 
         self.text_queue = deque()
         self.displayed_text = None
@@ -181,7 +215,7 @@ class GameState:
     #     # this doesn't cover 100% of the relevant state info, but it's a start
     #     printable_json = {}
     #     printable_json["current_room"] = self.current_room
-    #     printable_json["player_has_items"] = self.player_has_items
+    #     printable_json["player.flags"] = self.player.flags
     #     printable_json["score"] = self.score
     #     for room in self._objects:
     #         printable_json[room] = {}
@@ -211,7 +245,7 @@ class GameState:
 
     def update_current_room(self, new_room):
         self.current_room = new_room
-        player_dir = self.player_dir
+        player_dir = self.player.dir
         details = Direction.DIRECTION_TO_NAME[player_dir] + " to " + new_room
         self.telemetry.log_event(Event.ROOM_ENTERED, details)
         for name, obj in self._objects[self.current_room].items():
@@ -246,7 +280,10 @@ class GameState:
         return self._objects[room][name]
 
     def _get_player_facing_position(self):
-        return (self.player_pos[0] + self.player_dir[0], self.player_pos[1] + self.player_dir[1])
+        return (
+            self.player.pos[0] + self.player.dir[0],
+            self.player.pos[1] + self.player.dir[1]
+        )
 
     def _get_object_at_position(self, position):
         for obj in self.objects:
@@ -299,7 +336,7 @@ class GameState:
                 self.displayed_text = "You found all the treasures! Please let the experimenter know."
 
         else:
-            self.player_has_items.append(item)
+            self.player.flags.append(item)
             self.displayed_text = f"You received the {item.upper()}."
             self.displayed_icon = item
             event_type = Event.ITEM_OBTAINED
@@ -333,14 +370,14 @@ class GameState:
             self.displayed_icon = None
             return None, None
 
-        if any(isinstance(coord, float) for coord in self.player_pos):
+        if any(isinstance(coord, float) for coord in self.player.pos):
             rounded_pos = (
-                round(self.player_pos[0] + 0.5 * self.player_dir[0]),
-                round(self.player_pos[1] + 0.5 * self.player_dir[1])
+                round(self.player.pos[0] + 0.5 * self.player.dir[0]),
+                round(self.player.pos[1] + 0.5 * self.player.dir[1])
             )
             obj = self._get_object_at_position(rounded_pos)
         else:
-            obj = self._get_object_at_position(self.player_pos)
+            obj = self._get_object_at_position(self.player.pos)
         print("interacting with object: ", obj)
 
         if obj is not None and obj.type == "treasure":
@@ -354,7 +391,7 @@ class GameState:
                     self.displayed_text = "You found all the treasures! Please let the experimenter know."
                 event_type = Event.TREASURE_FOUND
                 details = ""
-                self.player_has_items.append(obj.name)
+                self.player.flags.append(obj.name)
 
                 self.telemetry.log_event(event_type, details)
                 return event_type, details    
@@ -379,12 +416,13 @@ class GameState:
                     return None, None
 
             elif obj.type == "npc":
-                conversation = obj.interact(self.player_has_items)
+                conversation, player, event, details = obj.interact(self.player)
+                player = self.player
                 if conversation:
-                    event_type = Event.NPC_INTERACT
-                    details = obj.name
+                    # event_type = Event.NPC_INTERACT
+                    # details = obj.name
 
-                    self.telemetry.log_event(event_type, details)
+                    # self.telemetry.log_event(event_type, details)
 
                     self.text_queue = conversation
                     return self.handle_interact()
@@ -413,10 +451,10 @@ class GameState:
                         self.displayed_icon = None
 
             elif obj.type == "door":
-                res = obj.interact(self.player_has_items)
+                res = obj.interact(self.player.flags)
                 if res is not None:
                     if res:
-                        self.player_has_items.remove(obj.key)
+                        self.player.flags.remove(obj.key)
                         self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
                         event_type = Event.DOOR_UNLOCKED
                         details = "used " + obj.key
@@ -435,7 +473,7 @@ class GameState:
                         # self.telemetry.log_event(event_type, details)
             
             elif obj.type == "potion":
-                self.player_held_item = obj # for potion, we set the held item
+                self.player.held_item = obj # for potion, we set the held item
                 self.displayed_text = f"You picked up the {obj.name.upper()} potion."
                 self.displayed_icon = obj.name
                 event_type = Event.ITEM_OBTAINED
@@ -522,9 +560,17 @@ def start_state(object_filename):
             if "conditional_interacts" in new_obj_dict:
                 conditional_interact_data = new_obj_dict["conditional_interacts"]
             else:
-                conditional_interact_data = None
+                conditional_interact_data = {}
 
-            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"], conditional_interact_data)
+            if "held_item_interact_data" in new_obj_dict:
+                # if held_item_interact_data is specified, use it
+                held_item_interact_data = new_obj_dict["held_item_interact_data"]
+            else:
+                # otherwise default to empty dict
+                held_item_interact_data = {}
+
+            new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"], 
+                          held_item_interact_data, conditional_interact_data)
             objects[room][obj_name] = new_obj
 
     return objects

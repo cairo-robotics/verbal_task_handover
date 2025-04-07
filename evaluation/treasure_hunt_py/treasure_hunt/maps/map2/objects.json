@@ -53,16 +53,20 @@
                 "interact_data" : [
                     [
                         ["Hello, I'm Lily.", ""],
-                        ["The item I need is item 1.", ""]
+                        ["The item I need is the GOLD potion.", ""]
                     ]
                 ],
-                "conditional_interacts": {
-                    "item_1" : [
-                        [
-                            ["Thank you, that's the item I needed!", ""],
+                "held_item_interact_data": {
+                    "gold_potion" : [
+                            ["Thank you, that was just what I needed.", ""],
+                            ["Now please talk to f_1 to proceed.", ""],
                             ["", "request to f_1"]
+                        ],
+                        "default" : [
+                            ["That's not the potion I need.", ""]
                         ]
-                    ],
+                },
+                "conditional_interacts": {
                     "letter from f_1" : [
                         [
                             ["Letter from f_1 obtained! Talk to d_1 next", ""],
@@ -74,11 +78,6 @@
                             ["Letter from d_1 obtained!", ""],
                             ["Player 2 can collect the treasure using the password 'carrot'", ""],
                             ["", "password 'carrot' for player2"]
-                        ]
-                    ],
-                    "default" : [
-                        [
-                            ["No, that's not what I needed.", ""]
                         ]
                     ]
                 }

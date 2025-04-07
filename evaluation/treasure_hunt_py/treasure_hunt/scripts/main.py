@@ -66,8 +66,8 @@ def main(args):
 
     if load_file:
         state = GameState.load(load_file)
-        player_pos = state.player_pos
-        player_dir = state.player_dir
+        player_pos = state.player.pos
+        player_dir = state.player.dir
         current_room = state.current_room
         print("Game loaded from ", load_file)
     else:
@@ -129,7 +129,7 @@ def main(args):
                     keys_pressed[event.key] = True
                     if move_target_pos is None:
                         new_pos = list(player_pos)
-                        player_dir = state.player_dir
+                        player_dir = state.player.dir
                         if keys_pressed[pygame.K_LEFT]:
                             new_pos[0] -= 1
                             player_dir = Direction.WEST
@@ -148,7 +148,7 @@ def main(args):
                             move_start_time = pygame.time.get_ticks()
                         else:
                             move_target_pos = list(player_pos)
-                        state.player_dir = player_dir
+                        state.player.dir = player_dir
 
             elif event.type == pygame.KEYUP:
                 if event.key in keys_pressed:
@@ -157,7 +157,7 @@ def main(args):
         # handle held arrow keys for movement
         if move_target_pos is None:
             new_pos = list(player_pos)
-            player_dir = state.player_dir
+            player_dir = state.player.dir
             key_held = (keys_pressed[pygame.K_LEFT] or keys_pressed[pygame.K_RIGHT] or keys_pressed[pygame.K_UP] or keys_pressed[pygame.K_DOWN])
             if keys_pressed[pygame.K_LEFT]:
                 new_pos[0] -= 1
@@ -175,7 +175,7 @@ def main(args):
             if key_held and game_map.is_valid_move(new_pos, state):
                 move_target_pos = new_pos
                 move_start_time = pygame.time.get_ticks()
-                state.player_dir = player_dir
+                state.player.dir = player_dir
 
         if move_target_pos is not None:
             elapsed_time = pygame.time.get_ticks() - move_start_time
@@ -188,10 +188,10 @@ def main(args):
                     player_pos = new_player_pos
                     state.update_current_room(current_room)
                     # telemetry.log_event(Event.ROOM_ENTERED, current_room)
-                state.player_pos = player_pos
+                state.player.pos = player_pos
             else:
                 progress = elapsed_time / move_duration
-                state.player_pos = [
+                state.player.pos = [
                     player_pos[0] + (move_target_pos[0] - player_pos[0]) * progress,
                     player_pos[1] + (move_target_pos[1] - player_pos[1]) * progress
                 ]

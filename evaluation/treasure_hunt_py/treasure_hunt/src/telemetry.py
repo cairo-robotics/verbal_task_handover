@@ -3,6 +3,7 @@ import time
 class Event:
     # define implemented event types
     NPC_INTERACT = "NPC interact"
+    GAVE_ITEM_TO_NPC = "Gave item to NPC"
     DOOR_UNLOCKED = "Door unlocked"
     DOOR_LOCKED = "Tried locked door"
     ITEM_OBTAINED = "Item obtained"
