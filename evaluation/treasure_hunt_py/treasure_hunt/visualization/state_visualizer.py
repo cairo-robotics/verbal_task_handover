@@ -374,6 +374,8 @@ class StateVisualizer:
             vis_module = WireModuleInterface(game_module, width, height)
         elif "password" in game_module.type:
             vis_module = PasswordModuleVisualizer(game_module, self.SPRITES["textbox"], width, height)
+        elif "dialogue" in game_module.type:
+            vis_module = InteractiveDialogueInterface(game_module, width, height)
         module_surface = vis_module.render()
 
         # Calculate the position to blit the module_surface in the center of grid_surface

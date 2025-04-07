@@ -79,6 +79,11 @@
                             ["Player 2 can collect the treasure using the password 'carrot'", ""],
                             ["", "password 'carrot' for player2"]
                         ]
+                    ],
+                    "default": [
+                        [
+                            ["No, that's not what I needed.", ""]
+                        ]
                     ]
                 }
             }
@@ -186,6 +191,27 @@
                     ],
                     "default" : [
                         ["No, that's not what I needed", ""]
+                    ]
+                }
+            }
+        },
+        "lounge_1" : {
+            "eliza": {
+                "position" : [1, 1],
+                "facing" : "EAST",
+                "interact_data" : [
+                    [
+                        ["Hello, I'm Eliza.", ""],
+                        ["I'm waiting on a message from a few people here.", ""]
+                    ]
+                ],
+                "conditional_interacts" : {
+                    "request to f_1" : [
+                        ["Ah, thank you for bringing me this request. Please take this back to the patient.", ""],
+                        ["", "letter from f_1"]
+                    ],
+                    "default" : [
+                        ["[That item isn't used here.]", ""]
                     ]
                 }
             }

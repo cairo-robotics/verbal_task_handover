@@ -139,7 +139,28 @@ class NPC(Object):
         
         self.current_conversation = 0
         self.conditional_interact_data = conditional_interact_data
+        print("conditional_interact_data: ", self.conditional_interact_data)
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
+
+    def do_menu_select_interact(self, player):
+        if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
+            return True
+        return False
+        # return True # FOR TESTING
+
+    def menu_select_interact(self, player, key):
+        if key in self.conditional_interact_data:
+            if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
+                conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
+                event = Event.NPC_INTERACT
+                details = "asked about + " + key                
+            else:
+                conversation = self.conditional_interact_data[key][-1]
+            
+            self.conditional_interact_counts[key] += 1
+            return deque(conversation), player, event, details
+        else:
+            return deque(self.conditional_interact_data["default"][self.conditional_interact_counts["default"]]), player, None, None
 
     def interact(self, player):
         conversation = None
@@ -300,24 +321,46 @@ class GameState:
             return True
         return False
     
+    def handle_NPC_menu_interact(self, selected_item):
+        npc = self._get_facing_object()
+        conversation, player, event, details = npc.menu_select_interact(self.player, selected_item)
+        self.player = player
+        event_type = event
+        details = details
+        if event_type:
+            self.telemetry.log_event(event_type, details)
+        if conversation:
+            self.text_queue = conversation
+            return self.handle_interact()
+
     def handle_keypress(self, key):
         if self.player_in_module and not self.current_module.on_cooldown:
             res = self.current_module.on_keypress(key)
             if res is not None:
-                if res:
-                    self.got_item(self.current_module.contains)
-                    self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
-                    self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
-                    self.current_module = None
+                if res == -1: # exit the module
+                    self.handle_esc()
 
-                    return
-                elif "wire" in self.current_module.type:
-                    self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
-                    self.displayed_icon = None
-                elif "password" in self.current_module.type:
-                    self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
-                    self.displayed_icon = None
-                self.telemetry.log_event(Event.MODULE_ATTEMPTED, self.current_module.name)
+                else:
+                    self.current_module = None
+                    self.handle_NPC_menu_interact(res)
+                    
+            # if res is not None:
+            #     if res:
+            #         self.got_item(self.current_module.contains)
+            #         self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
+            #         self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
+            #         self.current_module = None
+
+            #         return
+            #     elif "wire" in self.current_module.type:
+            #         self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
+            #         self.displayed_icon = None
+            #     elif "password" in self.current_module.type:
+            #         self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
+            #         self.displayed_icon = None
+            #     self.telemetry.log_event(Event.MODULE_ATTEMPTED, self.current_module.name)
+
+
 
     def handle_esc(self):
         self.current_module = None
@@ -416,16 +459,21 @@ class GameState:
                     return None, None
 
             elif obj.type == "npc":
-                conversation, player, event, details = obj.interact(self.player)
-                player = self.player
-                if conversation:
-                    # event_type = Event.NPC_INTERACT
-                    # details = obj.name
-
-                    # self.telemetry.log_event(event_type, details)
-
-                    self.text_queue = conversation
-                    return self.handle_interact()
+                if obj.do_menu_select_interact(self.player):
+                    # raise NotImplementedError
+                    self.current_module = InteractiveDialogue(self.player.flags, "Press the number key of the option to ask about. Press ESC to go back.", obj.name)
+                    self.displayed_text = self.current_module.display_text
+                    return None, None
+                else:
+                    conversation, player, event, details = obj.interact(self.player)
+                    self.player = player
+                    event_type = event
+                    details = details
+                    if event_type:
+                        self.telemetry.log_event(event_type, details)
+                    if conversation:
+                        self.text_queue = conversation
+                        return self.handle_interact()
 
             elif (obj.type == "chest" or obj.type == "barrel"):
                 if obj.type == "barrel" and not self.displayed_text:
