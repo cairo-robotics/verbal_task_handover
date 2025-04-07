@@ -1,6 +1,48 @@
 {
     "objects" : {
-        "room0" : {
+        "storage_1" : {
+            "ruby_potion" : {
+                "type" : "potion",
+                "position" : [1, 3]
+            },
+            "pale_blue_potion" : {
+                "type" : "potion",
+                "position" : [3, 3]
+            },
+            "gold_potion" : {
+                "type" : "potion",
+                "position" : [5, 3]
+            },
+            "teal_blue_potion" : {
+                "type" : "potion",
+                "position" : [7, 3]
+            },
+            "light_purple_potion" : {
+                "type" : "potion",
+                "position" : [9, 3]
+            }
+        },
+        "storage_2" : {
+            "light_pink_potion": {
+                "type": "potion",
+                "position": [1, 1]
+            },
+            "green_potion": {
+                "type": "potion",
+                "position": [3, 1]
+            },
+            "blue_potion": {
+                "type": "potion",
+                "position": [5, 1]
+            },
+            "orange_potion": {
+                "type": "potion",
+                "position": [7, 1]
+            },
+            "purple_potion": {
+                "type": "potion",
+                "position": [9, 1]
+            }
         }
     },
     "npcs" : {

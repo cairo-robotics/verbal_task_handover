@@ -164,6 +164,7 @@ class GameState:
         self._objects = objects
         self.current_room = current_room
         self.player_has_items = []
+        self.player_held_item = None # for aspects that require an item to be held (like potions)
 
         self.text_queue = deque()
         self.displayed_text = None
@@ -432,6 +433,13 @@ class GameState:
                         event_type = Event.DOOR_LOCKED
                         details = ""
                         # self.telemetry.log_event(event_type, details)
+            
+            elif obj.type == "potion":
+                self.player_held_item = obj # for potion, we set the held item
+                self.displayed_text = f"You picked up the {obj.name.upper()} potion."
+                self.displayed_icon = obj.name
+                event_type = Event.ITEM_OBTAINED
+                details = obj.name
             else:
                 res = obj.interact()
                 self.telemetry.log_event(Event.ITEM_INTERACTED, obj.name)
@@ -501,7 +509,9 @@ def start_state(object_filename):
                 new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["contains"], new_obj_dict["password"])
             else:
                 new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
-
+                # if "is_passable" in new_obj_dict:
+                #     # allow custom passability for objects
+                #     new_obj._is_passable = new_obj_dict["is_passable"]
             objects[room][obj_name] = new_obj
 
     for room in all_entities["npcs"]:
