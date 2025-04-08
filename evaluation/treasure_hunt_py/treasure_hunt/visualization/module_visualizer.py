@@ -15,7 +15,8 @@ class InteractiveDialogueInterface(ModuleInterface):
 
     def render(self):
         surface_height = self.height * 7 // 8
-        surface_width = int(self.width * 0.8)
+        # surface_width = int(self.width * 0.8)
+        surface_width = self.width
 
         textbox_surface = pygame.Surface((surface_width, surface_height))
         textbox_surface.fill((255, 255, 255))

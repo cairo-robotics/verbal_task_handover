@@ -101,18 +101,23 @@
                         ["It's located in storage room 2, to the NORTH of the main room.", ""]
                     ]
                 ],
-                "conditional_interacts" : {
+                "held_item_interact_data": {
                     "blue_potion" : [
                         ["Thank you, that's what I needed!", ""],
                         ["Now please get in touch with John", ""],
                         ["", "request from room 2"]
                     ],
+                    "default": [
+                        ["No, that's not the potion I need.", ""]
+                    ]
+                },
+                "conditional_interacts" : {
                     "letter from John" : [
-                        ["Thank you! The password hint for player 2 is 'shoe'", ""],
-                        ["", "password 'shoe' for player 2"]
+                        [["Thank you! The password hint for player 2 is 'shoe'", ""],
+                        ["", "password 'shoe' for player 2"]]
                     ],
                     "default" : [
-                        ["No, that's not what I needed.", ""]
+                        [["No, that's not what I needed.", ""]]
                     ]
                 }
             }
@@ -128,19 +133,24 @@
                         ["It's located in storage room 1, to the SOUTH of the main room.", ""]
                     ]
                 ],
-                "conditional_interacts" : {
+                "held_item_interact_data" : {
                     "red_potion" : [
-                        ["Thank you, that's what I needed!", ""],
-                        ["Now please consult Lola.", ""],
+                        ["Thank you!", ""],
+                        ["Now please consult Lola", ""],
                         ["", "request from room 3"]
                     ],
+                    "default" : [
+                        ["No, that's not the potion I need.", ""]
+                    ]
+                },
+                "conditional_interacts" : {
                     "letter from Lola" : [
-                        ["Thank you, you did it!", ""],
+                        [["Thank you, you did it!", ""],
                         ["The password for player 2 is 'chicken'"],
-                        ["", "password for player 2 'chicken'"]
+                        ["", "password for player 2 'chicken'"]]
                     ],
                     "default" : [
-                        ["No, that's not what I needed", ""]
+                        [["No, that's not what I needed", ""]]
                     ]
                 }
             }
@@ -155,19 +165,24 @@
                         ["The item I need is the GREEN potion", ""]
                     ]
                 ],
-                "conditional_interacts" : {
+                "held_item_interact_data": {
                     "green_potion" : [
-                        ["Thank you, that's what I needed!", ""],
+                        ["Thank you!", ""],
                         ["Now please talk to Steve", ""],
                         ["", "request from room 4"]
                     ],
+                    "default" : [
+                        ["No, that's not the potion I need.", ""]
+                    ]
+                },
+                "conditional_interacts" : {
                     "letter from Steve" : [
-                        ["Thanks!", ""],
+                        [["Thanks!", ""],
                         ["The password for player 2 is 'zero'", ""],
-                        ["", "password for player 2 'zero'"]
+                        ["", "password for player 2 'zero'"]]
                     ],
                     "default" : [
-                        ["No, that's not what I needed", ""]
+                        [["No, that's not what I needed", ""]]
                     ]
                 }
             }
@@ -182,19 +197,24 @@
                         ["The item I need is the ORANGE potion.", ""]
                     ]
                 ],
-                "conditional_interacts" : {
+                "held_item_interact_data": {
                     "orange_potion" : [
-                        ["Thank you, that's what I needed!", ""],
-                        ["Now please talk to John", ""],
+                        ["Thank you!", ""],
+                        ["Now please find and talk to John.", ""],
                         ["", "request from room 5"]
                     ],
+                    "default" : [
+                        ["No, that's not the potion I need.", ""]
+                    ]
+                },
+                "conditional_interacts" : {
                     "letter from John" : [
-                        ["Thanks!", ""],
+                        [["Thanks!", ""],
                         ["The password for player 2 is 'triangle'", ""],
-                        ["", "password for player 2 'triangle'"]
+                        ["", "password for player 2 'triangle'"]]
                     ],
                     "default" : [
-                        ["No, that's not what I needed", ""]
+                        [["No, that's not what I needed", ""]]
                     ]
                 }
             }
@@ -205,14 +225,14 @@
                 "facing" : "EAST",
                 "interact_data" : [
                     [
-                        ["Hello, I'm Eliza.", ""],
-                        ["I'm waiting on a message from a few people here.", ""]
+                        [["Hello, I'm Eliza.", ""],
+                        ["I'm waiting on a message from a few people here.", ""]]
                     ]
                 ],
                 "conditional_interacts" : {
                     "request from room 1" : [
-                        ["Ah, thank you for bringing me this request. Please take this back to the patient.", ""],
-                        ["", "response from Eliza"]
+                       [ ["Ah, thank you for bringing me this request. Please take this back to the patient.", ""],
+                        ["", "response from Eliza"]]
                     ],
                     "default" : [
                         ["[That item isn't used here.]", ""]
@@ -230,8 +250,8 @@
                 ],
                 "conditional_interacts" : {
                     "request from room 4" : [
-                        ["Thank you for bringing this request. Please take this back to Marie.", ""],
-                        ["", "response from Steve"]
+                       [ ["Thank you for bringing this request. Please take this back to Marie.", ""],
+                        ["", "response from Steve"]]
                     ],
                     "default" : [
                         ["[That item isn't used here.]", ""]
@@ -251,15 +271,15 @@
                 ],
                 "conditional_interacts" : {
                     "request from room 1" : [
-                        ["Ah, thank you for bringing me this request. Please take this back to Lily.", ""],
-                        ["", "response from Lola"]
+                        [["Ah, thank you for bringing me this request. Please take this back to Lily.", ""],
+                        ["", "response from Lola"]]
                     ],
                     "request from room 5" : [
-                        ["Ah, thank you for bringing me this request. Please take this back to Guy.", ""],
-                        ["", "response (2) from Lola"]
+                        [["Ah, thank you for bringing me this request. Please take this back to Guy.", ""],
+                        ["", "response (2) from Lola"]]
                     ],
                     "default" : [
-                        ["[That item isn't used here.]", ""]
+                        [["[That item isn't used here.]", ""]]
                     ]
                 }
             },

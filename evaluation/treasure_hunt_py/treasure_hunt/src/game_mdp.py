@@ -154,13 +154,11 @@ class NPC(Object):
                 conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
                 event = Event.NPC_INTERACT
                 details = "asked about + " + key                
-            else:
-                conversation = self.conditional_interact_data[key][-1]
             
             self.conditional_interact_counts[key] += 1
             return deque(conversation), player, event, details
         else:
-            return deque(self.conditional_interact_data["default"][self.conditional_interact_counts["default"]]), player, None, None
+            return deque(self.conditional_interact_data["default"][0]), player, None, None
 
     def interact(self, player):
         conversation = None
