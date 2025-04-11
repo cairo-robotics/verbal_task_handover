@@ -136,25 +136,34 @@ class NPC(Object):
         self.interact_data = interact_data
         self.held_item_interact_data = held_item_interact_data
         self.held_item_interact_complete = False
+
         
         self.current_conversation = 0
         self.conditional_interact_data = conditional_interact_data
         print("conditional_interact_data: ", self.conditional_interact_data)
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
+        
+        self.default_conversation = self.interact_data[-1]
 
     def do_menu_select_interact(self, player):
         if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
-            return True
+            for key in player.flags:
+                if key in self.conditional_interact_data and self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]) - 1:
+                    return True
         return False
         # return True # FOR TESTING
 
     def menu_select_interact(self, player, key):
         if key in self.conditional_interact_data:
-            if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
-                conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
-                event = Event.NPC_INTERACT
-                details = "asked about + " + key                
-            
+            # if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
+            conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
+
+            # else:
+                # conversation = self.conditional_interact_data[key][-1]
+            self.default_conversation = self.conditional_interact_data[key][-1]
+
+            event = Event.NPC_INTERACT
+            details = "asked about + " + key
             self.conditional_interact_counts[key] += 1
             return deque(conversation), player, event, details
         else:
@@ -167,11 +176,13 @@ class NPC(Object):
 
         if not self.held_item_interact_complete and player.held_item is not None:
             if player.held_item.name in self.held_item_interact_data:
-                conversation = self.held_item_interact_data[player.held_item.name]
+                conversation = self.held_item_interact_data[player.held_item.name][0]
                 # Mark this as complete to avoid repeating the same interaction
                 self.held_item_interact_complete = True
                 event = Event.GAVE_ITEM_TO_NPC  # Log the event of giving an item to the NPC
                 details = player.held_item.name
+
+                self.default_conversation = self.held_item_interact_data[player.held_item.name][-1]
 
                 player.held_item = None  # Clear the held item after interaction
                 return deque(conversation), player, event, details
@@ -194,8 +205,8 @@ class NPC(Object):
                 return deque(conversation), player, event, details
 
         # Return the entire conversation
-        conversation = self.interact_data[self.current_conversation] if self.current_conversation < len(self.interact_data) else self.interact_data[-1]
-        self.current_conversation += 1
+        conversation = self.default_conversation
+        # self.current_conversation += 1
         return deque(conversation), player, Event.NPC_INTERACT, details
     
 
@@ -459,7 +470,7 @@ class GameState:
             elif obj.type == "npc":
                 if obj.do_menu_select_interact(self.player):
                     # raise NotImplementedError
-                    self.current_module = InteractiveDialogue(self.player.flags, "Press the number key of the option to ask about. Press ESC to go back.", obj.name)
+                    self.current_module = InteractiveDialogue(self.player.flags, "Press the number key of the option to ask {} about. Press ESC to go back.".format(obj.name.upper()), obj.name)
                     self.displayed_text = self.current_module.display_text
                     return None, None
                 else:
@@ -519,11 +530,15 @@ class GameState:
                         # self.telemetry.log_event(event_type, details)
             
             elif obj.type == "potion":
-                self.player.held_item = obj # for potion, we set the held item
-                self.displayed_text = f"You picked up the {obj.name.upper()} potion."
-                self.displayed_icon = obj.name
-                event_type = Event.ITEM_OBTAINED
-                details = obj.name
+                if self.player.held_item is not None and self.player.held_item.name == obj.name:
+                    self.displayed_text = "You put back the potion."
+                    self.player.held_item = None
+                else:
+                    self.player.held_item = obj # for potion, we set the held item
+                    self.displayed_text = f"You picked up the {obj.name.upper()} potion."
+                    self.displayed_icon = obj.name
+                    event_type = Event.ITEM_OBTAINED
+                    details = obj.name
             else:
                 res = obj.interact()
                 self.telemetry.log_event(Event.ITEM_INTERACTED, obj.name)

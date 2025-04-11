@@ -14,7 +14,7 @@ class InteractiveDialogueInterface(ModuleInterface):
         self.font = pygame.font.SysFont("Arial", 12)
 
     def render(self):
-        surface_height = self.height * 7 // 8
+        surface_height = max(self.height * 7 // 8, len(self.dialogue_module.options) * 20 + 20)
         # surface_width = int(self.width * 0.8)
         surface_width = self.width
 
