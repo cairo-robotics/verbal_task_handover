@@ -6,6 +6,7 @@ import os
 import copy
 import json
 import math
+import time
 
 # GRAPHICS_DIR = "./assets/"
 GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
@@ -267,6 +268,12 @@ class StateVisualizer:
         room_name_surface = self.font.render(room_name_text, True, WHITE)
         room_name_rect = room_name_surface.get_rect(topright=(surface.get_width() - 10, 10))
         surface.blit(room_name_surface, room_name_rect)
+
+        # Render the elapsed time in the bottom-right corner
+        time_text = time.strftime("%M:%S", time.gmtime(state.elapsed_time))
+        elapsed_time_surface = self.font.render(time_text, True, WHITE)
+        elapsed_time_rect = elapsed_time_surface.get_rect(bottomright=(surface.get_width() - 10, surface.get_height() - 10))
+        surface.blit(elapsed_time_surface, elapsed_time_rect)
 
     def _render_player(self, surface, state):
         player_dir = state.player.dir

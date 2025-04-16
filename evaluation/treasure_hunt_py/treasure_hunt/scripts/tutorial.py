@@ -104,7 +104,7 @@ def main(args):
 
     TUTORIAL_TEXT = [
         [
-            "Welcome to the tutorial for the Treasure Hunt task! (Press SPACE to continue)",
+            "Welcome to the tutorial for the study task! (Press SPACE to continue)",
             "Your goal for this task is to find all of the TREASURES hidden in the map, which look like red gems.",
             "You'll find an example in just a moment."
             "You can move around using the arrow keys.",

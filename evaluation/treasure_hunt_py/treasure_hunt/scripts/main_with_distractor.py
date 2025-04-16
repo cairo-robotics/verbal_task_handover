@@ -3,6 +3,7 @@ from treasure_hunt.src.game_mdp import GameState, Direction, start_state
 from treasure_hunt.src.core import GameMap
 from treasure_hunt.visualization.state_visualizer import StateVisualizer
 from treasure_hunt.src.telemetry import Telemetry, DummyTelemetry, Event
+from treasure_hunt.scripts.distractor import DistractorTaskManager
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import argparse
@@ -16,11 +17,12 @@ MAP_DIRECTORY = GAME_DIR + '/../maps/map2/'
 SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
-SAVE_FILENAME = 'test_save.pkl'
+SAVE_FILENAME = 'test_save'
 
 STARTING_ROOM = 'room0'
 
 DISTRACTOR_START_TIME = 5 # in minutes after script is executed
+TOTAL_TASK_TIME = 10 # in minutes
 
 # Constants  
 TILE_SIZE = 96
@@ -45,59 +47,30 @@ VISUAL_PARAMS = {
 
 STARTING_TEXT = [
     "The study task will now begin. (Press SPACE to continue)",
-    "This task is loosely based on a hospital floor.",
-    "In this map, there are 5 'patient' rooms, labelled room1 through room5. (The name of your current room is in the top-right.)",
+    "This map is loosely based on a hospital floor.",
+    "There are 5 'patient' rooms, labeled room1 through room5. (The name of your current room is in the top-right.)",
     "Your goal is to fulfill the requests of the patients in each room.",
     "Among other tasks, you will need to bring each patient the correct color POTION."
     "The potion colors needed are as follows:",
-    "Room 1 needs a GOLD potion",
-    "Room 2 needs a BLUE potion",
-    "Room 3 needs a RED potion",
-    "Room 4 needs a GREEN potion",
-    "Room 5 needs an ORANGE potion",
-    "You can also check with each patient to see which they need, but remember that this will cost you time."
-    "Patients may also ask you to bring their requests to NPCs elsewhere on the map."
-    "Press SPACE to start the timer and begin the task."
+    "Room 1 needs a GOLD potion.",
+    "Room 2 needs a BLUE potion.",
+    "Room 3 needs a RED potion.",
+    "Room 4 needs a GREEN potion.",
+    "Room 5 needs an ORANGE potion.",
+    "You can also check with each patient to see which they need, but remember that this will cost you time.",
+    "Patients may also ask you to bring their requests to NPCs elsewhere on the map.",
+    "Press SPACE to begin the task."
 ]
 
-import webbrowser
-import threading
-import time
+def ending_popup():
+    import tkinter as tk
+    from tkinter import messagebox
 
-class DistractorTaskManager:
-    def __init__(self, duration_minutes = 2):
-        self.task_completed = False
-        self.task_active = False
-        self.duration_seconds = duration_minutes * 60
-        self.distractor_url = "https://cairo-robotics.github.io/memory_match_game/"
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
 
-    def launch_distractor(self):
-        print("Launching distractor task...")
-        self.task_active = True
-        webbrowser.open(self.distractor_url, new=1)
-
-    def wait_for_completion(self):
-        print("Waiting for distractor task completion...")
-        time.sleep(self.duration_seconds)
-        self.mark_task_completed()
-
-    def mark_task_completed(self):
-        print("Distractor task completed.")
-        self.task_active = False
-        self.task_completed = True
-
-    def start_timer_and_launch(self, start_time_minutes=7):
-        start_seconds = start_time_minutes * 60
-        # start_seconds = 10
-
-        def timer_thread():
-            time.sleep(start_seconds)
-            self.launch_distractor()
-
-        thread = threading.Thread(target=timer_thread)
-        thread.daemon = True
-        thread.start()
-        
+    # Show the message box
+    messagebox.showinfo("Time up", "Your time is up. Your game has been saved. Please notify the experimenter.")
 
 def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
@@ -114,12 +87,12 @@ def main(args):
         load_file = None
         save_file = args.save or SAVE_FILENAME
 
-    save_file = os.path.join(SAVE_DIRECTORY, save_file)
     
     telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, save_file + '.txt')
     telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
+    save_file = os.path.join(SAVE_DIRECTORY, save_file)
 
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Treasure Hunt Task")
     clock = pygame.time.Clock()
 
@@ -137,7 +110,7 @@ def main(args):
         state = GameState(player_pos, player_dir, current_room, objects)
         print("Initializing new game...")
         state.text_queue = deque([[line, ""] for line in STARTING_TEXT])
-        print(state.text_queue)
+        state.handle_interact()
 
     state.set_telemetry(telemetry)
 
@@ -161,8 +134,10 @@ def main(args):
     move_target_pos = None
     keys_pressed = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False, pygame.K_DOWN: False}
 
+
+    # set timer to start distractor task (will pause game while task is running)
     distractor_manager = DistractorTaskManager()
-    distractor_manager.start_timer_and_launch(start_time_minutes=DISTRACTOR_START_TIME)
+    distractor_manager.start_timer_and_launch(wait_duration=DISTRACTOR_START_TIME)
 
 
     while running:
@@ -254,6 +229,38 @@ def main(args):
                     state.update_current_room(current_room)
                     # telemetry.log_event(Event.ROOM_ENTERED, current_room)
                 state.player.pos = player_pos
+
+                # immediately queue next move if possible
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT]:
+                    new_pos = list(player_pos)
+                    new_pos[0] -= 1
+                    if game_map.is_valid_move(new_pos, state):
+                        state.player.dir = Direction.WEST
+                        move_target_pos = new_pos
+                        move_start_time = pygame.time.get_ticks()
+                elif keys[pygame.K_RIGHT]:
+                    new_pos = list(player_pos)
+                    new_pos[0] += 1
+                    if game_map.is_valid_move(new_pos, state):
+                        state.player.dir = Direction.EAST
+                        move_target_pos = new_pos
+                        move_start_time = pygame.time.get_ticks()
+                elif keys[pygame.K_UP]:
+                    new_pos = list(player_pos)
+                    new_pos[1] -= 1
+                    if game_map.is_valid_move(new_pos, state):
+                        state.player.dir = Direction.NORTH
+                        move_target_pos = new_pos
+                        move_start_time = pygame.time.get_ticks()
+                elif keys[pygame.K_DOWN]:
+                    new_pos = list(player_pos)
+                    new_pos[1] += 1
+                    if game_map.is_valid_move(new_pos, state):
+                        state.player.dir = Direction.SOUTH
+                        move_target_pos = new_pos
+                        move_start_time = pygame.time.get_ticks()
+
             else:
                 progress = elapsed_time / move_duration
                 state.player.pos = [
@@ -265,10 +272,17 @@ def main(args):
         
         dt = clock.tick(FPS)
         state.tick(dt)
-        if distractor_manager.task_active:
+        if distractor_manager.distractor_active:
             distractor_manager.wait_for_completion()
+        
+        if state.elapsed_time > TOTAL_TASK_TIME * 60:
+            # save game state
+            state.save(save_file)
+            # show ending popup
+            ending_popup()
 
-
+            running = False
+            telemetry.cleanup()
         
     pygame.quit()
 

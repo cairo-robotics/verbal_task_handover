@@ -241,6 +241,7 @@ class GameState:
         
         self.cooldown = 0
         self.cooldown_time_elapsed = 0
+        self.elapsed_time = 0
 
         self.current_module = None
     
@@ -285,6 +286,8 @@ class GameState:
             obj.on_update()
 
     def tick(self, dt):
+        self.elapsed_time += dt / 1000
+
         prior_cooldown = self.cooldown
         self.cooldown = max(0, self.cooldown - dt)
         if prior_cooldown > 0 and self.cooldown == 0:
