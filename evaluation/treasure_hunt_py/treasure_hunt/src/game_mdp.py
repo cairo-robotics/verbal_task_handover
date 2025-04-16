@@ -140,7 +140,6 @@ class NPC(Object):
         
         self.current_conversation = 0
         self.conditional_interact_data = conditional_interact_data
-        print("conditional_interact_data: ", self.conditional_interact_data)
         self.conditional_interact_counts = {key: 0 for key in self.conditional_interact_data}
         
         self.default_conversation = self.interact_data[-1]
@@ -205,7 +204,11 @@ class NPC(Object):
                 return deque(conversation), player, event, details
 
         # Return the entire conversation
-        conversation = self.default_conversation
+        if self.current_conversation < len(self.interact_data):
+            conversation = self.interact_data[self.current_conversation]
+            self.current_conversation += 1
+        else:
+            conversation = self.default_conversation
         # self.current_conversation += 1
         return deque(conversation), player, Event.NPC_INTERACT, details
     

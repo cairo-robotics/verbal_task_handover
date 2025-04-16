@@ -14,6 +14,7 @@ GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_p
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+GREY = (196, 196, 196)
 
 def within_radius(pos1, pos2, r):
     return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2 <= r**2
@@ -156,7 +157,8 @@ class StateVisualizer:
                 elif tile == "-":
                     pygame.draw.rect(surface, BLACK, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
-                    self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    # self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    pygame.draw.rect(surface, GREY, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _render_grid_with_textures(self, surface, game_map):
         texture_map_names = game_map.all_texture_maps

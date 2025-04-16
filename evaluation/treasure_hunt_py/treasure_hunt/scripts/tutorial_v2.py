@@ -6,13 +6,12 @@ from treasure_hunt.src.telemetry import Telemetry, DummyTelemetry, Event
 import os
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE
 import argparse
-from collections import deque
 
 # Initialize Pygame
 pygame.init()
 
 GAME_DIR = os.path.dirname(os.path.abspath(__file__))
-MAP_DIRECTORY = GAME_DIR + '/../maps/map2/'
+MAP_DIRECTORY = GAME_DIR + '/../maps/tutorial_v2/'
 SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
@@ -20,15 +19,12 @@ SAVE_FILENAME = 'test_save.pkl'
 
 STARTING_ROOM = 'room0'
 
-DISTRACTOR_START_TIME = 5 # in minutes after script is executed
-
 # Constants  
 TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-MOVE_DURATION = 300 # time it takes to move from one tile to another in milliseconds
-# MOVE_DURATION = 10
+MOVE_DURATION = 350 # time it takes to move from one tile to another in milliseconds
 
 # Colors
 BLACK = (0, 0, 0)
@@ -42,62 +38,6 @@ VISUAL_PARAMS = {
     'light_radius' : 2,
     'walk_animation_frames' : 3
 }
-
-STARTING_TEXT = [
-    "The study task will now begin. (Press SPACE to continue)",
-    "This task is loosely based on a hospital floor.",
-    "In this map, there are 5 'patient' rooms, labelled room1 through room5. (The name of your current room is in the top-right.)",
-    "Your goal is to fulfill the requests of the patients in each room.",
-    "Among other tasks, you will need to bring each patient the correct color POTION."
-    "The potion colors needed are as follows:",
-    "Room 1 needs a GOLD potion",
-    "Room 2 needs a BLUE potion",
-    "Room 3 needs a RED potion",
-    "Room 4 needs a GREEN potion",
-    "Room 5 needs an ORANGE potion",
-    "You can also check with each patient to see which they need, but remember that this will cost you time."
-    "Patients may also ask you to bring their requests to NPCs elsewhere on the map."
-    "Press SPACE to start the timer and begin the task."
-]
-
-import webbrowser
-import threading
-import time
-
-class DistractorTaskManager:
-    def __init__(self, duration_minutes = 2):
-        self.task_completed = False
-        self.task_active = False
-        self.duration_seconds = duration_minutes * 60
-        self.distractor_url = "https://cairo-robotics.github.io/memory_match_game/"
-
-    def launch_distractor(self):
-        print("Launching distractor task...")
-        self.task_active = True
-        webbrowser.open(self.distractor_url, new=1)
-
-    def wait_for_completion(self):
-        print("Waiting for distractor task completion...")
-        time.sleep(self.duration_seconds)
-        self.mark_task_completed()
-
-    def mark_task_completed(self):
-        print("Distractor task completed.")
-        self.task_active = False
-        self.task_completed = True
-
-    def start_timer_and_launch(self, start_time_minutes=7):
-        start_seconds = start_time_minutes * 60
-        # start_seconds = 10
-
-        def timer_thread():
-            time.sleep(start_seconds)
-            self.launch_distractor()
-
-        thread = threading.Thread(target=timer_thread)
-        thread.daemon = True
-        thread.start()
-        
 
 def on_render(window, state_vis, state, game_map):
     window.fill(BLACK)
@@ -116,31 +56,25 @@ def main(args):
 
     save_file = os.path.join(SAVE_DIRECTORY, save_file)
     
-    telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, save_file + '.txt')
-    telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
+    if args.telemetry:
+        telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, args.telemetry)
+        telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
+    else:
+        telemetry = DummyTelemetry()
+
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Treasure Hunt Task")
     clock = pygame.time.Clock()
 
-    if load_file:
-        state = GameState.load(load_file)
-        player_pos = state.player.pos
-        player_dir = state.player.dir
-        current_room = state.current_room
-        print("Game loaded from ", load_file)
-    else:
-        current_room = STARTING_ROOM
-        player_dir = Direction.SOUTH
-        player_pos = [2, 2]  # Start position (y, x)
-        objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
-        state = GameState(player_pos, player_dir, current_room, objects)
-        print("Initializing new game...")
-        state.text_queue = deque([[line, ""] for line in STARTING_TEXT])
-        print(state.text_queue)
+    current_room = STARTING_ROOM
+    player_dir = Direction.SOUTH
+    player_pos = [2, 2]  # Start position (y, x)
+    objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
+    state = GameState(player_pos, player_dir, current_room, objects)
+    print("Initializing new game...")
 
     state.set_telemetry(telemetry)
-
     # transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
     # game_map = load_map(MAP_DIRECTORY + current_room + '.txt')
     game_map = GameMap(MAP_DIRECTORY, current_room)
@@ -161,15 +95,32 @@ def main(args):
     move_target_pos = None
     keys_pressed = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False, pygame.K_DOWN: False}
 
-    distractor_manager = DistractorTaskManager()
-    distractor_manager.start_timer_and_launch(start_time_minutes=DISTRACTOR_START_TIME)
+    TUTORIAL_TEXT = [
+        [
+            "Welcome to the tutorial for the study task! (Press SPACE to continue)",
+            "You can move around using the arrow keys and interact with objects by pressing the SPACE bar.",
+            "Try going through the door at the top of this room."
+        ],
+        [
+            "Now try talking to the character in this room by walking to her and pressing SPACE."
+        ],
+        [
+            "You got a TREASURE! You have completed the tutorial. (Press SPACE to continue)",
+            "When you're ready, press 'Q' to start the study task."
+        ]
+    ]
 
+    from collections import deque
+    tutorial_text = deque(TUTORIAL_TEXT)
+    current_text = tutorial_text.popleft()
+
+    state.text_queue = deque([[line, ""] for line in current_text])
+    state.handle_interact()
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                telemetry.cleanup()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     state.handle_esc()
@@ -183,12 +134,17 @@ def main(args):
                 
                 elif event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact()
-                    # if interact_output:
-                    #     telemetry.log_event(*interact_output)
+                    if interact_output:
+                        telemetry.log_event(*interact_output)
 
-                # elif event.key == pygame.K_F4:
-                #     running = False
-                #     telemetry.cleanup()
+                        if interact_output[0] == "Treasure obtained" or interact_output[0] == "Treasure collected":
+                            current_text = tutorial_text.popleft()
+                            state.text_queue = deque([[line, ""] for line in current_text])
+                            state.handle_interact()
+
+                elif event.key == pygame.K_q:
+                    running = False
+                    telemetry.cleanup()
 
                 elif event.key in keys_pressed and not state.player_in_interaction:
                     keys_pressed[event.key] = True
@@ -211,8 +167,6 @@ def main(args):
                         if game_map.is_valid_move(new_pos, state):
                             move_target_pos = new_pos
                             move_start_time = pygame.time.get_ticks()
-                        else:
-                            move_target_pos = list(player_pos)
                         state.player.dir = player_dir
 
             elif event.type == pygame.KEYUP:
@@ -220,7 +174,7 @@ def main(args):
                     keys_pressed[event.key] = False
 
         # handle held arrow keys for movement
-        if move_target_pos is None:
+        if move_target_pos is None and not state.player_in_interaction:
             new_pos = list(player_pos)
             player_dir = state.player.dir
             key_held = (keys_pressed[pygame.K_LEFT] or keys_pressed[pygame.K_RIGHT] or keys_pressed[pygame.K_UP] or keys_pressed[pygame.K_DOWN])
@@ -252,7 +206,11 @@ def main(args):
                     current_room = new_room
                     player_pos = new_player_pos
                     state.update_current_room(current_room)
-                    # telemetry.log_event(Event.ROOM_ENTERED, current_room)
+                    telemetry.log_event(Event.ROOM_ENTERED, current_room)
+                    if new_room == "room1":
+                        current_text = tutorial_text.popleft()
+                        state.text_queue = deque([[line, ""] for line in current_text])
+                        state.handle_interact()
                 state.player.pos = player_pos
             else:
                 progress = elapsed_time / move_duration
@@ -265,10 +223,6 @@ def main(args):
         
         dt = clock.tick(FPS)
         state.tick(dt)
-        if distractor_manager.task_active:
-            distractor_manager.wait_for_completion()
-
-
         
     pygame.quit()
 
@@ -276,7 +230,8 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Your Pygame game with save/load and telemetry functionality")
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
-    parser.add_argument('--save', type=str, default="test_save", help='Filename of the save file to write')
+    parser.add_argument('--save', type=str, help='Filename of the save file to write')
+    parser.add_argument('--telemetry', type=str, help='Filename of the telemetry log file')
     parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
     args = parser.parse_args()
 
