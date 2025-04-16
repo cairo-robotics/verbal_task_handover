@@ -70,7 +70,7 @@
                         ]
                     ],
                     "default" : [
-                        [["No, that's not the potion I need.", ""]]
+                        ["No, that's not the potion I need.", ""]
                     ]
                 },
                 "conditional_interacts": {
@@ -122,7 +122,7 @@
                         ]
                     ],
                     "default": [
-                        [["That's not the potion I need.", ""]]
+                        ["That's not the potion I need.", ""]
                     ]
                 },
                 "conditional_interacts" : {
@@ -167,7 +167,7 @@
                         ]
                     ],
                     "default" : [
-                        [["No, that's not the potion I need.", ""]]
+                        ["No, that's not the potion I need.", ""]
                     ]
                 },
                 "conditional_interacts" : {
@@ -207,7 +207,7 @@
                         ]
                     ],
                     "default" : [
-                        [["No, that's not the potion I need.", ""]]
+                        ["No, that's not the potion I need.", ""]
                     ]
                 },
                 "conditional_interacts" : {
@@ -243,7 +243,7 @@
                         [["Please bring my request to a person named Brittany.", ""]]
                     ],
                     "default" : [
-                        [["No, that's not the potion I need.", ""]]
+                        ["No, that's not the potion I need.", ""]
                     ]
                 },
                 "conditional_interacts" : {
@@ -256,7 +256,7 @@
                         ["Please inform player 2 that later I'll need a dark purple potion", ""]]
                     ],
                     "default" : [
-                        [["No, that's not what I needed", ""]]
+                        ["No, that's not what I needed", ""]
                     ]
                 }
             }
@@ -266,10 +266,8 @@
                 "position" : [1, 1],
                 "facing" : "EAST",
                 "interact_data" : [
-                    [
                         [["Hello, I'm Eliza.", ""],
                         ["I'm waiting on a message from a few people here.", ""]]
-                    ]
                 ],
                 "conditional_interacts" : {
                     "request from room 1" : [
@@ -280,7 +278,7 @@
                         ]
                     ],
                     "default" : [
-                        [["[That item isn't used here.]", ""]]
+                        ["[That item isn't used here.]", ""]
                     ]
                 }
             },
