@@ -23,6 +23,7 @@ STARTING_ROOM = 'room0'
 
 DISTRACTOR_START_TIME = 5 # in minutes after script is executed
 TOTAL_TASK_TIME = 10 # in minutes
+AUTOSAVE_INITERVAL = 30 # in seconds
 
 # Constants  
 TILE_SIZE = 96
@@ -98,6 +99,7 @@ def main(args):
 
     if load_file:
         state = GameState.load(load_file)
+        state.player.pos = (int(state.player.pos[0]), int(state.player.pos[1]))
         player_pos = state.player.pos
         player_dir = state.player.dir
         current_room = state.current_room
@@ -139,6 +141,10 @@ def main(args):
     distractor_manager = DistractorTaskManager()
     distractor_manager.start_timer_and_launch(wait_duration=DISTRACTOR_START_TIME)
 
+    paused = False
+
+    autosave_interval = AUTOSAVE_INITERVAL * 1000  # in milliseconds
+    last_autosave_time = pygame.time.get_ticks()
 
     while running:
         for event in pygame.event.get():
@@ -148,6 +154,13 @@ def main(args):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     state.handle_esc()
+
+                elif event.key ==  pygame.K_p:
+                    paused = not paused
+                    if paused:
+                        print("Game paused. Press P to resume.")
+                    else:
+                        print("Game resumed.")
                     
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
@@ -158,12 +171,6 @@ def main(args):
                 
                 elif event.key == pygame.K_SPACE:
                     interact_output = state.handle_interact()
-                    # if interact_output:
-                    #     telemetry.log_event(*interact_output)
-
-                # elif event.key == pygame.K_F4:
-                #     running = False
-                #     telemetry.cleanup()
 
                 elif event.key in keys_pressed and not state.player_in_interaction:
                     keys_pressed[event.key] = True
@@ -193,6 +200,16 @@ def main(args):
             elif event.type == pygame.KEYUP:
                 if event.key in keys_pressed:
                     keys_pressed[event.key] = False
+
+        if paused:
+            continue
+
+        # Autosave logic
+        current_time = pygame.time.get_ticks()
+        if current_time - last_autosave_time >= autosave_interval:
+            state.save(save_file)
+            print("Autosaved game to ", save_file)
+            last_autosave_time = current_time
 
         # handle held arrow keys for movement
         if move_target_pos is None:
@@ -227,7 +244,6 @@ def main(args):
                     current_room = new_room
                     player_pos = new_player_pos
                     state.update_current_room(current_room)
-                    # telemetry.log_event(Event.ROOM_ENTERED, current_room)
                 state.player.pos = player_pos
 
                 # immediately queue next move if possible

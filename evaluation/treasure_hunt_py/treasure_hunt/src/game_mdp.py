@@ -147,7 +147,7 @@ class NPC(Object):
     def do_menu_select_interact(self, player):
         if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
             for key in player.flags:
-                if key in self.conditional_interact_data and self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]) - 1:
+                if key in self.conditional_interact_data:
                     return True
         return False
         # return True # FOR TESTING
@@ -188,7 +188,7 @@ class NPC(Object):
             
             elif "default" in self.held_item_interact_data:
                 # Fallback to a default interaction if the specific held item interaction is not found
-                conversation = self.held_item_interact_data["default"]
+                conversation = self.held_item_interact_data["default"][0]
                 return deque(conversation), player, event, details        
 
         for key in self.conditional_interact_data:

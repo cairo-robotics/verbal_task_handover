@@ -1,0 +1,110 @@
+2025-04-17 14:35:44 - Room entered: NORTH to hallway_5
+2025-04-17 14:35:45 - Room entered: WEST to lounge_3
+2025-04-17 14:35:47 - Room entered: EAST to hallway_5
+2025-04-17 14:35:51 - Room entered: SOUTH to room0
+2025-04-17 14:35:52 - Room entered: WEST to hallway_1
+2025-04-17 14:36:29 - Room entered: NORTH to hallway_5
+2025-04-17 14:36:34 - Room entered: WEST to lounge_3
+2025-04-17 14:36:36 - NPC interact: None
+2025-04-17 14:36:40 - NPC interact: None
+2025-04-17 14:36:45 - Room entered: EAST to hallway_5
+2025-04-17 14:36:49 - Room entered: NORTH to lounge_2
+2025-04-17 14:36:50 - NPC interact: None
+2025-04-17 14:36:53 - NPC interact: None
+2025-04-17 14:36:56 - Room entered: SOUTH to hallway_5
+2025-04-17 14:37:00 - Room entered: SOUTH to room0
+2025-04-17 14:37:03 - Room entered: EAST to hallway_4
+2025-04-17 14:37:09 - Room entered: NORTH to room3
+2025-04-17 14:37:10 - NPC interact: None
+2025-04-17 14:37:17 - Room entered: SOUTH to hallway_4
+2025-04-17 14:37:23 - Room entered: WEST to room0
+2025-04-17 14:37:26 - Room entered: SOUTH to hallway_2
+2025-04-17 14:37:30 - Room entered: SOUTH to lounge_1
+2025-04-17 14:37:31 - NPC interact: None
+2025-04-17 14:37:34 - NPC interact: None
+2025-04-17 14:37:37 - Room entered: NORTH to hallway_2
+2025-04-17 14:37:41 - Room entered: NORTH to room0
+2025-04-17 14:37:43 - Room entered: SOUTH to hallway_3
+2025-04-17 14:37:49 - Room entered: EAST to room5
+2025-04-17 14:37:50 - NPC interact: None
+2025-04-17 14:37:54 - Room entered: WEST to hallway_3
+2025-04-17 14:38:00 - Room entered: SOUTH to storage_1
+2025-04-17 14:38:03 - Item obtained: red_potion
+2025-04-17 14:38:07 - Room entered: NORTH to hallway_3
+2025-04-17 14:38:11 - Room entered: NORTH to room0
+2025-04-17 14:38:13 - Room entered: EAST to hallway_4
+2025-04-17 14:38:19 - Room entered: SOUTH to room4
+2025-04-17 14:47:42 - Room entered: SOUTH to room4
+2025-04-17 14:47:47 - Room entered: NORTH to hallway_4
+2025-04-17 14:47:50 - Room entered: NORTH to room3
+2025-04-17 14:47:52 - Gave item to NPC: red_potion
+2025-04-17 14:47:58 - NPC interact: None
+2025-04-17 14:48:01 - NPC interact: None
+2025-04-17 14:48:03 - Room entered: SOUTH to hallway_4
+2025-04-17 14:48:03 - Room entered: NORTH to room3
+2025-04-17 14:48:04 - NPC interact: None
+2025-04-17 14:48:06 - Room entered: SOUTH to hallway_4
+2025-04-17 14:48:13 - Room entered: WEST to room0
+2025-04-17 14:48:16 - Room entered: SOUTH to hallway_3
+2025-04-17 14:48:20 - Room entered: SOUTH to storage_1
+2025-04-17 14:48:21 - Item obtained: gold_potion
+2025-04-17 14:48:35 - Room entered: NORTH to hallway_3
+2025-04-17 14:48:39 - Room entered: NORTH to room0
+2025-04-17 14:48:43 - Room entered: WEST to hallway_1
+2025-04-17 14:48:49 - Room entered: SOUTH to room2
+2025-04-17 14:48:50 - NPC interact: None
+2025-04-17 14:48:59 - Room entered: NORTH to hallway_1
+2025-04-17 14:49:07 - Room entered: EAST to room0
+2025-04-17 14:49:09 - Room entered: NORTH to hallway_5
+2025-04-17 14:49:13 - Room entered: NORTH to lounge_2
+2025-04-17 14:49:14 - NPC interact: None
+2025-04-17 14:49:17 - NPC interact: None
+2025-04-17 14:49:19 - Room entered: SOUTH to hallway_5
+2025-04-17 14:49:23 - Room entered: WEST to lounge_3
+2025-04-17 14:49:25 - NPC interact: None
+2025-04-17 14:49:34 - NPC interact: asked about + request from room 3
+2025-04-17 14:49:41 - Room entered: EAST to hallway_5
+2025-04-17 14:49:45 - Room entered: EAST to storage_2
+2025-04-17 14:49:49 - Item obtained: blue_potion
+2025-04-17 14:49:52 - Room entered: WEST to hallway_5
+2025-04-17 14:49:57 - Room entered: SOUTH to room0
+2025-04-17 14:50:00 - Room entered: SOUTH to hallway_3
+2025-04-17 14:50:05 - Room entered: EAST to room5
+2025-04-17 14:50:10 - Room entered: WEST to hallway_3
+2025-04-17 14:50:15 - Room entered: NORTH to room0
+2025-04-17 14:50:17 - Room entered: EAST to hallway_4
+2025-04-17 14:50:23 - Room entered: NORTH to room3
+2025-04-17 14:50:44 - Room entered: SOUTH to hallway_4
+2025-04-17 14:50:49 - Room entered: WEST to room0
+2025-04-17 14:50:52 - Room entered: NORTH to hallway_5
+2025-04-17 14:50:55 - Room entered: WEST to lounge_3
+2025-04-17 14:51:06 - NPC interact: asked about + request from room 3
+2025-04-17 14:51:11 - NPC interact: None
+2025-04-17 14:51:14 - Room entered: EAST to hallway_5
+2025-04-17 14:51:18 - Room entered: NORTH to lounge_2
+2025-04-17 14:51:19 - NPC interact: None
+2025-04-17 14:51:22 - NPC interact: None
+2025-04-17 14:51:24 - Room entered: SOUTH to hallway_5
+2025-04-17 14:51:27 - Room entered: EAST to storage_2
+2025-04-17 14:51:28 - Room entered: WEST to hallway_5
+2025-04-17 14:51:33 - Room entered: SOUTH to room0
+2025-04-17 14:51:35 - Room entered: EAST to hallway_4
+2025-04-17 14:51:41 - Room entered: NORTH to room3
+2025-04-17 14:51:43 - NPC interact: asked about + response from Donna
+2025-04-17 14:51:55 - Room entered: SOUTH to hallway_4
+2025-04-17 14:52:00 - Room entered: WEST to room0
+2025-04-17 14:52:03 - Room entered: SOUTH to hallway_2
+2025-04-17 14:52:07 - Room entered: SOUTH to lounge_1
+2025-04-17 14:54:19 - NPC interact: None
+2025-04-17 14:54:25 - NPC interact: None
+2025-04-17 14:54:29 - Room entered: NORTH to hallway_2
+2025-04-17 14:54:33 - Room entered: NORTH to room0
+2025-04-17 14:54:35 - Room entered: WEST to hallway_1
+2025-04-17 14:54:40 - Room entered: SOUTH to room2
+2025-04-17 14:54:41 - Gave item to NPC: blue_potion
+2025-04-17 14:54:48 - Room entered: NORTH to hallway_1
+2025-04-17 14:54:51 - Room entered: NORTH to room1
+2025-04-17 14:54:53 - NPC interact: None
+2025-04-17 14:54:59 - Room entered: SOUTH to hallway_1
+2025-04-17 14:55:04 - Room entered: EAST to room0
+2025-04-17 14:55:08 - Room entered: SOUTH to hallway_3

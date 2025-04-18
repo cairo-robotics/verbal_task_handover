@@ -18,19 +18,25 @@ class DistractorTaskManager:
         print("Launching distractor task...")
 
         driver = webdriver.Firefox()
-        driver.get(self.url)
-        driver.implicitly_wait(2)
-        # driver.find_element_by_id("start").click()
 
-        time_left = driver.find_element(By.ID, "timer")
-        score = driver.find_element(By.ID, "score")
+        try:
+            driver.get(self.url)
+            driver.implicitly_wait(2)
+            # driver.find_element_by_id("start").click()
 
-        wait = WebDriverWait(driver, timeout=2.5 * 60)
-        wait.until(lambda _ : time_left.text == "0:00")
-        print("Memory match final score: " + score.text)
+            time_left = driver.find_element(By.ID, "timer")
+            score = driver.find_element(By.ID, "score")
 
-        driver.close()
-        driver.quit()
+            wait = WebDriverWait(driver, timeout=2.5 * 60)
+            wait.until(lambda _ : time_left.text == "0:00")
+            print("Memory match final score: " + score.text)
+
+            driver.close()
+            driver.quit()
+        except Exception as e:
+            print("Distractor task failed: ", e)
+            driver.quit()
+        
 
     def wait_for_completion(self): # runs in main thread
         print("Waiting for distractor task to complete...")
@@ -48,3 +54,8 @@ class DistractorTaskManager:
 
         timer = threading.Timer(wait_duration_in_seconds, callback)
         timer.start()
+
+if __name__ == "__main__":
+    distractor_manager = DistractorTaskManager()
+    distractor_manager.start_timer_and_launch(wait_duration=1)
+    distractor_manager.wait_for_completion()

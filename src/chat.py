@@ -259,7 +259,7 @@ def test_chatbot_with_graph():
     gui.mainloop()
 
 def main(args):
-    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/{}.txt".format(args.pid)
+    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/{}.txt".format(args.pid)
     from graph import TelemetryGraph
     g = TelemetryGraph()
     g.parse_from_file(telem_file)

@@ -1,0 +1,98 @@
+time	role	content
+0	system	You are an assistant helping the user develop a text "handover report" about their current state in a video game.
+The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game and complete the game from the state where it was left off as efficiently as possible.
+You have access to a knowledge graph representing what you know about the current state of the game.
+Your role is to help the user compose a complete and accurate report. You can assist in any of the following ways:
+- Check if the report and your knowledge graph have conflicting information. For example, if the report states they didn't use a key but the graph suggests they did, ask the user to clarify which is correct.
+- Suggest additional information from your knowledge graph that could be included in the report.
+- Update the knowledge graph based on the user's report or input. If you update the knowledge graph, include the text "Update graph" in your response. 
+- Provide feedback on the user's report, such as pointing out missing or inconsistent information.
+- If you believe the report is complete and requires no further edits, include the text "Report complete" in your response.
+                                                    
+Assume the knowledge graph is incomplete and the user's report may contain information not present in the graph.
+Assume the user cannot see the knowledge graph. In your responses, refer to the knowledge graph as "the data I have access to."
+Refer to rooms by their contents or locations where possible (e.g. South of the starting room.).
+The user may have forgetten certain information or purposely chosen not to include it, so be polite and nonconfrontational in your responses.
+
+The current knowledge graph is:
+```
+{'player history': ['Player: Entered hallway_1 at time=2025-04-16 15:47:10',
+                    'Player: Entered room2 at time=2025-04-16 15:47:17',
+                    'Player: Interacted None at time=2025-04-16 15:47:19',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:47:36',
+                    'Player: Entered room0 at time=2025-04-16 15:47:41',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:47:45',
+                    'Player: Entered lounge_2 at time=2025-04-16 15:47:49',
+                    'Player: Interacted None at time=2025-04-16 15:47:52',
+                    'Player: Interacted None at time=2025-04-16 15:47:56',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:47:59',
+                    'Player: Entered lounge_3 at time=2025-04-16 15:48:02',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:48:05',
+                    'Player: Entered storage_2 at time=2025-04-16 15:48:09',
+                    'Player: Obtained blue_potion at time=2025-04-16 15:48:13',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:48:18',
+                    'Player: Entered room0 at time=2025-04-16 15:48:23',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:48:26',
+                    'Player: Entered room2 at time=2025-04-16 15:48:31',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:48:41',
+                    'Player: Entered room1 at time=2025-04-16 15:48:44',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:48:47',
+                    'Player: Entered room0 at time=2025-04-16 15:48:52',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:48:55',
+                    'Player: Entered lounge_2 at time=2025-04-16 15:49:00',
+                    'Player: Interacted asked about + request from room 2 at time=2025-04-16 15:49:07',
+                    'Player: Interacted None at time=2025-04-16 15:49:14',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:49:17',
+                    'Player: Entered storage_2 at time=2025-04-16 15:49:20',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:49:21',
+                    'Player: Entered room0 at time=2025-04-16 15:49:25',
+                    'Player: Entered hallway_4 at time=2025-04-16 15:49:28',
+                    'Player: Entered room3 at time=2025-04-16 15:49:34',
+                    'Player: Interacted None at time=2025-04-16 15:49:35',
+                    'Player: Entered hallway_4 at time=2025-04-16 15:49:39',
+                    'Player: Entered room4 at time=2025-04-16 15:49:43',
+                    'Player: Interacted None at time=2025-04-16 15:49:44',
+                    'Player: Entered hallway_4 at time=2025-04-16 15:49:49',
+                    'Player: Entered room3 at time=2025-04-16 15:49:52',
+                    'Player: Interacted None at time=2025-04-16 15:49:53',
+                    'Player: Entered hallway_4 at time=2025-04-16 15:49:57',
+                    'Player: Entered room0 at time=2025-04-16 15:50:02',
+                    'Player: Entered hallway_2 at time=2025-04-16 15:50:09',
+                    'Player: Entered lounge_1 at time=2025-04-16 15:50:14',
+                    'Player: Interacted None at time=2025-04-16 15:50:16',
+                    'Player: Interacted None at time=2025-04-16 15:50:20',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:55:22',
+                    'Player: Entered room2 at time=2025-04-16 15:55:27',
+                    'Player: Interacted None at time=2025-04-16 15:55:29',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:55:33',
+                    'Player: Entered room0 at time=2025-04-16 15:55:38',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:55:40',
+                    'Player: Entered storage_2 at time=2025-04-16 15:55:45',
+                    'Player: Obtained blue_potion at time=2025-04-16 15:55:47',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:55:51',
+                    'Player: Entered lounge_2 at time=2025-04-16 15:55:54',
+                    'Player: Interacted None at time=2025-04-16 15:55:55',
+                    'Player: Interacted None at time=2025-04-16 15:55:58',
+                    'Player: Entered hallway_5 at time=2025-04-16 15:56:00',
+                    'Player: Entered room0 at time=2025-04-16 15:56:04',
+                    'Player: Entered hallway_1 at time=2025-04-16 15:56:06',
+                    'Player: Entered room2 at time=2025-04-16 15:56:11'],
+ 'player known data': ['Player: Started_in room0, ',
+                       'room0: WEST to hallway_1, NORTH to hallway_5, EAST to hallway_4, SOUTH to hallway_2, ',
+                       'hallway_1: SOUTH to room2, EAST to room0, NORTH to room1, ',
+                       'room2: Contains None, NORTH to hallway_1, ',
+                       'hallway_5: NORTH to lounge_2, WEST to lounge_3, EAST to storage_2, SOUTH to room0, ',
+                       'lounge_2: Contains None, SOUTH to hallway_5, Contains asked about + request from room 2, ',
+                       'lounge_3: EAST to hallway_5, ',
+                       'storage_2: Contains blue_potion, WEST to hallway_5, ',
+                       'room1: SOUTH to hallway_1, ',
+                       'hallway_4: NORTH to room3, SOUTH to room4, WEST to room0, ',
+                       'room3: Contains None, SOUTH to hallway_4, ',
+                       'room4: Contains None, NORTH to hallway_4, ',
+                       'hallway_2: SOUTH to lounge_1, ',
+                       'lounge_1: Contains None, WEST to hallway_1, ']}
+```
+                          
+The user's most recent report is:
+
+
