@@ -95,9 +95,7 @@
                     ],
                     "default": [
                         [
-                            [
-                                ["[That item isn't used here.]", ""]
-                            ]
+                            ["[That item isn't used here.]", ""]
                         ]
                     ]
                 }
@@ -167,7 +165,7 @@
                     "red_potion": [
                         [
                             ["Thank you!", ""],
-                            ["Now please consult Donna", ""],
+                            ["Now please bring this to Donna.", ""],
                             ["", "request from room 3"]
                         ],
                         [

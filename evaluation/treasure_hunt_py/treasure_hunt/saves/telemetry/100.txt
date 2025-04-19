@@ -1,0 +1,22 @@
+2025-04-18 22:35:22 - Room entered: WEST to hallway_1
+2025-04-18 22:35:22 - Room entered: NORTH to room1
+2025-04-18 22:35:23 - NPC interact: lily
+2025-04-18 22:35:25 - Room entered: SOUTH to hallway_1
+2025-04-18 22:35:32 - Room entered: EAST to room0
+2025-04-18 22:35:35 - Room entered: SOUTH to hallway_3
+2025-04-18 22:35:36 - Room entered: SOUTH to storage_1
+2025-04-18 22:35:36 - Room entered: NORTH to hallway_3
+2025-04-18 22:35:36 - Room entered: SOUTH to storage_1
+2025-04-18 22:35:37 - Item obtained: gold_potion
+2025-04-18 22:35:38 - Room entered: NORTH to hallway_3
+2025-04-18 22:35:38 - Room entered: NORTH to room0
+2025-04-18 22:35:40 - Room entered: WEST to hallway_1
+2025-04-18 22:35:41 - Room entered: NORTH to room1
+2025-04-18 22:35:42 - Room entered: SOUTH to hallway_1
+2025-04-18 22:35:43 - Room entered: NORTH to room1
+2025-04-18 22:35:43 - Gave item to NPC: gold_potion lily
+2025-04-18 22:35:47 - Room entered: SOUTH to hallway_1
+2025-04-18 22:35:47 - Room entered: SOUTH to room2
+2025-04-18 22:35:48 - Room entered: NORTH to hallway_1
+2025-04-18 22:35:49 - Room entered: SOUTH to room2
+2025-04-18 22:35:50 - NPC interact: oliver

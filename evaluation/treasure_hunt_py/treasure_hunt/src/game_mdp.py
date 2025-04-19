@@ -46,6 +46,9 @@ class NPC(Object):
     def do_menu_select_interact(self, player):
         """Return True if interaction should trigger a menu select, False otherwise.
         """
+        if self.held_item_interact_data and not self.held_item_interact_complete:
+            return False
+            
         if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
             for key in player.flags:
                 if key in self.conditional_interact_data:
@@ -56,11 +59,11 @@ class NPC(Object):
     def menu_select_interact(self, player, key):
         """Return the conversation and updated player object after menu select interaction."""
         if key in self.conditional_interact_data:
-            # if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
-            conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
+            if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
+                conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
 
-            # else:
-                # conversation = self.conditional_interact_data[key][-1]
+            else:
+                conversation = self.conditional_interact_data[key][-1]
             self.default_conversation = self.conditional_interact_data[key][-1]
 
             event = Event.NPC_INTERACT
@@ -91,6 +94,8 @@ class NPC(Object):
             elif "default" in self.held_item_interact_data:
                 # Fallback to a default interaction if the specific held item interaction is not found
                 conversation = self.held_item_interact_data["default"][0]
+                event = Event.GAVE_WRONG_ITEM
+                details = player.held_item.name + " " + self.name
                 return deque(conversation), player, event, details        
 
         for key in self.conditional_interact_data:
@@ -106,7 +111,7 @@ class NPC(Object):
                 return deque(conversation), player, event, details
 
         # Return the entire conversation
-        if self.current_conversation < len(self.interact_data):
+        if self.current_conversation < len(self.interact_data) and not self.held_item_interact_complete:
             conversation = self.interact_data[self.current_conversation]
             self.current_conversation += 1
         else:
@@ -146,6 +151,11 @@ class GameState:
         self.elapsed_time = 0
 
         self.current_module = None
+
+    def reset_npc_holds(self):
+        for room in self._objects:
+            for npc in room['npcs']:
+                npc.held_item_interact_complete = False
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -255,6 +265,7 @@ class GameState:
         self.displayed_icon = None
 
     def got_item(self, item):
+        event_type = None
         if "treasure" in item:
             self.score += 1
             print("score: ", self.score)
@@ -266,10 +277,11 @@ class GameState:
                 self.displayed_text = "You found all the treasures! Please let the experimenter know."
 
         else:
-            self.player.flags.append(item)
+            if item not in self.player.flags:
+                self.player.flags.append(item)
+                event_type = Event.ITEM_OBTAINED
             self.displayed_text = f"You received the {item.upper()}."
             self.displayed_icon = item
-            event_type = Event.ITEM_OBTAINED
 
         return event_type
 

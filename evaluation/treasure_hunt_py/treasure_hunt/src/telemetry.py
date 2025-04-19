@@ -15,7 +15,7 @@ class Event:
     MODULE_DEFUSED = "Module defused"
     MODULE_ATTEMPTED = "Module attempted"
     MODULE_INTERACTED = "Module interacted"
-    GOT_INSTRUCTION = "Got instruction"
+    GAVE_WRONG_ITEM = "Gave wrong item to NPC"
 
     def __init__(self, event_type, details=""):
         self.event_type = event_type

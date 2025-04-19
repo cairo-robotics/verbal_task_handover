@@ -8,8 +8,10 @@ import json
 import math
 import time
 
-# GRAPHICS_DIR = "./assets/"
-GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
+from treasure_hunt import assets
+
+GRAPHICS_DIR = os.path.dirname(assets.__file__)
+# GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
 
 # Colors
 BLACK = (0, 0, 0)
@@ -374,22 +376,24 @@ class StateVisualizer:
     def scale_by_factor(self):
         return self.tile_size/self.UNSCALED_TILE_SIZE
     
-    def render_module(self, game_module, grid_surface):
-        width, height = grid_surface.get_size() 
-        width = int(width * 0.75)
-        height = int(height * 0.75)
+    def render_module(self, game_module, game_surface):
+        game_width, game_height = game_surface.get_size() 
+        width = int(game_width * 0.5)
+        height = int(game_height * 0.6)
 
         if "wire" in game_module.type:
             vis_module = WireModuleInterface(game_module, width, height)
         elif "password" in game_module.type:
             vis_module = PasswordModuleVisualizer(game_module, self.SPRITES["textbox"], width, height)
         elif "dialogue" in game_module.type:
-            vis_module = InteractiveDialogueInterface(game_module, width, height)
+            vis_module = InteractiveDialogueInterface(game_module, width, height, self.font_size)
         module_surface = vis_module.render()
 
+        module_position = ((game_width - width) // 2, height * 0.15)
+
         # Calculate the position to blit the module_surface in the center of grid_surface
-        module_rect = module_surface.get_rect(center=grid_surface.get_rect().center)
-        grid_surface.blit(module_surface, module_rect)
+        # module_rect = module_surface.get_rect(center=grid_surface.get_rect().center)
+        game_surface.blit(module_surface, module_position)
 
     def render_state(self, state, game_map):
         grid_surface = pygame.surface.Surface(self._unscaled_grid_pixel_size(game_map.grid))
@@ -408,8 +412,6 @@ class StateVisualizer:
         if self.use_darkness:
             self._apply_darkness_mask(state, game_map, grid_surface)
 
-        if state.player_in_module:
-           self.render_module(state.current_module, grid_surface)
 
         if self.scale_by_factor != 1:
             grid_surface = scale_surface_by_factor(grid_surface, self.scale_by_factor)
@@ -423,6 +425,8 @@ class StateVisualizer:
         grid_rect = grid_surface.get_rect(center=(game_surface.get_width() // 2, grid_surface.get_height() // 2))
         game_surface.blit(grid_surface, grid_rect)
 
+        if state.player_in_module:
+           self.render_module(state.current_module, game_surface)
         text_to_display = state.displayed_text
         if text_to_display:
             self._render_text(game_surface, text_to_display, state.displayed_icon)

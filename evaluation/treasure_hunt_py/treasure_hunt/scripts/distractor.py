@@ -28,7 +28,7 @@ class DistractorTaskManager:
             score = driver.find_element(By.ID, "score")
 
             wait = WebDriverWait(driver, timeout=2.5 * 60)
-            wait.until(lambda _ : time_left.text == "0:00")
+            wait.until(lambda _ : time_left.text == "1:50")
             print("Memory match final score: " + score.text)
 
             driver.close()

@@ -23,7 +23,7 @@ SAVE_FILENAME = 'test_save'
 
 STARTING_ROOM = 'room0'
 
-DISTRACTOR_START_TIME = 5 # in minutes after script is executed
+DISTRACTOR_START_TIME = 0 # in minutes after script is executed
 AUTOSAVE_INTERVAL = 30 # in seconds
 
 # Constants  
@@ -32,7 +32,7 @@ SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
 # MOVE_DURATION = 300 # time it takes to move from one tile to another in milliseconds
-MOVE_DURATION = 30
+MOVE_DURATION = 100
 
 # Colors
 BLACK = (0, 0, 0)
@@ -54,11 +54,11 @@ STARTING_TEXT = [
     "Your goal is to fulfill the requests of the patients in each room.",
     "Among other tasks, you will need to bring each patient the correct color POTION."
     "The potion colors needed are as follows:",
-    "Room 1 needs a GOLD potion.",
-    "Room 2 needs a BLUE potion.",
-    "Room 3 needs a RED potion.",
-    "Room 4 needs a GREEN potion.",
-    "Room 5 needs an ORANGE potion.",
+    "Room 1 is to the west, and needs a GOLD potion.",
+    "Room 2 is to the west, and needs a BLUE potion.",
+    "Room 3 is to the east, and needs a RED potion.",
+    "Room 4 is to the east, and needs a GREEN potion.",
+    "Room 5 is to the south, and needs an ORANGE potion.",
     "You can also check with each patient to see which they need, but remember that this will cost you time.",
     "Patients may also ask you to bring their requests to NPCs elsewhere on the map.",
     "Press SPACE to begin the task."
@@ -89,16 +89,18 @@ def on_render(window, state_vis, state, game_map):
     state_vis.scale_blit_to_window(window, surface)
     pygame.display.flip()
 
+
 # Main game loop
 def main(args):
     if args.load:
         save_file = args.save or args.load
+        if args.load == args.save:
+            save_file += "_1" # avoid overwrites
         load_file = os.path.join(SAVE_DIRECTORY, args.load)
     else:
         load_file = None
         save_file = args.save or SAVE_FILENAME
 
-    
     telemetry_file = os.path.join(TELEMETRY_SAVE_DIRECTORY, save_file + '.txt')
     telemetry = Telemetry(telemetry_file, args.overwrite_telemetry)
     save_file = os.path.join(SAVE_DIRECTORY, save_file)
@@ -118,6 +120,9 @@ def main(args):
         if args.reset_time:
             state.elapsed_time = 0
             print("Timer reset to 0.")
+
+        if args.reset_held_items:
+            state.reset_npc_holds()
 
         state.text_queue = deque([[line, ""] for line in CONTINUE_TEXT])
         state.handle_interact()
@@ -149,10 +154,14 @@ def main(args):
     pygame.display.flip()
 
     running = True
-    move_start_time = None
+    move_start_time = 0
     move_duration = MOVE_DURATION  # Duration of the move in milliseconds
     move_target_pos = None
     keys_pressed = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False, pygame.K_DOWN: False}
+
+    paused = False
+    pause_start_time = 0
+    pause_total_time = 0
 
 
     # set timer to start distractor task (will pause game while task is running)
@@ -160,7 +169,6 @@ def main(args):
         distractor_manager = DistractorTaskManager()
         distractor_manager.start_timer_and_launch(wait_duration=DISTRACTOR_START_TIME)
 
-    paused = False
 
     autosave_interval = AUTOSAVE_INTERVAL * 1000  # in milliseconds
     last_autosave_time = pygame.time.get_ticks()
@@ -179,9 +187,13 @@ def main(args):
                 elif event.key ==  pygame.K_p:
                     paused = not paused
                     if paused:
-                        print("Game paused. Press P to resume.")
+                        print("Game paused.")
+                        pause_start_time = pygame.time.get_ticks()
                     else:
                         print("Game resumed.")
+                        pause_total_time = pygame.time.get_ticks() - pause_start_time
+                        # update timer
+                        state.elapsed_time -= pause_total_time / 1000
                     
                 elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     state.save(save_file)
@@ -307,11 +319,15 @@ def main(args):
 
         on_render(window, state_vis, state, game_map)
         
+        if args.use_distractor and distractor_manager.distractor_active:
+            distractor_start_time = pygame.time.get_ticks()
+            distractor_manager.wait_for_completion()
+            distractor_time_total = pygame.time.get_ticks() - distractor_start_time
+            state.elapsed_time -= (distractor_time_total / 1000)
+        
         dt = clock.tick(FPS)
         state.tick(dt)
-        if args.use_distractor and distractor_manager.distractor_active:
-            distractor_manager.wait_for_completion()
-        
+
         if timeout and state.elapsed_time > timeout:
             # save game state
             state.save(save_file)
@@ -332,6 +348,8 @@ if __name__ == '__main__':
     parser.add_argument('--use-distractor', type=bool, default=True, help='Use the distractor task')
     parser.add_argument('--timeout', type=int, default=10, help='Timeout (in minutes) for the main task (0 for no timeout)')
     parser.add_argument('--reset-time', action='store_true', help='Reset the time for the main task')
+    parser.add_argument('--reset-held-items', action='store_true', help='Reset the held-item quests for NPCs')
+
     args = parser.parse_args()
 
     main(args)

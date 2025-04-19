@@ -16,7 +16,8 @@ from pprint import pprint
 import argparse
 
 CHAT_SAVE_FILE = "chat_save.txt"
-CHAT_SAVE_DIR = os.environ.get("SAVE_DIR", os.getcwd())
+TELEMETRY_LOAD_DIR = os.path.join(os.environ.get("SAVE_DIR"), "telemetry")
+CHAT_SAVE_DIR = os.path.join(os.environ.get("SAVE_DIR", os.getcwd()), "reports")
 
 GENERAL_PROMPT = Template("""\
 You are an assistant helping the user develop a text "handover report" about their current progress in a video game.
@@ -265,7 +266,7 @@ def test_chatbot_with_graph():
     gui.mainloop()
 
 def main(args):
-    telem_file = os.path.join(CHAT_SAVE_DIR, "telemetry", "{}.txt".format(args.pid))
+    telem_file = os.path.join(TELEMETRY_LOAD_DIR, "{}.txt".format(args.pid))
     from graph import TelemetryGraph
     g = TelemetryGraph()
     g.parse_from_file(telem_file)

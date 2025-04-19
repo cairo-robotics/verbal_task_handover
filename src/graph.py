@@ -166,6 +166,7 @@ class TelemetryGraph:
 
                 G.add_node(item_name)
                 G.add_node(npc_name)
+                G.add_edge(npc_name, item_name, action="Was given")
 
                 if not G.has_edge(last_added_position_node, npc_name):
                     G.add_edge(last_added_position_node, npc_name, action="Contains")
