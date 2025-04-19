@@ -1,5 +1,5 @@
 api_config.sh
-unused/
+evaluation/treasure_hunt_py/treasure_hunt/assets/unused
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

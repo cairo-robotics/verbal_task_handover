@@ -2,6 +2,23 @@ from numpy import random
 import pygame
 # random.seed(0)
 
+class InteractiveDialogue:
+    def __init__(self, options, text, title=None):
+        self.type = "interactive_dialogue"
+        self.on_cooldown = False
+        self.options = options
+        self.display_text = text
+        self.title = title
+        self.selected_option = 0
+
+    def on_keypress(self, key):
+        # import pdb; pdb.set_trace()
+        key = pygame.key.name(key)
+        if key.isdigit() and 0 < int(key) <= len(self.options):
+            return self.options[int(key)-1]
+        else:
+            return None
+
 class Object:
     def __init__(self, name, type, position, id=None, item_text=None):
         self.name = name
@@ -51,6 +68,8 @@ class KeyObject(Object):
             self.linked_object.make_visible()
             return True
         return None
+    
+
     
 class WireModule(Object):
     def __init__(self, position, contains, serial_no="1234", wires=None):

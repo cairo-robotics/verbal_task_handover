@@ -6,6 +6,30 @@ class ModuleInterface:
         self.width = width
         self.height = height
 
+class InteractiveDialogueInterface(ModuleInterface):
+    def __init__(self, dialogue_module, game_width, game_height):
+        super().__init__(game_width, game_height)
+        self.dialogue_module = dialogue_module
+
+        self.font = pygame.font.SysFont("Arial", 12)
+
+    def render(self):
+        surface_height = max(self.height * 7 // 8, len(self.dialogue_module.options) * 20 + 20)
+        # surface_width = int(self.width * 0.8)
+        surface_width = self.width
+
+        textbox_surface = pygame.Surface((surface_width, surface_height))
+        textbox_surface.fill((255, 255, 255))
+
+        for i, dialogue_option in enumerate(self.dialogue_module.options):
+            text = str(i + 1) + ". " + dialogue_option 
+            text_surface = self.font.render(text, True, (0, 0, 0))
+            text_rect = text_surface.get_rect()
+            text_rect.topleft = (10, i * 20 + 10)  # Adjust position for each line
+            textbox_surface.blit(text_surface, text_rect)
+        return textbox_surface
+
+
 class WireSprite:
     def __init__(self, rgb, x, y, width, height):
         self.color = rgb

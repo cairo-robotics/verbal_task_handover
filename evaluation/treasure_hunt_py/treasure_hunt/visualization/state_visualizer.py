@@ -6,6 +6,7 @@ import os
 import copy
 import json
 import math
+import time
 
 # GRAPHICS_DIR = "./assets/"
 GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
@@ -14,6 +15,7 @@ GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_p
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+GREY = (196, 196, 196)
 
 def within_radius(pos1, pos2, r):
     return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2 <= r**2
@@ -156,7 +158,8 @@ class StateVisualizer:
                 elif tile == "-":
                     pygame.draw.rect(surface, BLACK, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
                 else:
-                    self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    # self.SPRITES["grass"].blit_on_surface_scaled(surface, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE), (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+                    pygame.draw.rect(surface, GREY, (x * self.UNSCALED_TILE_SIZE, y * self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
 
     def _render_grid_with_textures(self, surface, game_map):
         texture_map_names = game_map.all_texture_maps
@@ -266,16 +269,22 @@ class StateVisualizer:
         room_name_rect = room_name_surface.get_rect(topright=(surface.get_width() - 10, 10))
         surface.blit(room_name_surface, room_name_rect)
 
+        # Render the elapsed time in the bottom-right corner
+        time_text = time.strftime("%M:%S", time.gmtime(state.elapsed_time))
+        elapsed_time_surface = self.font.render(time_text, True, WHITE)
+        elapsed_time_rect = elapsed_time_surface.get_rect(bottomright=(surface.get_width() - 10, surface.get_height() - 10))
+        surface.blit(elapsed_time_surface, elapsed_time_rect)
+
     def _render_player(self, surface, state):
-        player_dir = state.player_dir
+        player_dir = state.player.dir
         dir_name = Direction.DIRECTION_TO_NAME[player_dir]
         
         # Determine the sprite frame based on the player's position
-        if float(state.player_pos[0]).is_integer() and float(state.player_pos[1]).is_integer():
+        if float(state.player.pos[0]).is_integer() and float(state.player.pos[1]).is_integer():
             sprite_frame = 2  # Standing still
         else:
             # Calculate the frame based on the walk animation cycle
-            move_progress = max(state.player_pos[0] % 1, state.player_pos[1] % 1)
+            move_progress = max(state.player.pos[0] % 1, state.player.pos[1] % 1)
             cycle_frame   = int(move_progress * self.walk_animation_frames)
             sprite_frame = (cycle_frame % 4) + 1 # 4 frames per walk cycle - 1, 2, 3, 2
             if sprite_frame == 4:
@@ -283,12 +292,37 @@ class StateVisualizer:
 
         sprite_name = f"{dir_name}_{sprite_frame}.png"
         x_offset = (self.MULTI_FRAME_SPRITES["player"].sprite_size[1] - self.MULTI_FRAME_SPRITES["player"].sprite_size[0]) / (2 * self.MULTI_FRAME_SPRITES["player"].sprite_size[1])
-        player_pos = (state.player_pos[0] + x_offset, state.player_pos[1])
+        player_pos = (state.player.pos[0] + x_offset, state.player.pos[1])
         
         self.MULTI_FRAME_SPRITES["player"].blit_on_surface(surface,
                                                            self._position_in_unscaled_pixels(player_pos),
                                                            sprite_name)
+    
+    def _render_player_held_item(self, surface, state):
+        """
+        Render the player's held item (if any) on the player sprite.
+        This is typically used for displaying items like gems or keys.
+        """
+        if not state.player.held_item:
+            return
         
+        item = state.player.held_item
+        if item.type in self.MULTI_FRAME_SPRITES:
+            mfs = self.MULTI_FRAME_SPRITES[item.type]
+            item_sprite_size = get_scaled_surface_size(mfs, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            item_pos = (state.player.pos[0] + 0.25, state.player.pos[1] - 0.5)
+            item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
+            mfs.blit_on_surface_scaled(surface, item_pixel_pos, item.sprite + ".png", (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+        elif item.sprite in self.SPRITES:
+            sprite = self.SPRITES[item.sprite]
+            item_sprite_size = get_scaled_surface_size(sprite, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+            player_pos = (state.player.pos[0], state.player.pos[1] - 0.5)
+            item_pos = (player_pos[0], player_pos[1] - 1)  # One tile above the player's position
+            item_pixel_pos = self._position_in_unscaled_pixels(item_pos)
+            sprite.blit_on_surface_scaled(surface, item_pixel_pos, (self.UNSCALED_TILE_SIZE, self.UNSCALED_TILE_SIZE))
+
+
+
     def _render_objects(self, surface, state):
         for obj in state.objects:
             if not obj.is_visible:
@@ -321,14 +355,14 @@ class StateVisualizer:
         return (self.UNSCALED_TILE_SIZE * x, self.UNSCALED_TILE_SIZE * y)
     
     def _apply_darkness_mask(self, state, game_map, surface):
-        px, py = state.player_pos
-        if state.player_dir == Direction.NORTH:
+        px, py = state.player.pos
+        if state.player.dir == Direction.NORTH:
             py = math.floor(py)
-        elif state.player_dir == Direction.SOUTH:
+        elif state.player.dir == Direction.SOUTH:
             py = math.ceil(py)
-        elif state.player_dir == Direction.EAST:
+        elif state.player.dir == Direction.EAST:
             px = math.ceil(px)
-        elif state.player_dir == Direction.WEST:
+        elif state.player.dir == Direction.WEST:
             px = math.floor(px)
         
         for y in range(len(game_map.grid)):
@@ -349,6 +383,8 @@ class StateVisualizer:
             vis_module = WireModuleInterface(game_module, width, height)
         elif "password" in game_module.type:
             vis_module = PasswordModuleVisualizer(game_module, self.SPRITES["textbox"], width, height)
+        elif "dialogue" in game_module.type:
+            vis_module = InteractiveDialogueInterface(game_module, width, height)
         module_surface = vis_module.render()
 
         # Calculate the position to blit the module_surface in the center of grid_surface
@@ -367,6 +403,7 @@ class StateVisualizer:
         
         self._render_objects(grid_surface, state)
         self._render_player(grid_surface, state)
+        self._render_player_held_item(grid_surface, state)
 
         if self.use_darkness:
             self._apply_darkness_mask(state, game_map, grid_surface)

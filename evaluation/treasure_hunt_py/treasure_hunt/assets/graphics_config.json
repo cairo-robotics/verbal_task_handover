@@ -36,12 +36,6 @@
         "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
-    "mark" : {
-        "type" : "multi",
-        "path": "chars/mark.png",
-        "config": "chars/char_sprites.json",
-        "scaling" : 1.0
-    },
     "lily" : {
         "type" : "multi",
         "path": "chars/lily.png",
@@ -54,9 +48,9 @@
         "config": "chars/char_sprites.json",
         "scaling": 1.0
     },
-    "jay" : {
+    "nick" : {
         "type" : "multi",
-        "path": "chars/jay.png",
+        "path": "chars/nick.png",
         "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },
@@ -75,6 +69,43 @@
     "eliza" : {
         "type" : "multi",
         "path": "chars/eliza.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "lola" : {
+        "type" : "multi",
+        "path": "chars/lola.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "john" : {
+        "type" : "multi",
+        "path": "chars/john.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "donna": {  
+        "type" : "multi",
+        "path": "chars/donna.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+
+    },
+    "brittany" : {
+        "type" : "multi",
+        "path": "chars/brittany.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "oliver" : {
+        "type" : "multi",
+        "path": "chars/oliver.png",
+        "config": "chars/char_sprites.json",
+        "scaling" : 1.0
+    },
+    "thomas" : {
+        "type" : "multi",
+        "path": "chars/thomas.png",
         "config": "chars/char_sprites.json",
         "scaling" : 1.0
     },

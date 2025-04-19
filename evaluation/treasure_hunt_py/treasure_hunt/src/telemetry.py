@@ -3,6 +3,7 @@ import time
 class Event:
     # define implemented event types
     NPC_INTERACT = "NPC interact"
+    GAVE_ITEM_TO_NPC = "Gave item to NPC"
     DOOR_UNLOCKED = "Door unlocked"
     DOOR_LOCKED = "Tried locked door"
     ITEM_OBTAINED = "Item obtained"
@@ -14,6 +15,7 @@ class Event:
     MODULE_DEFUSED = "Module defused"
     MODULE_ATTEMPTED = "Module attempted"
     MODULE_INTERACTED = "Module interacted"
+    GOT_INSTRUCTION = "Got instruction"
 
     def __init__(self, event_type, details=""):
         self.event_type = event_type

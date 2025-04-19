@@ -1,0 +1,141 @@
+2025-03-19 16:04:50 - Room entered: WEST to room7
+2025-03-19 16:04:51 - Room entered: EAST to room0
+2025-03-19 16:04:52 - Item interacted: torch2
+2025-03-19 16:04:55 - Room entered: NORTH to room19
+2025-03-19 16:04:56 - Room entered: SOUTH to room0
+2025-03-19 16:05:00 - NPC interact: lily
+2025-03-19 16:05:08 - Item interacted: barrel
+2025-03-19 16:05:17 - Room entered: NORTH to room19
+2025-03-19 16:05:17 - Room entered: EAST to room0
+2025-03-19 16:05:19 - NPC interact: jay
+2025-03-19 16:05:24 - NPC interact: guy
+2025-03-19 16:05:33 - Room entered: SOUTH to room9
+2025-03-19 16:05:39 - Room entered: SOUTH to room3
+2025-03-19 16:05:41 - Item interacted: barrel
+2025-03-19 16:05:46 - Item interacted: barrel
+2025-03-19 16:05:55 - Item interacted: page
+2025-03-19 16:06:07 - Item interacted: red banner
+2025-03-19 16:06:08 - Item interacted: red banner
+2025-03-19 16:06:17 - Tried locked door: locked_door
+2025-03-19 16:06:22 - Item interacted: torch
+2025-03-19 16:06:27 - Item interacted: barrel
+2025-03-19 16:06:33 - Room entered: NORTH to room9
+2025-03-19 16:06:38 - Room entered: NORTH to room0
+2025-03-19 16:06:43 - Room entered: SOUTH to room12
+2025-03-19 16:06:45 - Room entered: SOUTH to room4
+2025-03-19 16:06:48 - Item interacted: page
+2025-03-19 16:07:04 - Room entered: NORTH to room12
+2025-03-19 16:07:05 - Room entered: NORTH to room0
+2025-03-19 16:07:08 - NPC interact: lily
+2025-03-19 16:07:13 - NPC interact: jay
+2025-03-19 16:07:16 - NPC interact: guy
+2025-03-19 16:07:27 - Room entered: EAST to room10
+2025-03-19 16:07:29 - Item interacted: barrel
+2025-03-19 16:07:33 - Room entered: EAST to room5
+2025-03-19 16:07:34 - Room entered: WEST to room10
+2025-03-19 16:07:35 - Room entered: EAST to room5
+2025-03-19 16:07:36 - NPC interact: eliza
+2025-03-19 16:07:44 - Room entered: NORTH to room13
+2025-03-19 16:07:48 - Room entered: EAST to room14
+2025-03-19 16:07:50 - Item interacted: barrel
+2025-03-19 16:07:56 - Item interacted: barrel
+2025-03-19 16:08:05 - Room entered: WEST to room13
+2025-03-19 16:08:07 - Room entered: SOUTH to room5
+2025-03-19 16:08:08 - Room entered: WEST to room13
+2025-03-19 16:08:08 - Room entered: SOUTH to room5
+2025-03-19 16:08:10 - Room entered: NORTH to room2
+2025-03-19 16:08:12 - Item obtained: blue gem
+2025-03-19 16:08:13 - Room entered: EAST to room5
+2025-03-19 16:08:15 - Room entered: WEST to room10
+2025-03-19 16:08:16 - Room entered: EAST to room5
+2025-03-19 16:08:17 - NPC interact: eliza
+2025-03-19 16:08:23 - NPC interact: eliza
+2025-03-19 16:08:29 - Room entered: WEST to room10
+2025-03-19 16:08:31 - Room entered: WEST to room0
+2025-03-19 16:08:34 - NPC interact: jay
+2025-03-19 16:08:44 - NPC interact: jay
+2025-03-19 16:08:55 - Room entered: SOUTH to room9
+2025-03-19 16:09:00 - Room entered: SOUTH to room3
+2025-03-19 16:09:09 - Treasure collected: 
+2025-03-19 16:09:12 - Room entered: NORTH to room9
+2025-03-19 16:09:18 - Room entered: NORTH to room0
+2025-03-19 16:09:24 - Tried locked door: door_to_room6
+2025-03-19 16:09:25 - Tried locked door: door_to_room6
+2025-03-19 16:09:29 - Room entered: SOUTH to room9
+2025-03-19 16:09:35 - Room entered: SOUTH to room3
+2025-03-19 16:09:39 - Door unlocked: used blue key
+2025-03-19 16:09:41 - Room entered: WEST to room16
+2025-03-19 16:09:42 - Treasure collected: treasure4
+2025-03-19 16:09:47 - Room entered: EAST to room3
+2025-03-19 16:09:50 - Room entered: NORTH to room9
+2025-03-19 16:09:55 - Room entered: NORTH to room0
+2025-03-19 16:09:57 - Room entered: WEST to room8
+2025-03-19 16:10:00 - Room entered: WEST to room2
+2025-03-19 16:10:02 - Item obtained: gold key
+2025-03-19 16:10:05 - Room entered: EAST to room8
+2025-03-19 16:10:07 - Room entered: EAST to room0
+2025-03-19 16:10:10 - Tried locked door: door_to_room6
+2025-03-19 16:10:13 - Room entered: WEST to room7
+2025-03-19 16:10:15 - Door unlocked: used gold key
+2025-03-19 16:10:20 - Room entered: WEST to room18
+2025-03-19 16:10:21 - Item interacted: barrel
+2025-03-19 16:10:25 - NPC interact: marie
+2025-03-19 16:10:31 - Room entered: EAST to room7
+2025-03-19 16:10:32 - Room entered: WEST to room18
+2025-03-19 16:10:35 - Room entered: EAST to room7
+2025-03-19 16:10:36 - Room entered: NORTH to room1
+2025-03-19 16:10:38 - Module interacted: password_module
+2025-03-19 16:10:41 - Module defused: password_module
+2025-03-19 16:10:47 - NPC interact: mark
+2025-03-19 16:10:55 - Room entered: SOUTH to room7
+2025-03-19 16:10:59 - Room entered: EAST to room0
+2025-03-19 16:11:01 - Door unlocked: used silver key
+2025-03-19 16:11:02 - Room entered: EAST to room11
+2025-03-19 16:11:04 - Room entered: NORTH to room17
+2025-03-19 16:11:05 - Item interacted: barrel
+2025-03-19 16:11:10 - Item interacted: blue banner
+2025-03-19 16:11:10 - Item interacted: blue banner
+2025-03-19 16:11:11 - Item interacted: blue banner
+2025-03-19 16:11:11 - Room entered: EAST to room15
+2025-03-19 16:11:14 - Treasure collected: treasure5
+2025-03-19 16:11:16 - Item interacted: barrel
+2025-03-19 16:11:21 - Room entered: NORTH to room17
+2025-03-19 16:11:25 - Room entered: SOUTH to room11
+2025-03-19 16:11:26 - Room entered: EAST to room6
+2025-03-19 16:11:29 - NPC interact: steve
+2025-03-19 16:11:36 - Room entered: WEST to room11
+2025-03-19 16:11:39 - Room entered: WEST to room0
+2025-03-19 16:11:42 - Room entered: WEST to room7
+2025-03-19 16:11:46 - Room entered: NORTH to room1
+2025-03-19 16:14:23 - NPC interact: mark
+2025-03-19 16:14:27 - Room entered: SOUTH to room7
+2025-03-19 16:14:31 - Room entered: EAST to room0
+2025-03-19 16:14:33 - Item interacted: torch1
+2025-03-19 16:14:34 - Item interacted: torch1
+2025-03-19 16:14:34 - Item interacted: torch1
+2025-03-19 16:14:36 - Room entered: NORTH to room19
+2025-03-19 16:14:39 - Module interacted: wire_module
+2025-03-19 16:14:47 - Room entered: SOUTH to room0
+2025-03-19 16:14:52 - Room entered: SOUTH to room12
+2025-03-19 16:14:54 - Room entered: SOUTH to room4
+2025-03-19 16:14:58 - Item interacted: page
+2025-03-19 16:15:00 - Item interacted: page
+2025-03-19 16:15:06 - Room entered: NORTH to room12
+2025-03-19 16:15:08 - Room entered: NORTH to room0
+2025-03-19 16:15:11 - Room entered: SOUTH to room9
+2025-03-19 16:15:14 - Room entered: NORTH to room0
+2025-03-19 16:15:22 - Room entered: SOUTH to room9
+2025-03-19 16:15:28 - Room entered: SOUTH to room3
+2025-03-19 16:15:33 - Item interacted: page
+2025-03-19 16:15:51 - Item interacted: page
+2025-03-19 16:16:11 - Item interacted: page
+2025-03-19 16:16:33 - Room entered: NORTH to room9
+2025-03-19 16:16:38 - Room entered: NORTH to room0
+2025-03-19 16:16:40 - Room entered: NORTH to room19
+2025-03-19 16:16:41 - Module interacted: wire_module
+2025-03-19 16:17:08 - Module attempted: wire_module
+2025-03-19 16:17:13 - Room entered: SOUTH to room0
+2025-03-19 16:17:15 - Room entered: SOUTH to room9
+2025-03-19 16:17:21 - Room entered: SOUTH to room3
+2025-03-19 16:17:24 - Item interacted: page
+2025-03-19 16:17:33 - Room entered: NORTH to room9

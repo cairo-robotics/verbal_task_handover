@@ -1,0 +1,62 @@
+{
+    "objects" : {
+        "room1" : {
+            "blue_potion" : {
+                "position" : [2, 1],
+                "type": "potion"
+            }
+        }
+    },
+    "npcs" : {
+        "room1" : {
+            "lily" : {
+                "position" : [5, 3],
+                "facing" : "SOUTH",
+                "interact_data" : [
+                    [
+                        ["> LILY: Hi there! I'm an example of an NPC.", ""],
+                        ["> You can pick up things like potions by pressing the SPACE bar when you're near them.", ""],
+                        ["> But, you can only hold one of them at a time.", ""],
+                        ["> If you need to put them down, just hit SPACE again where you picked them up.", ""],
+                        ["> Can you bring me that one over there?", ""],
+                        ["> You can give it to me just by interacting with me while you're holding it.", ""]
+                    ],
+                    [
+                        ["> LILY: Try bringing me that potion over there.", ""]
+                    ]
+                ],
+                "held_item_interact_data" : {
+                    "blue_potion" : [
+                        [
+                            ["> LILY: Thank you!", ""],
+                            ["> NPCs will reward you with TREASURE for finishing all their requests.", ""],
+                            ["> The other kind of request you'll do is selecting other items to ask NPCs about from the menu.", ""],
+                            ["> I'll give you this for an example.", ""],
+                            ["", "letter from Lily"],
+                            ["> Try interacting with me again and asking me about it.", ""],
+                            ["> When the menu comes up, use the number keys to select the relevant item.", ""]
+                        ],
+                        [
+                            ["", ""]
+                        ]
+                    ]
+                },
+                "conditional_interacts" : {
+                    "letter from Lily" : [
+                        [
+                            ["> LILY: Perfect! You'll hold on to these items throughout the task, but they'll let you prompt NPCs to fulfill their requests.", ""],
+                            ["> Now, here's your reward:", ""],
+                            ["", "treasure0"]
+                        ],
+                        [
+                            ["> You can press Q to start the task.", ""]
+                        ]
+                    ],
+                    "default" : [
+                        ["...", ""]
+                    ]
+                }
+            }
+        }
+    }
+}

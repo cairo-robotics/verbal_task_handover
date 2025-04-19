@@ -25,7 +25,108 @@ class Direction(object):
     OPPOSITE_DIRECTIONS = { NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST }
     DIRECTION_TO_NAME = { d:name for d, name in zip([NORTH, SOUTH, EAST, WEST], ["NORTH", "SOUTH", "EAST", "WEST"])}
     NAME_TO_DIRECTION = { name:d for d, name in DIRECTION_TO_NAME.items()}
+
+class Stairs(Object):
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "stairs", position, id, **kwargs)
+        self._sprite = "stairs"
+        # self.destination = destination
+
+class Door(Object):
+    def __init__(self, name, position, is_locked, key, id=None, **kwargs):
+        super().__init__(name, "door", position, id, **kwargs)
+        self.is_locked = is_locked
+        self.was_unlocked = False
+        self.is_open = False
+        self.key = key
+
+    @property
+    def sprite(self):
+        return "door_open" if self.is_open else "door_closed"
+
+        # TODO: comment the below during the actual task! This is just for sanity checking during development
+        # if self.is_locked:
+        #     return "door_locked"
+        # elif self.is_open:
+        #     return "door_open"
+        # elif self.was_unlocked:
+        #     return "door_unlocked"
+        # return "door_closed"
+
+    @property
+    def is_passable(self):
+        return self.is_open
+    
+    def open(self):
+        self.is_open = True
+
+    def close(self):
+        self.is_open = False
+
+    def unlock(self):
+        self.is_locked = False
+        self.was_unlocked = True
+
+    def on_update(self):
+        self.close()
+    
+    def interact(self, player_items):
+        if self.is_locked:
+            if self.key in player_items:
+                self.unlock()
+                # self.is_open = True
+                return True
+            else:
+                return False
+        elif not self.is_open:
+            self.open()
+            return None
+        return None
+
+class Chest(Object):
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, "chest", position, id, **kwargs)
+        self.contains = contains
+        self.is_open = False
+    
+    @property
+    def sprite(self):
+        if self.is_open:
+            return "chest_open"
+        else:
+            return "chest_closed"
+
+    @property
+    def is_passable(self):
+        return False
+
+    def interact(self, *args):
+        if self.is_open or not self.is_visible or not self.contains:
+            return None
+        else:
+            self.is_open = True
+            return self.contains
         
+class Barrel(Chest):
+    def __init__(self, name, position, contains, id=None, **kwargs):
+        super().__init__(name, position, contains, id, **kwargs)
+        self.type = "barrel"
+
+    @property
+    def sprite(self):
+        return "barrel"
+        
+class Treasure(Object):
+    def __init__(self, name, position, id=None, **kwargs):
+        super().__init__(name, "treasure", position, id, **kwargs)
+        self._sprite = "gem_red"
+        self.collected = False
+
+    def interact(self, *args):
+        if not self.collected:
+            self.collected = True
+            return True
+        return False
 
 class NPC(Object):
     def __init__(self, name, position, facing, interact_data, held_item_interact_data={}, conditional_interact_data={}):
@@ -44,8 +145,6 @@ class NPC(Object):
         self.default_conversation = self.interact_data[-1]
 
     def do_menu_select_interact(self, player):
-        """Return True if interaction should trigger a menu select, False otherwise.
-        """
         if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
             for key in player.flags:
                 if key in self.conditional_interact_data:
@@ -54,7 +153,6 @@ class NPC(Object):
         # return True # FOR TESTING
 
     def menu_select_interact(self, player, key):
-        """Return the conversation and updated player object after menu select interaction."""
         if key in self.conditional_interact_data:
             # if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
             conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
@@ -64,7 +162,7 @@ class NPC(Object):
             self.default_conversation = self.conditional_interact_data[key][-1]
 
             event = Event.NPC_INTERACT
-            details = self.name + " about " + key
+            details = "asked about + " + key
             self.conditional_interact_counts[key] += 1
             return deque(conversation), player, event, details
         else:
@@ -73,7 +171,7 @@ class NPC(Object):
     def interact(self, player):
         conversation = None
         event = None
-        details = self.name
+        details = None
 
         if not self.held_item_interact_complete and player.held_item is not None:
             if player.held_item.name in self.held_item_interact_data:
@@ -81,7 +179,7 @@ class NPC(Object):
                 # Mark this as complete to avoid repeating the same interaction
                 self.held_item_interact_complete = True
                 event = Event.GAVE_ITEM_TO_NPC  # Log the event of giving an item to the NPC
-                details = player.held_item.name + " " + self.name
+                details = player.held_item.name
 
                 self.default_conversation = self.held_item_interact_data[player.held_item.name][-1]
 
@@ -98,7 +196,7 @@ class NPC(Object):
                 if self.conditional_interact_counts[key] < len(self.conditional_interact_data[key]):
                     conversation = self.conditional_interact_data[key][self.conditional_interact_counts[key]]
                     event = Event.NPC_INTERACT
-                    details = ""      
+                    details = ""                
                 else:
                     conversation = self.conditional_interact_data[key][-1]
                 
@@ -146,6 +244,18 @@ class GameState:
         self.elapsed_time = 0
 
         self.current_module = None
+    
+    # def get_human_readable_state(self):
+    #     # this doesn't cover 100% of the relevant state info, but it's a start
+    #     printable_json = {}
+    #     printable_json["current_room"] = self.current_room
+    #     printable_json["player.flags"] = self.player.flags
+    #     printable_json["score"] = self.score
+    #     for room in self._objects:
+    #         printable_json[room] = {}
+    #         for obj in self._objects[room]:
+    #             printable_json[room][obj] = self._objects[room][obj].__dict__
+    #     return printable_json
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -248,6 +358,24 @@ class GameState:
                 else:
                     self.current_module = None
                     self.handle_NPC_menu_interact(res)
+                    
+            # if res is not None:
+            #     if res:
+            #         self.got_item(self.current_module.contains)
+            #         self.text_queue = deque([("You defused the module! Press SPACE to continue.", None)])
+            #         self.telemetry.log_event(Event.MODULE_DEFUSED, self.current_module.name)
+            #         self.current_module = None
+
+            #         return
+            #     elif "wire" in self.current_module.type:
+            #         self.displayed_text = "You tried to cut the wrong wire. Please wait 60 seconds to try again. Press ESC to exit."
+            #         self.displayed_icon = None
+            #     elif "password" in self.current_module.type:
+            #         self.displayed_text = "You entered the wrong password. Please wait 5 seconds to try again. Press ESC to exit."
+            #         self.displayed_icon = None
+            #     self.telemetry.log_event(Event.MODULE_ATTEMPTED, self.current_module.name)
+
+
 
     def handle_esc(self):
         self.current_module = None
@@ -308,12 +436,44 @@ class GameState:
             obj = self._get_object_at_position(rounded_pos)
         else:
             obj = self._get_object_at_position(self.player.pos)
+        print("interacting with object: ", obj)
+
+        if obj is not None and obj.type == "treasure":
+            res = obj.interact()
+            if res:
+                self.score += 1
+                print("score: ", self.score)
+                self.displayed_text = "You found a TREASURE!"
+                self.displayed_icon = "red gem"
+                if self.score == MAX_SCORE:
+                    self.displayed_text = "You found all the treasures! Please let the experimenter know."
+                event_type = Event.TREASURE_FOUND
+                details = ""
+                self.player.flags.append(obj.name)
+
+                self.telemetry.log_event(event_type, details)
+                return event_type, details    
 
         obj = self._get_facing_object()
         event_type = None
         details = None
         if obj:
-            if obj.type == "npc":
+            if "module" in obj.type:
+                if not obj.on_cooldown:
+                    module_trigger = obj.interact()
+                    if module_trigger:
+                        self.current_module = obj
+                        self.displayed_text = obj.item_text
+                        self.displayed_icon = None
+                        print("activating module...")
+                        self.telemetry.log_event(Event.MODULE_INTERACTED, obj.name)
+                    return None, None
+                else:
+                    self.displayed_text = "The module is locked. Wait before trying again."
+                    self.displayed_icon = None
+                    return None, None
+
+            elif obj.type == "npc":
                 if obj.do_menu_select_interact(self.player):
                     # raise NotImplementedError
                     self.current_module = InteractiveDialogue(self.player.flags, "Press the number key of the option to ask {} about. Press ESC to go back.".format(obj.name.upper()), obj.name)
@@ -330,6 +490,51 @@ class GameState:
                         self.text_queue = conversation
                         return self.handle_interact()
 
+            elif (obj.type == "chest" or obj.type == "barrel"):
+                if obj.type == "barrel" and not self.displayed_text:
+                    self.displayed_text = "You search around inside the barrel."
+                    self.displayed_icon = None
+                    self.cooldown = 2000
+                    self.telemetry.log_event(Event.ITEM_INTERACTED, "barrel")
+                    item = obj.interact()
+                    if not item and not obj.item_text:
+                        self.text_queue = deque([("There's nothing in here.", None)])
+                    elif item:
+                        self.text_queue = deque([("", item)])
+                    elif obj.item_text:
+                        self.text_queue = deque(obj.item_text)
+
+                elif (obj.type == "chest" and self.displayed_text is None) or self.displayed_text == "You search around inside the barrel...":
+                    item = obj.interact()
+                    if item:
+                        details = item
+                        event_type = self.got_item(item)
+                    else:
+                        self.displayed_text = "There's nothing in here."
+                        self.displayed_icon = None
+
+            elif obj.type == "door":
+                res = obj.interact(self.player.flags)
+                if res is not None:
+                    if res:
+                        self.player.flags.remove(obj.key)
+                        self.displayed_text = f"You used the {obj.key.upper()} to unlock the door."
+                        event_type = Event.DOOR_UNLOCKED
+                        details = "used " + obj.key
+                        self.telemetry.log_event(event_type, details)
+                        return event_type, details
+                    elif obj.item_text:
+                        self.text_queue = deque(obj.item_text)
+                        event_type = Event.DOOR_LOCKED
+                        details = obj.name
+                        self.telemetry.log_event(event_type, details)
+                        return self.handle_interact()
+                    else:
+                        self.displayed_text = "Looks like you don't have the key for this door."
+                        event_type = Event.DOOR_LOCKED
+                        details = ""
+                        # self.telemetry.log_event(event_type, details)
+            
             elif obj.type == "potion":
                 if self.player.held_item is not None and self.player.held_item.name == obj.name:
                     self.displayed_text = "You put back the potion."
@@ -364,8 +569,7 @@ class GameState:
         #     json.dump(self.get_human_readable_state(), file, indent=4)
 
     @classmethod
-    def load(cls, filename="save"):
-        filename = filename + ".pkl"
+    def load(cls, filename="save.pkl"):
         try:
             with open(filename, "rb") as file:
                 st =  pickle.load(file)
@@ -387,8 +591,32 @@ def start_state(object_filename):
             obj_type = new_obj_dict["type"]
             obj_id = new_obj_dict.get("id", None)
             obj_text = new_obj_dict.get("item text", None)
-        
-            new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
+            if obj_type == "chest":
+                new_obj = Chest(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
+            elif obj_type == "barrel":
+                new_obj = Barrel(obj_name, new_obj_dict["position"], new_obj_dict["contains"], obj_id, item_text=obj_text)
+            elif obj_type == "door":
+                new_obj = Door(obj_name, new_obj_dict["position"], new_obj_dict["is_locked"], new_obj_dict["key"], obj_id, item_text=obj_text)
+            elif obj_type == "treasure":
+                new_obj = Treasure(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
+            elif obj_type == "stairs":
+                new_obj = Stairs(obj_name, new_obj_dict["position"], obj_id, item_text=obj_text)
+            elif obj_type == "key object":
+                new_obj = KeyObject(
+                    objects[room][new_obj_dict["linked_object"]],
+                    **new_obj_dict["key_object"], 
+                    id=obj_id,
+                    item_text=obj_text
+                        )
+            elif obj_type == "wire_module":
+                new_obj = WireModule(new_obj_dict["position"], new_obj_dict["contains"], new_obj_dict["serial_no"], new_obj_dict["wires"])
+            elif obj_type == "password_module":
+                new_obj = PasswordModule(new_obj_dict["position"], new_obj_dict["contains"], new_obj_dict["password"])
+            else:
+                new_obj = Object(obj_name, obj_type, new_obj_dict["position"], obj_id, item_text=obj_text)
+                # if "is_passable" in new_obj_dict:
+                #     # allow custom passability for objects
+                #     new_obj._is_passable = new_obj_dict["is_passable"]
             objects[room][obj_name] = new_obj
 
     for room in all_entities["npcs"]:

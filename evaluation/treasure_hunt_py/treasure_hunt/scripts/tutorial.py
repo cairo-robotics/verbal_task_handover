@@ -11,7 +11,7 @@ import argparse
 pygame.init()
 
 GAME_DIR = os.path.dirname(os.path.abspath(__file__))
-MAP_DIRECTORY = GAME_DIR + '/../maps/tutorial/'
+MAP_DIRECTORY = GAME_DIR + '/../maps/tutorial_v2/'
 SAVE_DIRECTORY = GAME_DIR + '/../saves/'
 TELEMETRY_SAVE_DIRECTORY = SAVE_DIRECTORY + 'telemetry/'
 
@@ -24,7 +24,7 @@ TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-MOVE_DURATION = 350 # time it takes to move from one tile to another in milliseconds
+MOVE_DURATION = 300 # time it takes to move from one tile to another in milliseconds
 
 # Colors
 BLACK = (0, 0, 0)
@@ -67,19 +67,12 @@ def main(args):
     pygame.display.set_caption("Treasure Hunt Task")
     clock = pygame.time.Clock()
 
-    if load_file:
-        state = GameState.load(load_file)
-        player_pos = state.player_pos
-        player_dir = state.player_dir
-        current_room = state.current_room
-        print("Game loaded from ", load_file)
-    else:
-        current_room = STARTING_ROOM
-        player_dir = Direction.SOUTH
-        player_pos = [2, 2]  # Start position (y, x)
-        objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
-        state = GameState(player_pos, player_dir, current_room, objects)
-        print("Initializing new game...")
+    current_room = STARTING_ROOM
+    player_dir = Direction.SOUTH
+    player_pos = [2, 2]  # Start position (y, x)
+    objects = start_state(os.path.join(MAP_DIRECTORY, 'objects.json'))
+    state = GameState(player_pos, player_dir, current_room, objects)
+    print("Initializing new game...")
 
     state.set_telemetry(telemetry)
     # transitions = load_transitions(os.path.join(MAP_DIRECTORY, 'transitions.json'))
@@ -104,31 +97,24 @@ def main(args):
 
     TUTORIAL_TEXT = [
         [
-            "Welcome to the tutorial for the Treasure Hunt task! (Press SPACE to continue)",
-            "Your goal for this task is to find all of the TREASURES hidden in the map, which look like red gems.",
-            "You'll find an example in just a moment."
-            "You can move around using the arrow keys.",
-            "You can also interact with objects by pressing the SPACE bar.",
-            "Try opening the chest in front of you by pressing SPACE."
+            "Welcome to the tutorial for the study task! (Press SPACE to continue)",
+            "You will be able to move around using the arrow keys and interact with objects by pressing the SPACE bar. (Press SPACE to continue)",
+            "You can also progress through textboxes (like this) by pressing SPACE.",
+            "Try going through the door at the top of this room. (Press SPACE to continue)",
         ],
         [
-            "Great job! You found a key.",
-            "Keys can be used to open locked doors.",
-            "Try opening the door to at the top of the room."
+            "Now try talking to the character in this room by walking to her and pressing SPACE."
         ],
         [
-            "The SPACE bar can also be used to talk to other characters and interact with other objects.",
-            "Practice by looking around this room."
-        ],
-        [
-            "Well done! You've completed the tutorial.",
-            "If you're ready, we'll begin the task. Press Q to quit the tutorial.",
+            "You got a TREASURE! You have completed the tutorial. (Press SPACE to continue)",
+            "When you're ready, press 'Q' to start the study task."
         ]
     ]
 
     from collections import deque
     tutorial_text = deque(TUTORIAL_TEXT)
     current_text = tutorial_text.popleft()
+
     state.text_queue = deque([[line, ""] for line in current_text])
     state.handle_interact()
 
@@ -152,7 +138,7 @@ def main(args):
                     if interact_output:
                         telemetry.log_event(*interact_output)
 
-                        if interact_output[0] == "Item obtained" or interact_output[0] == "Treasure collected":
+                        if interact_output[0] == "Treasure obtained" or interact_output[0] == "Treasure collected":
                             current_text = tutorial_text.popleft()
                             state.text_queue = deque([[line, ""] for line in current_text])
                             state.handle_interact()
@@ -161,11 +147,11 @@ def main(args):
                     running = False
                     telemetry.cleanup()
 
-                elif event.key in keys_pressed:
+                elif event.key in keys_pressed and not state.player_in_interaction:
                     keys_pressed[event.key] = True
                     if move_target_pos is None:
                         new_pos = list(player_pos)
-                        player_dir = state.player_dir
+                        player_dir = state.player.dir
                         if keys_pressed[pygame.K_LEFT]:
                             new_pos[0] -= 1
                             player_dir = Direction.WEST
@@ -182,16 +168,16 @@ def main(args):
                         if game_map.is_valid_move(new_pos, state):
                             move_target_pos = new_pos
                             move_start_time = pygame.time.get_ticks()
-                        state.player_dir = player_dir
+                        state.player.dir = player_dir
 
             elif event.type == pygame.KEYUP:
                 if event.key in keys_pressed:
                     keys_pressed[event.key] = False
 
         # handle held arrow keys for movement
-        if move_target_pos is None:
+        if move_target_pos is None and not state.player_in_interaction:
             new_pos = list(player_pos)
-            player_dir = state.player_dir
+            player_dir = state.player.dir
             key_held = (keys_pressed[pygame.K_LEFT] or keys_pressed[pygame.K_RIGHT] or keys_pressed[pygame.K_UP] or keys_pressed[pygame.K_DOWN])
             if keys_pressed[pygame.K_LEFT]:
                 new_pos[0] -= 1
@@ -209,7 +195,7 @@ def main(args):
             if key_held and game_map.is_valid_move(new_pos, state):
                 move_target_pos = new_pos
                 move_start_time = pygame.time.get_ticks()
-                state.player_dir = player_dir
+                state.player.dir = player_dir
 
         if move_target_pos is not None:
             elapsed_time = pygame.time.get_ticks() - move_start_time
@@ -226,10 +212,10 @@ def main(args):
                         current_text = tutorial_text.popleft()
                         state.text_queue = deque([[line, ""] for line in current_text])
                         state.handle_interact()
-                state.player_pos = player_pos
+                state.player.pos = player_pos
             else:
                 progress = elapsed_time / move_duration
-                state.player_pos = [
+                state.player.pos = [
                     player_pos[0] + (move_target_pos[0] - player_pos[0]) * progress,
                     player_pos[1] + (move_target_pos[1] - player_pos[1]) * progress
                 ]
