@@ -115,6 +115,10 @@ def main(args):
         current_room = state.current_room
         print("Game loaded from ", load_file)
 
+        if args.reset_time:
+            state.elapsed_time = 0
+            print("Timer reset to 0.")
+
         state.text_queue = deque([[line, ""] for line in CONTINUE_TEXT])
         state.handle_interact()
 
@@ -327,6 +331,7 @@ if __name__ == '__main__':
     parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
     parser.add_argument('--use-distractor', type=bool, default=True, help='Use the distractor task')
     parser.add_argument('--timeout', type=int, default=10, help='Timeout (in minutes) for the main task (0 for no timeout)')
+    parser.add_argument('--reset-time', action='store_true', help='Reset the time for the main task')
     args = parser.parse_args()
 
     main(args)
