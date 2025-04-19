@@ -1,0 +1,45 @@
+2025-04-18 18:48:30 - Room entered: NORTH to hallway_5
+2025-04-18 18:48:34 - Room entered: NORTH to lounge_2
+2025-04-18 18:48:34 - Room entered: SOUTH to hallway_5
+2025-04-18 18:48:37 - Room entered: EAST to storage_2
+2025-04-18 18:48:41 - Room entered: WEST to hallway_5
+2025-04-18 18:48:46 - Room entered: SOUTH to room0
+2025-04-18 18:48:48 - Room entered: SOUTH to hallway_3
+2025-04-18 18:48:52 - Room entered: SOUTH to storage_1
+2025-04-18 18:48:53 - Room entered: NORTH to hallway_3
+2025-04-18 18:48:53 - Room entered: SOUTH to storage_1
+2025-04-18 18:48:54 - Item obtained: gold_potion
+2025-04-18 18:49:28 - Room entered: WEST to hallway_1
+2025-04-18 18:49:29 - Room entered: NORTH to room1
+2025-04-18 18:49:30 - NPC interact: None
+2025-04-18 18:49:31 - NPC interact: None
+2025-04-18 18:49:32 - Room entered: SOUTH to hallway_1
+2025-04-18 18:49:34 - Room entered: EAST to room0
+2025-04-18 18:49:34 - Room entered: EAST to hallway_4
+2025-04-18 18:49:34 - Room entered: WEST to room0
+2025-04-18 18:49:36 - Room entered: SOUTH to hallway_3
+2025-04-18 18:49:36 - Room entered: SOUTH to storage_1
+2025-04-18 18:49:37 - Room entered: NORTH to hallway_3
+2025-04-18 18:49:39 - Room entered: EAST to room5
+2025-04-18 18:49:39 - Room entered: WEST to hallway_3
+2025-04-18 18:49:40 - Room entered: SOUTH to storage_1
+2025-04-18 18:49:40 - Room entered: NORTH to hallway_3
+2025-04-18 18:49:41 - Room entered: NORTH to room0
+2025-04-18 18:49:42 - Room entered: NORTH to hallway_5
+2025-04-18 18:49:47 - Room entered: NORTH to lounge_2
+2025-04-18 18:49:47 - Room entered: SOUTH to hallway_5
+2025-04-18 18:49:48 - Room entered: EAST to storage_2
+2025-04-18 18:49:48 - Room entered: WEST to hallway_5
+2025-04-18 18:49:49 - Room entered: WEST to lounge_3
+2025-04-18 18:49:50 - Room entered: EAST to hallway_5
+2025-04-18 18:49:50 - Room entered: EAST to storage_2
+2025-04-18 18:49:51 - Room entered: WEST to hallway_5
+2025-04-18 18:49:51 - Room entered: WEST to lounge_3
+2025-04-18 18:49:52 - Room entered: EAST to hallway_5
+2025-04-18 18:49:52 - Room entered: EAST to storage_2
+2025-04-18 18:49:53 - Room entered: WEST to hallway_5
+2025-04-18 18:49:53 - Room entered: WEST to lounge_3
+2025-04-18 18:49:54 - Room entered: EAST to hallway_5
+2025-04-18 18:49:54 - Room entered: EAST to storage_2
+2025-04-18 18:49:55 - Room entered: WEST to hallway_5
+2025-04-18 18:49:55 - Room entered: WEST to lounge_3

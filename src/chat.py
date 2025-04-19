@@ -16,11 +16,14 @@ from pprint import pprint
 import argparse
 
 CHAT_SAVE_FILE = "chat_save.txt"
+CHAT_SAVE_DIR = os.environ.get("SAVE_DIR", os.getcwd())
 
 GENERAL_PROMPT = Template("""\
-You are an assistant helping the user develop a text "handover report" about their current state in a video game.
-The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game \
+You are an assistant helping the user develop a text "handover report" about their current progress in a video game.
+The purpose of this report is to summarize the user's progress and game knowledge in order to help another player understand the current state of the game \
 and complete the game from the state where it was left off as efficiently as possible.
+Assume this other player has no prior knowledge of the game state, including the layout of the map, locations of items or characters, etc.
+
 You have access to a knowledge graph representing what you know about the current state of the game.
 Your role is to help the user compose a complete and accurate report. You can assist in any of the following ways:
 - Check if the report and your knowledge graph have conflicting information. For example, if the report states they didn't use a key but the graph suggests they did, ask the user to clarify which is correct.
@@ -44,12 +47,12 @@ $user_report
 """)
 
 class ChatBot():
-    def __init__(self, graph=None, save_file=None) -> None:
+    def __init__(self, graph=None, save_file=CHAT_SAVE_FILE) -> None:
         self.model = "gpt-4o-mini"
         self.temperature = 0.2
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-        self.chat_file = save_file
+        self.chat_file = os.path.join(CHAT_SAVE_DIR, save_file)
 
         self.history = Queue(maxsize=15) # NOTE: does NOT include the system role message(s)
         self.graph = graph
@@ -180,8 +183,11 @@ class ChatBot():
     #         print(Fore.GREEN + reply + Style.RESET_ALL)
 
 class ChatGUI(tk.Tk):
-    def __init__(self, bot):
+    def __init__(self, bot, report_filename):
         super().__init__()
+
+        self.report_filename = os.path.join(CHAT_SAVE_DIR, report_filename) # where the user's final report will be stored
+
         self.bot = bot
         self.title("Chatbot")
         self.geometry("1200x1000")
@@ -236,7 +242,7 @@ class ChatGUI(tk.Tk):
         self.bot.update_report(text_area.get("1.0", tk.END).strip())  # Get all text from the text area
         print("Report saved.")  # You can remove or replace this with any feedback mechanism
 
-        with open("user_report.txt", "w") as file:
+        with open(self.report_filename, "w") as file:
             file.write(self.bot.report_text)
 
         reply = self.bot.interact("(Report updated.)")
@@ -259,14 +265,15 @@ def test_chatbot_with_graph():
     gui.mainloop()
 
 def main(args):
-    telem_file = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves/telemetry/{}.txt".format(args.pid)
+    telem_file = os.path.join(CHAT_SAVE_DIR, "telemetry", "{}.txt".format(args.pid))
     from graph import TelemetryGraph
     g = TelemetryGraph()
     g.parse_from_file(telem_file)
     save_filename = "{}_chat_save.txt".format(args.pid)
+    report_filename = "{}_user_report.txt".format(args.pid)
     tt = ChatBot(g, save_filename)
 
-    gui = ChatGUI(tt)
+    gui = ChatGUI(tt, report_filename)
     gui.mainloop()
 
 if __name__ == "__main__":

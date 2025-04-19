@@ -125,3 +125,4 @@
 2025-04-17 13:31:40 - Room entered: NORTH to room1
 2025-04-17 13:31:41 - NPC interact: None
 2025-04-17 13:31:44 - Room entered: SOUTH to hallway_1
+2025-04-18 17:22:00 - Room entered: NORTH to hallway_5

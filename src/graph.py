@@ -137,7 +137,7 @@ class TelemetryGraph:
                 room_name = details.split(" ")[2]
 
                 G.add_node(room_name)
-                G.add_edge("Player", room_name, action="Entered", time=timestamp)
+                # G.add_edge("Player", room_name, action="Entered", time=timestamp)
 
                 if not G.has_edge(current_room, room_name):
                     G.add_edge(current_room, room_name, action=direction + " to")
@@ -149,19 +149,31 @@ class TelemetryGraph:
             
             elif event.startswith("NPC interact"):
                 npc_name = event.split(": ")[1]
-                # if last_position and current_room:
-                #     position_node = self.get_node_name_from_position(current_room, last_position)
-                #     if not G.has_node(position_node):
-                #         G.add_node(position_node)
-                    
-                #     G.add_edge(position_node, npc_name, action="Contains")
-                #     if position_node != last_added_position_node:
-                #         G.add_edge(last_added_position_node, position_node, action="Moved to", time=timestamp)
-                #     last_added_position_node = position_node
 
                 if not G.has_edge(last_added_position_node, npc_name):
                     G.add_edge(last_added_position_node, npc_name, action="Contains")
                 G.add_edge("Player", npc_name, action="Interacted", time=timestamp)
+
+                if "about" in event:
+                    key = event.split("about ")[1]
+                    G.add_node(key)
+                    G.add_edge(npc_name, key, action="asked about")
+
+            elif event.startswith("Gave item to NPC"):
+                details = event.split(": ")[1]
+                item_name = details.split(" ")[0]
+                npc_name = details.split(" ")[1]
+
+                G.add_node(item_name)
+                G.add_node(npc_name)
+
+                if not G.has_edge(last_added_position_node, npc_name):
+                    G.add_edge(last_added_position_node, npc_name, action="Contains")
+
+            elif event.startswith("Got instruction"):
+                details = event.split(": ")[1]
+                G.add_node(details)
+                G.add_edge("Player", details, action="Got instruction")
 
             elif event.startswith("Item obtained"):
                 item_name = event.split(": ")[1]

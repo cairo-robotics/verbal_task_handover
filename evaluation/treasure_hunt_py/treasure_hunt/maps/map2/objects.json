@@ -85,13 +85,12 @@
                     "response from Lola": [
                         [
                             ["Thank you!", ""],
-                            ["Please inform the next player that I'll need a purple potion", ""],
-                            ["", "purple potion request"],
+                            ["Please inform the next player that I'll need another GOLD potion later.", ""],
                             ["Anyway, here's your reward!", ""],
                             ["", "treasure1"]
                         ],
                         [
-                            ["Please inform the next player that I'll need a purple potion", ""]
+                            ["Please inform the next player that I'll need another GOLD potion", ""]
                         ]
                     ],
                     "default": [
@@ -138,11 +137,11 @@
                         [
                             ["Thank you!", ""],
                             ["", "treasure2"],
-                            ["Please inform player 2 that later I'll need a green potion", ""]
+                            ["Please inform player 2 that later I'll need another BLUE potion", ""]
                         ],
                         [
                             ["I'm all set for now, thank you.", ""],
-                            ["Please inform player 2 that later I'll need a green potion", ""]
+                            ["Please inform player 2 that later I'll need a BLUE potion.", ""]
                         ]
                     ],
                     "default": [
@@ -187,11 +186,11 @@
                         [
                             ["Thank you, you did it!", ""],
                             ["", "treasure3"],
-                            ["Please inform player 2 that later I'll need the teal blue potion", ""]
+                            ["Please inform player 2 that later I'll need the RED potion again.", ""]
                         ],
                         [
                             ["I'm all set for now, thank you.", ""],
-                            ["Please inform player 2 that later I'll need the teal blue potion later", ""]
+                            ["Please inform player 2 that later I'll need the RED potion again later", ""]
                         ]
                     ],
                     "default": [
@@ -235,12 +234,12 @@
                         [
                             ["Thanks!", ""],
                             ["", "treasure4"],
-                            ["Please inform player 2 that later I'll need a orange potion", ""],
+                            ["Please inform player 2 that later I'll need another GREEN potion", ""],
                             ["", "orange potion request"]
                         ],
                         [
                             ["I'm all set for now, thank you.", ""],
-                            ["Please inform player 2 that later I'll need a orange potion", ""]
+                            ["Please inform player 2 that later I'll need another GREEN potion", ""]
                         ]
                     ],
                     "default": [
@@ -284,11 +283,11 @@
                         [
                             ["Thanks!", ""],
                             ["", "treasure5"],
-                            ["Please inform player 2 that later I'll need a dark purple potion", ""]
+                            ["Please inform player 2 that later I'll need another ORANGE potion", ""]
                         ],
                         [
                             ["I'm all set for now, thank you.", ""],
-                            ["Please inform player 2 that later I'll need a dark purple potion", ""]
+                            ["Please inform player 2 that later I'll need another ORANGE potion", ""]
                         ]
                     ],
                     "default": [

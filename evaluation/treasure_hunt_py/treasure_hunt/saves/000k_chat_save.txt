@@ -1,6 +1,8 @@
 time	role	content
-0	system	You are an assistant helping the user develop a text "handover report" about their current state in a video game.
-The purpose of this report is to help another player, or the same player at a later time, understand the current state of the game and complete the game from the state where it was left off as efficiently as possible.
+0	system	You are an assistant helping the user develop a text "handover report" about their current progress in a video game.
+The purpose of this report is to summarize the user's progress and game knowledge in order to help another player understand the current state of the game and complete the game from the state where it was left off as efficiently as possible.
+Assume this other player has no prior knowledge of the game state, including the layout of the map, locations of items or characters, etc.
+
 You have access to a knowledge graph representing what you know about the current state of the game.
 Your role is to help the user compose a complete and accurate report. You can assist in any of the following ways:
 - Check if the report and your knowledge graph have conflicting information. For example, if the report states they didn't use a key but the graph suggests they did, ask the user to clarify which is correct.
@@ -16,20 +18,21 @@ The user may have forgetten certain information or purposely chosen not to inclu
 
 The current knowledge graph is:
 ```
-{'player history': ['Player: Entered room7 at time=2025-03-27 14:41:27',
-                    'Player: Tried (locked) door_10 at time=2025-03-27 14:41:32',
-                    'Player: Entered room0 at time=2025-03-27 14:41:37',
-                    'Player: Entered room8 at time=2025-03-27 14:41:42',
-                    'Player: Entered room2 at time=2025-03-27 14:41:47',
-                    'Player: Obtained gold key at time=2025-03-27 14:41:50',
-                    'Player: Entered room8 at time=2025-03-27 14:41:55',
-                    'Player: Entered room0 at time=2025-03-27 14:42:00',
-                    'Player: Interacted guy at time=2025-03-27 14:42:04'],
+{'player history': ['Player: Obtained gold_potion at time=2025-04-18 18:48:54',
+                    'Player: Interacted None at time=2025-04-18 18:49:30',
+                    'Player: Interacted None at time=2025-04-18 18:49:31'],
  'player known data': ['Player: Started_in room0, ',
-                       'room0: WEST to room7, WEST to room8, Contains guy, ',
-                       'room7: Contains door_10, EAST to room0, ',
-                       'room8: WEST to room2, EAST to room0, ',
-                       'room2: Contains gold key, EAST to room8, ']}
+                       'room0: NORTH to hallway_5, SOUTH to hallway_3, EAST to hallway_4, ',
+                       'hallway_5: NORTH to lounge_2, EAST to storage_2, SOUTH to room0, WEST to lounge_3, ',
+                       'lounge_2: SOUTH to hallway_5, ',
+                       'storage_2: WEST to hallway_5, ',
+                       'hallway_3: SOUTH to storage_1, EAST to room5, NORTH to room0, ',
+                       'storage_1: NORTH to hallway_3, Contains gold_potion, WEST to hallway_1, ',
+                       'hallway_1: NORTH to room1, EAST to room0, ',
+                       'room1: Contains None, SOUTH to hallway_1, ',
+                       'hallway_4: WEST to room0, ',
+                       'room5: WEST to hallway_3, ',
+                       'lounge_3: EAST to hallway_5, ']}
 ```
                           
 The user's most recent report is:

@@ -57,5 +57,5 @@ class DistractorTaskManager:
 
 if __name__ == "__main__":
     distractor_manager = DistractorTaskManager()
-    distractor_manager.start_timer_and_launch(wait_duration=1)
+    distractor_manager.start_timer_and_launch(wait_duration=0)
     distractor_manager.wait_for_completion()
