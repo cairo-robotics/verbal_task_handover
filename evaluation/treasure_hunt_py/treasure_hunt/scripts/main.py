@@ -23,7 +23,7 @@ SAVE_FILENAME = 'test_save'
 
 STARTING_ROOM = 'room0'
 
-DISTRACTOR_START_TIME = 0 # in minutes after script is executed
+DISTRACTOR_START_TIME = 5 # in minutes after script is executed
 AUTOSAVE_INTERVAL = 30 # in seconds
 
 # Constants  
@@ -31,8 +31,8 @@ TILE_SIZE = 96
 SCREEN_WIDTH = 15 * TILE_SIZE
 SCREEN_HEIGHT = 15 * TILE_SIZE
 FPS = 30
-# MOVE_DURATION = 300 # time it takes to move from one tile to another in milliseconds
-MOVE_DURATION = 100
+MOVE_DURATION = 300 # time it takes to move from one tile to another in milliseconds
+# MOVE_DURATION = 100
 
 # Colors
 BLACK = (0, 0, 0)
@@ -123,6 +123,9 @@ def main(args):
 
         if args.reset_held_items:
             state.reset_npc_holds()
+
+        if args.is_player2:
+            state.player.name = "player2"
 
         state.text_queue = deque([[line, ""] for line in CONTINUE_TEXT])
         state.handle_interact()
@@ -345,10 +348,11 @@ if __name__ == '__main__':
     parser.add_argument('--load', type=str, help='Filename of the save file to load')
     parser.add_argument('--save', type=str, default="test_save", help='Name (no suffix) of the save file to write')
     parser.add_argument('--overwrite-telemetry', action='store_true', help='Overwrite the telemetry log file')
-    parser.add_argument('--use-distractor', type=bool, default=True, help='Use the distractor task')
+    parser.add_argument('--use-distractor', action='store_true', help='Use the distractor task')
     parser.add_argument('--timeout', type=int, default=10, help='Timeout (in minutes) for the main task (0 for no timeout)')
     parser.add_argument('--reset-time', action='store_true', help='Reset the time for the main task')
     parser.add_argument('--reset-held-items', action='store_true', help='Reset the held-item quests for NPCs')
+    parser.add_argument('--is_player2', action='store_true', help='Whether the current player is player 2')
 
     args = parser.parse_args()
 
