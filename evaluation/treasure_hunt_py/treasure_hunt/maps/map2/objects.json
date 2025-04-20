@@ -121,6 +121,15 @@
                         ["It's located in storage room 2, to the NORTH of the main room.", ""]
                     ]
                 ],
+                "player2_interact_data": {
+                    "blue_potion": [
+                        [
+                            ["Thank you! That's exactly what I needed.", ""],
+                            ["Here's a bonus reward.", ""],
+                            ["", "treasure6"]
+                        ]
+                    ]
+                },
                 "held_item_interact_data": {
                     "blue_potion": [
                         [
@@ -170,6 +179,15 @@
                         ["It's located in storage room 1, to the SOUTH of the main room.", ""]
                     ]
                 ],
+                "player2_interact_data": {
+                    "red_potion": [
+                        [
+                            ["Thank you! That's exactly what I needed.", ""],
+                            ["Here's a bonus reward.", ""],
+                            ["", "treasure7"]
+                        ]
+                    ]
+                },
                 "held_item_interact_data": {
                     "red_potion": [
                         [
@@ -218,6 +236,15 @@
                         ["The item I need is the GREEN potion", ""]
                     ]
                 ],
+                "player2_interact_data": {
+                    "green_potion": [
+                        [
+                            ["Thank you! That's exactly what I needed.", ""],
+                            ["Here's a bonus reward.", ""],
+                            ["", "treasure8"]
+                        ]
+                    ]
+                },
                 "held_item_interact_data": {
                     "green_potion": [
                         [
@@ -267,6 +294,15 @@
                         ["The item I need is the ORANGE potion.", ""]
                     ]
                 ],
+                "player2_interact_data": {
+                    "orange_potion": [
+                        [
+                            ["Thank you! That's exactly what I needed.", ""],
+                            ["Here's a bonus reward.", ""],
+                            ["", "treasure9"]
+                        ]
+                    ]
+                },
                 "held_item_interact_data": {
                     "orange_potion": [
                         [
