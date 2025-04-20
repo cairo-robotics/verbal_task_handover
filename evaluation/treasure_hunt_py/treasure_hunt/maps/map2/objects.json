@@ -57,6 +57,15 @@
                         ["It's located in storage room 1, to the SOUTH of the main room.", ""]
                     ]
                 ],
+                "player2_interact_data": {
+                    "gold_potion": [
+                        [
+                            ["Thank you! That's exactly what I needed.", ""],
+                            ["Here's a bonus reward.", ""],
+                            ["", "treasure4"]
+                        ]
+                    ]
+                },
                 "held_item_interact_data": {
                     "gold_potion": [
                         [

@@ -28,13 +28,18 @@ class Direction(object):
         
 
 class NPC(Object):
-    def __init__(self, name, position, facing, interact_data, held_item_interact_data={}, conditional_interact_data={}):
+    def __init__(self, name, position, facing, interact_data, held_item_interact_data={}, conditional_interact_data={},
+                 player2_interact_data={}):
         super().__init__(name, "npc", position)
         # self._sprite = name
         self.orientation = Direction.NAME_TO_DIRECTION[facing]
+
         self.interact_data = interact_data
+
         self.held_item_interact_data = held_item_interact_data
+        self.player2_held_item_interact_data = player2_interact_data
         self.held_item_interact_complete = False
+        self.player2_held_item_interact_complete = False
 
         
         self.current_conversation = 0
@@ -47,6 +52,8 @@ class NPC(Object):
         """Return True if interaction should trigger a menu select, False otherwise.
         """
         if self.held_item_interact_data and not self.held_item_interact_complete:
+            return False
+        elif self.player2_held_item_interact_data and (not self.player2_held_item_interact_complete) and player.name == "player2" and player.held_item:
             return False
             
         if self.conditional_interact_data and player.flags and (not player.held_item or player.held_item.name not in self.held_item_interact_data):
@@ -96,7 +103,18 @@ class NPC(Object):
                 conversation = self.held_item_interact_data["default"][0]
                 event = Event.GAVE_WRONG_ITEM
                 details = player.held_item.name + " " + self.name
-                return deque(conversation), player, event, details        
+                return deque(conversation), player, event, details
+
+        # TODO finish 
+        elif player.name == "player2" and (not self.player2_held_item_interact_complete) and player.held_item is not None:
+            if player.held_item.name in self.player2_held_item_interact_data:
+                conversation = self.player2_held_item_interact_data[player.held_item.name][0]
+                event = Event.GAVE_ITEM_TO_NPC  # Log the event of giving an item to the NPC
+                details = player.held_item.name + " " + self.name
+                self.player2_held_item_interact_complete = True
+
+                player.held_item = None  # Clear the held item after interaction
+                return deque(conversation), player, event, details
 
         for key in self.conditional_interact_data:
             if key in player.flags:
@@ -130,6 +148,8 @@ class Player:
 
         self.held_item = None
         self.flags = []
+        
+        self.name = "player1"
     
 class GameState:
     def __init__(self, player_pos, player_dir, current_room, objects=None):
@@ -154,8 +174,9 @@ class GameState:
 
     def reset_npc_holds(self):
         for room in self._objects:
-            for npc in room['npcs']:
-                npc.held_item_interact_complete = False
+            if 'npcs' in self._objects[room]:
+                for npc in self._objects[room]['npcs']:
+                    npc.held_item_interact_complete = False
 
     def __getstate__(self):
         # Create a copy of the object's __dict__
@@ -420,8 +441,15 @@ def start_state(object_filename):
                 # otherwise default to empty dict
                 held_item_interact_data = {}
 
+            if "player2_interact_data" in new_obj_dict:
+                # if held_item_interact_data is specified, use it
+                player2_interact_data = new_obj_dict["player2_interact_data"]
+            else:
+                # otherwise default to empty dict
+                player2_interact_data = {}
+
             new_obj = NPC(obj_name, new_obj_dict["position"], new_obj_dict["facing"], new_obj_dict["interact_data"], 
-                          held_item_interact_data, conditional_interact_data)
+                          held_item_interact_data, conditional_interact_data, player2_interact_data)
             objects[room][obj_name] = new_obj
 
     return objects
