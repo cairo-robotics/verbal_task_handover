@@ -11,7 +11,7 @@ fi
 PARTICIPANT_ID="$1"
 LOAD_FILE="$2"
 
-SAVE_DIR="evaluation/treasure_hunt_py/treasure_hunt/saves"
+SAVE_DIR="/media/cairo/T7/handover_project/participant_data"
 export SAVE_DIR
 
 VENV_PATH="./venv"
@@ -32,7 +32,7 @@ fi
 
 
 # Run the main task (no distractor)
-python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py --use-distractor false --reset-time --load "$LOAD_FILE" --save "$PARTICIPANT_ID" >> $SAVE_DIR/$PARTICIPANT_ID.log
+python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py --reset-held-items --is_player2 --reset-time --load "$LOAD_FILE" --save "$PARTICIPANT_ID" >> $SAVE_DIR/$PARTICIPANT_ID.log
 
 if [ $? -ne 0 ]; then
   echo "Error: main.py failed"

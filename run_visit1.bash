@@ -42,7 +42,7 @@ fi
 # fi
 
 # Run the main task (with distractor enabled by default)
-python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py --save "$PARTICIPANT_ID" >> $SAVE_DIR/$PARTICIPANT_ID.log
+python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py --use-distractor --save "$PARTICIPANT_ID" >> $SAVE_DIR/$PARTICIPANT_ID.log
 
 if [ $? -ne 0 ]; then
   echo "Error: main.py failed"
