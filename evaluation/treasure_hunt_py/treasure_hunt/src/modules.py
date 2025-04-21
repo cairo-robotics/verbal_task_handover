@@ -1,5 +1,7 @@
 from numpy import random
 import pygame
+from treasure_hunt.visualization.utils import *
+
 # random.seed(0)
 
 class InteractiveDialogue:
@@ -14,8 +16,11 @@ class InteractiveDialogue:
     def on_keypress(self, key):
         # import pdb; pdb.set_trace()
         key = pygame.key.name(key)
-        if key.isdigit() and 0 < int(key) <= len(self.options):
-            return self.options[int(key)-1]
+        if not label_in_list(key):
+            return None
+        key_index = label_to_index(key)
+        if 0 <= key_index < len(self.options):
+            return self.options[key_index]
         else:
             return None
 

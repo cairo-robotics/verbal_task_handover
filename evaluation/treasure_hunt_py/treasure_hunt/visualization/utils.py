@@ -35,6 +35,19 @@ def run_static_resizeable_window(surface, fps=30):
         if event.type != QUIT:  # if user meant to quit error does not matter
             raise
 
+label_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' , 'C', 'D', 'E', 'F', 'G', 'H']
+
+# Custom enumeration for menu objects 
+def index_to_label(index):
+    return label_list[index]
+
+def label_to_index(label):
+    label = label.upper()
+    return label_list.index(label)
+
+def label_in_list(label):
+    label = label.upper()
+    return label in label_list
 
 def scale_surface_by_factor(surface, scale_by_factor):
     """return scaled input surfacem (with size multiplied by scale_by_factor param)

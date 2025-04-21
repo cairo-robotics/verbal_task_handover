@@ -23,7 +23,8 @@ class InteractiveDialogueInterface(ModuleInterface):
         textbox_surface = pygame.Surface((surface_width, surface_height))
         textbox_surface.fill((255, 255, 255))
         for i, dialogue_option in enumerate(self.dialogue_module.options):
-            text = str(i + 1) + ". " + dialogue_option 
+            # text = str(i + 1) + ". " + dialogue_option 
+            text = str(index_to_label(i)) + ". " + dialogue_option
             text_surface = self.font.render(text, True, (0, 0, 0))
             text_rect = text_surface.get_rect()
             text_rect.topleft = (10, i * line_height + 10)  # Adjust position for each line
