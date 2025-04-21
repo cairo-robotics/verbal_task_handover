@@ -34,12 +34,12 @@ if [ -f ".env" ]; then
 fi
 
 # Run the tutorial
-# python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/tutorial.py
-# if [ $? -ne 0 ]; then
-#   echo "Error: tutorial.py failed"
-#   deactivate
-#   exit 1
-# fi
+python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/tutorial.py
+if [ $? -ne 0 ]; then
+  echo "Error: tutorial.py failed"
+  deactivate
+  exit 1
+fi
 
 # Run the main task (with distractor enabled by default)
 python3 evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py --use-distractor --save "$PARTICIPANT_ID" >> $SAVE_DIR/$PARTICIPANT_ID.log

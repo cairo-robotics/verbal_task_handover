@@ -264,7 +264,7 @@
                     ]
                 },
                 "conditional_interacts": {
-                    "letter from Steve": [
+                    "response from Steve": [
                         [
                             ["Thanks!", ""],
                             ["", "treasure4"],
@@ -322,7 +322,7 @@
                     ]
                 },
                 "conditional_interacts": {
-                    "response from brittany": [
+                    "response from Brittany": [
                         [
                             ["Thanks!", ""],
                             ["", "treasure5"],
@@ -434,7 +434,7 @@
                 "conditional_interacts": {
                     "request from room 2": [
                         [
-                            ["Ah, thank you for bringing me this request. Please take this back to oliver.", ""],
+                            ["Ah, thank you for bringing me this request. Please take this back to Oliver.", ""],
                             ["", "response from John"]
                         ],
                         [
