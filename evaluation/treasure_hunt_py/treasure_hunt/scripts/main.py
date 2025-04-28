@@ -1,5 +1,5 @@
 import pygame
-from treasure_hunt.src.game_mdp import GameState, Direction, start_state
+from treasure_hunt.src.game_mdp import GameState, Direction, start_state, update_start_state
 from treasure_hunt.src.core import GameMap
 from treasure_hunt.visualization.state_visualizer import StateVisualizer
 from treasure_hunt.src.telemetry import Telemetry, DummyTelemetry, Event
@@ -121,11 +121,12 @@ def main(args):
             state.elapsed_time = 0
             print("Timer reset to 0.")
 
-        if args.reset_held_items:
-            state.reset_npc_holds()
+        # if args.reset_held_items:
+        #     state.reset_npc_holds()
 
         if args.is_player2:
             state.player.name = "player2"
+            update_start_state(state, os.path.join(MAP_DIRECTORY, 'objects_p2.json'))
 
         state.text_queue = deque([[line, ""] for line in CONTINUE_TEXT])
         state.handle_interact()

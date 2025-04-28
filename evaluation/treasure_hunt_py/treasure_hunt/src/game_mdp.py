@@ -172,12 +172,6 @@ class GameState:
 
         self.current_module = None
 
-    def reset_npc_holds(self):
-        for room in self._objects:
-            if 'npcs' in self._objects[room]:
-                for npc in self._objects[room]['npcs']:
-                    npc.held_item_interact_complete = False
-
     def __getstate__(self):
         # Create a copy of the object's __dict__
         state = self.__dict__.copy()
@@ -294,7 +288,7 @@ class GameState:
             self.displayed_text = "You received a TREASURE!"
             self.displayed_icon = "red gem"
 
-            if self.score == MAX_SCORE:
+            if self.score == MAX_SCORE and self.player.name != "player2":
                 self.displayed_text = "You found all the treasures! Please let the experimenter know."
 
         else:
@@ -453,3 +447,39 @@ def start_state(object_filename):
             objects[room][obj_name] = new_obj
 
     return objects
+
+def update_start_state(state, object_filename):
+    with open(object_filename, 'r') as f:
+        all_entities = json.load(f)
+    
+        for room in all_entities["npcs"]:
+            room_objs = all_entities["npcs"][room]
+            for obj_name in room_objs:
+                new_obj_dict = room_objs[obj_name]
+
+                if "conditional_interacts" in new_obj_dict:
+                    conditional_interact_data = new_obj_dict["conditional_interacts"]
+                else:
+                    conditional_interact_data = {}
+
+                if "held_item_interact_data" in new_obj_dict:
+                    # if held_item_interact_data is specified, use it
+                    held_item_interact_data = new_obj_dict["held_item_interact_data"]
+                else:
+                    # otherwise default to empty dict
+                    held_item_interact_data = {}
+
+                if "player2_interact_data" in new_obj_dict:
+                    # if held_item_interact_data is specified, use it
+                    player2_interact_data = new_obj_dict["player2_interact_data"]
+                else:
+                    # otherwise default to empty dict
+                    player2_interact_data = {}
+
+                npc = state._get_object_by_name(room, obj_name)
+                if npc:
+                    # Update the NPC's interact data
+                    npc.interact_data = new_obj_dict["interact_data"]
+                    npc.held_item_interact_data = held_item_interact_data
+                    npc.conditional_interact_data = conditional_interact_data
+                    npc.player2_held_item_interact_data = player2_interact_data
