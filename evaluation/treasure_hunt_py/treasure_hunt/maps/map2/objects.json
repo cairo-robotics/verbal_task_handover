@@ -230,7 +230,7 @@
                     ]
                 },
                 "conditional_interacts": {
-                    "letter from Steve": [
+                    "response from Steve": [
                         [
                             ["Thanks!", ""],
                             ["", "treasure4"],
