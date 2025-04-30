@@ -1,0 +1,90 @@
+{
+  "$defs": {
+    "GameStateNPC": {
+      "properties": {
+        "location": {
+          "description": "The room or lounge where the NPC is located.",
+          "title": "Location",
+          "type": "string"
+        },
+        "interacted": {
+          "description": "Whether the player has interacted with this NPC.",
+          "title": "Interacted",
+          "type": "boolean"
+        },
+        "potion_needed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The potion the NPC needs, or null if no potion is needed.",
+          "title": "Potion Needed"
+        },
+        "potion_given": {
+          "description": "Whether the potion has been given to the NPC.",
+          "title": "Potion Given",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "location",
+        "interacted",
+        "potion_given"
+      ],
+      "title": "GameStateNPC",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "player_items": {
+      "description": "A list of items currently in the player's inventory.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Player Items",
+      "type": "array"
+    },
+    "player_held_item": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The item currently held by the player, or null if none.",
+      "title": "Player Held Item"
+    },
+    "npcs": {
+      "additionalProperties": {
+        "$ref": "#/$defs/GameStateNPC"
+      },
+      "description": "A dictionary mapping NPC names to their current state.",
+      "title": "Npcs",
+      "type": "object"
+    },
+    "active_quests": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Active quests represented as {item: destination} pairs.",
+      "title": "Active Quests",
+      "type": "object"
+    }
+  },
+  "required": [
+    "player_items",
+    "player_held_item",
+    "npcs",
+    "active_quests"
+  ],
+  "title": "GameState",
+  "type": "object"
+}

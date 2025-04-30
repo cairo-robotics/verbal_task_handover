@@ -4,7 +4,7 @@ import json
 
 from openai import OpenAI
 
-from vector_schema import GameStateSchema
+from vector_schema import GameState
 
 # see https://openai.com/index/introducing-structured-outputs-in-the-api/
 
@@ -14,15 +14,7 @@ Please convert any information included in the description into the given JSON s
 """
 
 # TEST_TEXT = """I have a silver key and a blue key. I found a door with a gold lock, but I don't remember where. I also talked to an NPC named Lily and learned a password 'asdf'. """
-
-def main():
-    if len(sys.argv) != 3:
-        print("Usage: python report_to_vector.py <text_filename> <output_filename>")
-        return
-
-    text_filename = sys.argv[1]
-    output_filename = sys.argv[2]
-
+def convert_to_vector(text_filename, output_filename):
     try:
         with open(text_filename, 'r') as file:
             prompt = file.read()
@@ -41,7 +33,7 @@ def main():
             {"role": "user", "content": prompt}
         ],
         temperature=temperature,
-        response_format = GameStateSchema
+        response_format = GameState
     )
 
     message = response.choices[0].message
@@ -52,6 +44,16 @@ def main():
     else:
         print("Failed to parse response.")
         print(message.refusal)
+
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python report_to_vector.py <text_filename> <output_filename>")
+        return
+
+    text_filename = sys.argv[1]
+    output_filename = sys.argv[2]
+    convert_to_vector(text_filename, output_filename)
+
 
 if __name__ == "__main__":
     main()

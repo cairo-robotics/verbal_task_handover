@@ -12,7 +12,6 @@ def extract_ground_truth_data(state):
     # print(state.player_has_items)
     json_data = {
         "player_items" : state.player.flags,
-        "player_held_item" : state.player.held_item,
         "npcs": {}, # dict - names as unique identifiers
     }
 
@@ -22,7 +21,6 @@ def extract_ground_truth_data(state):
             if obj.type == "npc":
                 npc = {
                     "location" : room,
-                    "interacted" : (obj.current_conversation > 0),
                     "potion_needed" : list(obj.held_item_interact_data.keys())[0] if obj.held_item_interact_data else None,
                     "potion_given" : obj.held_item_interact_complete
                 }
@@ -61,6 +59,7 @@ def update_quest_info(state, json_data):
         "guy" : "orange_potion",
     }
     active_quests = {}
+    overall_progress = 0
 
 
     for i, npc, potion in zip(range(1, 6), potions_needed.keys(), potions_needed.values()):
@@ -69,43 +68,65 @@ def update_quest_info(state, json_data):
 
     for item in json_data["player_items"]:
         if item == "request from room 1":
+            overall_progress += 1
             if not ("response from eliza" in json_data["player_items"]):
                 active_quests[item] = "bring to eliza"
             elif not ("response from lola" in json_data["player_items"]):
+                overall_progress += 1
                 active_quests[item] = "bring to lola"
         elif item == "request from room 2":
+            overall_progress += 1            
             if not ("response from John" in json_data["player_items"]):
                 active_quests[item] = "bring to john"
         elif item == "request from room 3":
+            overall_progress += 1
             if not ("response from Donna" in json_data["player_items"]):
                 active_quests[item] = "bring to donna"
         elif item == "request from room 4":
+            overall_progress += 1
             if not ("response from steve" in json_data["player_items"] or "letter from steve" in json_data["player_items"]):
                 active_quests[item] = "bring to steve"
         elif item == "request from room 5":
+            overall_progress += 1
             if not ("response from Brittany" in json_data["player_items"]):
                 active_quests[item] = "bring to brittany"
         
         elif item == "response from lola":
+            overall_progress += 1
             if not ("treasure1" in json_data["player_items"]):
                 active_quests[item] = "bring to lily"
         elif item == "response from steve" or item == "letter from steve":
+            overall_progress += 1
             if not ("treasure4" in json_data["player_items"]):
                 active_quests[item] = "bring to marie"
         elif item == "response from John":
+            overall_progress += 1
             if not ("treasure2" in json_data["player_items"]):
                 active_quests[item] = "bring to oliver"
         elif item == "response from Donna":
+            overall_progress += 1
             if not ("treasure3" in json_data["player_items"]):
                 active_quests[item] = "bring to nick"
         elif item == "response from Brittany":
+            overall_progress += 1
             if not ("treasure5" in json_data["player_items"]):
                 active_quests[item] = "bring to guy"
 
+        elif "treasure" in item:
+            overall_progress += 1
+
     json_data["active_quests"] = active_quests
+    json_data["meta_score"] = overall_progress       
 
-
-            
+def output_ground_truth(state_filename, output_filename):   
+    state = GameState.load(state_filename)
+    json_data = extract_ground_truth_data(state)
+    update_quest_info(state, json_data)
+    with open(output_filename, 'w') as f:
+        print(json_data)
+        print(type(json_data))
+        json.dump(json_data, f, indent=4)
+    print(f"Ground truth data saved to {output_filename}")
 
 if __name__ == "__main__":
 
@@ -114,10 +135,4 @@ if __name__ == "__main__":
         sys.exit(1)
     filename = sys.argv[1]
     output_file = sys.argv[2]
-
-    state = GameState.load(filename)
-    json_data = extract_ground_truth_data(state)
-    update_quest_info(state, json_data)
-    with open(output_file, 'w') as f:
-        json.dump(json_data, f, indent=4)
-    print(f"Ground truth data saved to {output_file}")
+    output_ground_truth(filename, output_file)
