@@ -1,0 +1,35 @@
+2025-04-19 12:00:26 - Room entered: WEST to hallway_1
+2025-04-19 12:00:27 - Room entered: EAST to room0
+2025-04-19 12:00:29 - Room entered: WEST to hallway_1
+2025-04-19 12:00:30 - Room entered: EAST to room0
+2025-04-19 12:00:33 - Room entered: SOUTH to hallway_2
+2025-04-19 12:00:36 - Room entered: SOUTH to lounge_1
+2025-04-19 12:00:45 - Room entered: NORTH to hallway_2
+2025-04-19 12:00:49 - Room entered: NORTH to room0
+2025-04-19 12:00:51 - Room entered: WEST to hallway_1
+2025-04-19 12:00:56 - Room entered: NORTH to room1
+2025-04-19 12:59:25 - NPC interact: eliza about request from room 1
+2025-04-19 12:59:27 - NPC interact: eliza about request from room 1
+2025-04-19 12:59:29 - NPC interact: steve
+2025-04-19 12:59:30 - NPC interact: steve
+2025-04-19 12:59:32 - Room entered: NORTH to hallway_2
+2025-04-19 12:59:33 - Room entered: NORTH to room0
+2025-04-19 12:59:34 - Room entered: EAST to hallway_4
+2025-04-19 12:59:36 - Room entered: SOUTH to room4
+2025-04-19 12:59:37 - Room entered: NORTH to hallway_4
+2025-04-19 12:59:38 - Room entered: NORTH to room3
+2025-04-19 12:59:38 - NPC interact: nick
+2025-04-19 12:59:40 - Room entered: SOUTH to hallway_4
+2025-04-19 12:59:42 - Room entered: WEST to room0
+2025-04-19 12:59:43 - Room entered: SOUTH to hallway_2
+2025-04-19 12:59:44 - Room entered: SOUTH to lounge_1
+2025-04-19 12:59:45 - NPC interact: steve
+2025-04-19 12:59:46 - NPC interact: steve
+2025-04-19 12:59:48 - Room entered: NORTH to hallway_2
+2025-04-19 12:59:49 - Room entered: NORTH to room0
+2025-04-19 12:59:51 - Room entered: WEST to hallway_1
+2025-04-19 12:59:52 - Room entered: NORTH to room1
+2025-04-19 12:59:56 - NPC interact: lily about response from Eliza
+2025-04-19 12:59:59 - Room entered: SOUTH to hallway_1
+2025-04-19 13:00:00 - Room entered: SOUTH to room2
+2025-04-19 13:00:01 - NPC interact: oliver

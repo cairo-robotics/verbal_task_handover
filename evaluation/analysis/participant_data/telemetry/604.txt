@@ -1,0 +1,88 @@
+2025-04-28 12:36:07 - Room entered: NORTH to room3
+2025-04-28 12:36:08 - NPC interact: nick
+2025-04-28 12:36:35 - Room entered: SOUTH to hallway_4
+2025-04-28 12:36:39 - Room entered: SOUTH to room4
+2025-04-28 12:36:41 - NPC interact: marie
+2025-04-28 12:36:46 - Room entered: NORTH to hallway_4
+2025-04-28 12:36:53 - Room entered: WEST to room0
+2025-04-28 12:36:59 - Room entered: SOUTH to hallway_2
+2025-04-28 12:37:03 - Room entered: SOUTH to lounge_1
+2025-04-28 12:37:06 - NPC interact: steve
+2025-04-28 12:37:45 - Room entered: NORTH to hallway_2
+2025-04-28 12:37:50 - Room entered: NORTH to room0
+2025-04-28 12:37:58 - Room entered: SOUTH to hallway_3
+2025-04-28 12:38:02 - Room entered: SOUTH to storage_1
+2025-04-28 12:38:07 - Item obtained: red_potion
+2025-04-28 12:38:15 - Room entered: NORTH to hallway_3
+2025-04-28 12:38:18 - Room entered: NORTH to room0
+2025-04-28 12:38:22 - Room entered: NORTH to hallway_5
+2025-04-28 12:38:27 - Room entered: EAST to storage_2
+2025-04-28 12:38:28 - Room entered: WEST to hallway_5
+2025-04-28 12:38:32 - Room entered: NORTH to lounge_2
+2025-04-28 12:38:40 - Room entered: SOUTH to hallway_5
+2025-04-28 12:38:43 - Room entered: EAST to storage_2
+2025-04-28 12:38:45 - Room entered: WEST to hallway_5
+2025-04-28 12:38:49 - Room entered: WEST to lounge_3
+2025-04-28 12:39:04 - NPC interact: brittany about request from room 5
+2025-04-28 12:39:18 - Room entered: EAST to hallway_5
+2025-04-28 12:39:22 - Room entered: NORTH to lounge_2
+2025-04-28 12:39:28 - Room entered: SOUTH to hallway_5
+2025-04-28 12:39:32 - Room entered: EAST to storage_2
+2025-04-28 12:39:34 - Room entered: WEST to hallway_5
+2025-04-28 12:39:39 - Room entered: SOUTH to room0
+2025-04-28 12:39:41 - Room entered: EAST to hallway_4
+2025-04-28 12:39:50 - Room entered: NORTH to room3
+2025-04-28 12:39:53 - Gave item to NPC: red_potion nick
+2025-04-28 12:40:03 - Room entered: SOUTH to hallway_4
+2025-04-28 12:40:09 - Room entered: WEST to room0
+2025-04-28 12:40:12 - Room entered: NORTH to hallway_5
+2025-04-28 12:40:16 - Room entered: NORTH to lounge_2
+2025-04-28 12:40:34 - Room entered: SOUTH to hallway_5
+2025-04-28 12:40:38 - Room entered: WEST to lounge_3
+2025-04-28 12:40:45 - NPC interact: donna about request from room 3
+2025-04-28 12:40:54 - Room entered: EAST to hallway_5
+2025-04-28 12:40:57 - Room entered: NORTH to lounge_2
+2025-04-28 12:41:07 - Room entered: SOUTH to hallway_5
+2025-04-28 12:41:11 - Room entered: EAST to storage_2
+2025-04-28 12:41:14 - Item obtained: green_potion
+2025-04-28 12:41:18 - Room entered: WEST to hallway_5
+2025-04-28 12:41:23 - Room entered: SOUTH to room0
+2025-04-28 12:41:28 - Room entered: SOUTH to hallway_2
+2025-04-28 12:41:32 - Room entered: SOUTH to lounge_1
+2025-04-28 12:41:47 - Room entered: NORTH to hallway_2
+2025-04-28 12:41:51 - Room entered: NORTH to room0
+2025-04-28 12:41:55 - Room entered: SOUTH to hallway_3
+2025-04-28 12:41:58 - Room entered: SOUTH to storage_1
+2025-04-28 12:42:00 - Room entered: NORTH to hallway_3
+2025-04-28 12:42:06 - Room entered: EAST to room5
+2025-04-28 12:42:09 - Room entered: WEST to hallway_3
+2025-04-28 12:42:14 - Room entered: NORTH to room0
+2025-04-28 12:42:18 - Room entered: WEST to hallway_1
+2025-04-28 12:42:24 - Room entered: NORTH to room1
+2025-04-28 12:42:43 - Room entered: SOUTH to hallway_1
+2025-04-28 12:42:49 - Room entered: EAST to room0
+2025-04-28 12:42:52 - Room entered: SOUTH to hallway_3
+2025-04-28 12:42:57 - Room entered: EAST to room5
+2025-04-28 12:43:00 - Room entered: WEST to hallway_3
+2025-04-28 12:43:06 - Room entered: NORTH to room0
+2025-04-28 12:43:10 - Room entered: NORTH to hallway_5
+2025-04-28 12:43:14 - Room entered: WEST to lounge_3
+2025-04-28 12:43:51 - Room entered: EAST to hallway_5
+2025-04-28 12:43:55 - Room entered: SOUTH to room0
+2025-04-28 12:43:57 - Room entered: EAST to hallway_4
+2025-04-28 12:44:03 - Room entered: NORTH to room3
+2025-04-28 12:44:04 - NPC interact: 
+2025-04-28 12:44:12 - Room entered: SOUTH to hallway_4
+2025-04-28 12:44:16 - Room entered: SOUTH to room4
+2025-04-28 12:44:18 - Gave item to NPC: green_potion marie
+2025-04-28 12:44:28 - Room entered: NORTH to hallway_4
+2025-04-28 12:44:35 - Room entered: WEST to room0
+2025-04-28 12:44:39 - Room entered: SOUTH to hallway_2
+2025-04-28 12:44:43 - Room entered: SOUTH to lounge_1
+2025-04-28 12:44:52 - NPC interact: steve about request from room 4
+2025-04-28 12:45:08 - Room entered: NORTH to hallway_2
+2025-04-28 12:45:12 - Room entered: NORTH to room0
+2025-04-28 12:45:16 - Room entered: EAST to hallway_4
+2025-04-28 12:45:22 - Room entered: NORTH to room3
+2025-04-28 12:45:23 - Room entered: SOUTH to hallway_4
+2025-04-28 12:45:26 - Room entered: SOUTH to room4

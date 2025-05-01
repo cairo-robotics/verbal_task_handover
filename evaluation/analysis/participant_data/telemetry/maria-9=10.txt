@@ -1,0 +1,17 @@
+2025-04-21 17:20:30 - Room entered: EAST to hallway_4
+2025-04-21 17:20:36 - Room entered: NORTH to room3
+2025-04-21 17:20:37 - NPC interact: nick
+2025-04-21 17:20:39 - Room entered: SOUTH to hallway_4
+2025-04-21 17:20:45 - Room entered: WEST to room0
+2025-04-21 17:20:48 - Room entered: SOUTH to hallway_2
+2025-04-21 17:20:51 - Room entered: NORTH to room0
+2025-04-21 17:20:54 - Room entered: SOUTH to hallway_3
+2025-04-21 17:20:57 - Room entered: SOUTH to storage_1
+2025-04-21 17:21:00 - Item obtained: red_potion
+2025-04-21 17:21:03 - Room entered: NORTH to hallway_3
+2025-04-21 17:21:07 - Room entered: NORTH to room0
+2025-04-21 17:21:08 - Room entered: EAST to hallway_4
+2025-04-21 17:21:14 - Room entered: NORTH to room3
+2025-04-21 17:21:15 - Gave item to NPC: red_potion nick
+2025-04-21 17:21:18 - Room entered: SOUTH to hallway_4
+2025-04-21 17:21:23 - Room entered: WEST to room0

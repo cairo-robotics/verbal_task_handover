@@ -1,0 +1,85 @@
+2025-04-29 15:33:56 - Room entered: NORTH to room3
+2025-04-29 15:33:58 - NPC interact: nick
+2025-04-29 15:34:04 - NPC interact: nick
+2025-04-29 15:34:10 - Room entered: SOUTH to hallway_4
+2025-04-29 15:34:13 - Room entered: SOUTH to room4
+2025-04-29 15:34:14 - NPC interact: marie
+2025-04-29 15:34:16 - NPC interact: marie
+2025-04-29 15:34:18 - Room entered: NORTH to hallway_4
+2025-04-29 15:34:24 - Room entered: WEST to room0
+2025-04-29 15:34:26 - Room entered: SOUTH to hallway_3
+2025-04-29 15:34:29 - Room entered: SOUTH to storage_1
+2025-04-29 15:34:34 - Item obtained: teal_blue_potion
+2025-04-29 15:34:48 - Item obtained: red_potion
+2025-04-29 15:34:53 - Room entered: NORTH to hallway_3
+2025-04-29 15:34:56 - Room entered: NORTH to room0
+2025-04-29 15:35:01 - Room entered: EAST to hallway_4
+2025-04-29 15:35:07 - Room entered: NORTH to room3
+2025-04-29 15:35:08 - Gave item to NPC: red_potion nick
+2025-04-29 15:35:16 - Room entered: SOUTH to hallway_4
+2025-04-29 15:35:21 - Room entered: WEST to room0
+2025-04-29 15:35:24 - Room entered: NORTH to hallway_5
+2025-04-29 15:35:29 - Room entered: NORTH to lounge_2
+2025-04-29 15:35:38 - Room entered: SOUTH to hallway_5
+2025-04-29 15:35:38 - Room entered: NORTH to lounge_2
+2025-04-29 15:35:44 - Room entered: SOUTH to hallway_5
+2025-04-29 15:35:47 - Room entered: EAST to storage_2
+2025-04-29 15:35:50 - Item obtained: green_potion
+2025-04-29 15:35:52 - Room entered: WEST to hallway_5
+2025-04-29 15:35:58 - Room entered: SOUTH to room0
+2025-04-29 15:36:00 - Room entered: EAST to hallway_4
+2025-04-29 15:36:06 - Room entered: SOUTH to room4
+2025-04-29 15:36:07 - Gave item to NPC: green_potion marie
+2025-04-29 15:36:12 - Room entered: NORTH to hallway_4
+2025-04-29 15:36:17 - Room entered: WEST to room0
+2025-04-29 15:36:20 - Room entered: NORTH to hallway_5
+2025-04-29 15:36:23 - Room entered: WEST to lounge_3
+2025-04-29 15:36:33 - NPC interact: donna about request from room 3
+2025-04-29 15:36:47 - Room entered: EAST to hallway_5
+2025-04-29 15:36:52 - Room entered: NORTH to lounge_2
+2025-04-29 15:37:00 - Room entered: SOUTH to hallway_5
+2025-04-29 15:37:05 - Room entered: WEST to lounge_3
+2025-04-29 15:37:16 - Room entered: EAST to hallway_5
+2025-04-29 15:37:20 - Room entered: SOUTH to room0
+2025-04-29 15:37:23 - Room entered: EAST to hallway_4
+2025-04-29 15:37:28 - Room entered: NORTH to room3
+2025-04-29 15:37:46 - NPC interact: nick about response from Donna
+2025-04-29 15:37:50 - Room entered: SOUTH to hallway_4
+2025-04-29 15:37:57 - Room entered: WEST to room0
+2025-04-29 15:38:00 - Room entered: WEST to hallway_1
+2025-04-29 15:38:06 - Room entered: NORTH to room1
+2025-04-29 15:38:22 - NPC interact: lily about response from Lola
+2025-04-29 15:38:27 - Room entered: SOUTH to hallway_1
+2025-04-29 15:38:30 - Room entered: SOUTH to room2
+2025-04-29 15:38:45 - NPC interact: oliver about response from John
+2025-04-29 15:38:50 - Room entered: NORTH to hallway_1
+2025-04-29 15:38:55 - Room entered: EAST to room0
+2025-04-29 15:38:57 - Room entered: SOUTH to hallway_2
+2025-04-29 15:39:01 - Room entered: SOUTH to lounge_1
+2025-04-29 15:39:06 - NPC interact: steve about request from room 4
+2025-04-29 15:39:15 - Room entered: NORTH to hallway_2
+2025-04-29 15:39:16 - Room entered: SOUTH to lounge_1
+2025-04-29 15:39:36 - NPC interact: eliza about request from room 1
+2025-04-29 15:40:11 - NPC interact: eliza about request from room 1
+2025-04-29 15:40:13 - NPC interact: eliza about request from room 1
+2025-04-29 15:40:20 - Room entered: NORTH to hallway_2
+2025-04-29 15:40:24 - Room entered: NORTH to room0
+2025-04-29 15:40:26 - Room entered: WEST to hallway_1
+2025-04-29 15:40:31 - Room entered: NORTH to room1
+2025-04-29 15:40:47 - NPC interact: lily about response from Eliza
+2025-04-29 15:40:53 - Room entered: SOUTH to hallway_1
+2025-04-29 15:40:59 - Room entered: EAST to room0
+2025-04-29 15:41:02 - Room entered: SOUTH to hallway_2
+2025-04-29 15:41:06 - Room entered: SOUTH to lounge_1
+2025-04-29 15:41:07 - Room entered: NORTH to hallway_2
+2025-04-29 15:41:11 - Room entered: NORTH to room0
+2025-04-29 15:41:18 - Room entered: SOUTH to hallway_3
+2025-04-29 15:41:21 - Room entered: SOUTH to storage_1
+2025-04-29 15:41:23 - Room entered: NORTH to hallway_3
+2025-04-29 15:41:28 - Room entered: EAST to room5
+2025-04-29 15:41:38 - NPC interact: guy about response from Brittany
+2025-04-29 15:41:42 - Room entered: WEST to hallway_3
+2025-04-29 15:41:47 - Room entered: NORTH to room0
+2025-04-29 15:41:52 - Room entered: NORTH to hallway_5
+2025-04-29 15:41:56 - Room entered: WEST to lounge_3
+2025-04-29 15:42:10 - NPC interact: donna about request from room 3

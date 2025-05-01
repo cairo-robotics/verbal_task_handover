@@ -1,0 +1,13 @@
+Tutorial is basic, the game has rooms in N,S,W and E directions. (There are multiple rooms in each direction). 
+
+1. N and S sides have NPCs to send and recieve msgs. 
+2. Potions are also N and S
+
+Adviced to go ask both rooms on W (or remeber their potion colour from the start). 
+Then get one potion -> deliver, take the msg -> Give the msg -> take the response -> then new potion -> complete the msg deliver and then the portion. 
+
+(Will reduce trips to send and recieve msgs/potions and gain more treasures)
+
+Try to remeber where which person is as it is more importnt and needs more work and time.
+
+Potion can easier to remeber andwork with. :)
