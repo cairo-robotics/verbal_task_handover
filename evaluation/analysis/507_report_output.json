@@ -1,0 +1,32 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": {
+    "Alice": {
+      "location": "Forest",
+      "potion_needed": "Healing Potion",
+      "potion_given": null
+    },
+    "Bob": {
+      "location": "Castle",
+      "potion_needed": "Strength Potion",
+      "potion_given": null
+    },
+    "Charlie": {
+      "location": "Village",
+      "potion_needed": "Speed Potion",
+      "potion_given": null
+    },
+    "Diana": {
+      "location": "Cave",
+      "potion_needed": null,
+      "potion_given": null
+    }
+  },
+  "active_quests": {
+    "Deliver Healing Potion": "Alice",
+    "Deliver Strength Potion": "Bob",
+    "Deliver Speed Potion": "Charlie",
+    "Deliver Message from Bob to Diana": ""
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": {
+    "Player 1": {
+      "location": "null",
+      "potion_needed": "null",
+      "potion_given": null
+    },
+    "Player 2": {
+      "location": "north room",
+      "potion_needed": "blue gem",
+      "potion_given": null
+    },
+    "John": {
+      "location": "north room",
+      "potion_needed": "null",
+      "potion_given": null
+    },
+    "Donna": {
+      "location": "north west room",
+      "potion_needed": "null",
+      "potion_given": null
+    },
+    "Lola": {
+      "location": "north east room",
+      "potion_needed": "null",
+      "potion_given": null
+    },
+    "Lily": {
+      "location": "null",
+      "potion_needed": "null",
+      "potion_given": null
+    }
+  },
+  "active_quests": {
+    "red gem": "north west room (to Donna)",
+    "message to Lily": "north east room (from Lola)"
+  }
+}

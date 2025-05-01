@@ -1,0 +1,72 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": {
+    "npc_1": {
+      "location": "room 1",
+      "potion_needed": "gold",
+      "potion_given": null
+    },
+    "npc_2": {
+      "location": "room 2",
+      "potion_needed": "blue",
+      "potion_given": null
+    },
+    "npc_3": {
+      "location": "top left",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_4": {
+      "location": "top",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_5": {
+      "location": "right",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_6": {
+      "location": "room 3",
+      "potion_needed": "red",
+      "potion_given": null
+    },
+    "npc_7": {
+      "location": "room 4",
+      "potion_needed": "green",
+      "potion_given": null
+    },
+    "npc_8": {
+      "location": "bottom right",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_9": {
+      "location": "bottom left",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_10": {
+      "location": "potion room blue",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_11": {
+      "location": "potion room green",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_12": {
+      "location": "potion room red",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "npc_13": {
+      "location": "potion room gold",
+      "potion_needed": null,
+      "potion_given": null
+    }
+  },
+  "active_quests": null
+}

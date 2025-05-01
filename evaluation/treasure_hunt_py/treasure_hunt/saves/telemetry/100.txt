@@ -1,0 +1,10 @@
+2025-04-18 19:49:50 - Room entered: SOUTH to storage_1
+2025-04-18 19:49:50 - Room entered: NORTH to hallway_3
+2025-04-18 19:49:52 - Room entered: EAST to room5
+2025-04-18 19:49:52 - Room entered: WEST to hallway_3
+2025-04-18 19:49:53 - Room entered: NORTH to room0
+2025-04-18 19:49:56 - Room entered: EAST to hallway_4
+2025-04-18 19:49:57 - Room entered: NORTH to room3
+2025-04-18 19:49:57 - Room entered: SOUTH to hallway_4
+2025-04-18 19:49:58 - Room entered: SOUTH to room4
+2025-04-18 19:49:58 - Room entered: NORTH to hallway_4

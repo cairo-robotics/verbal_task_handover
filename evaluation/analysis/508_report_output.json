@@ -1,0 +1,28 @@
+{
+  "player_items": [
+    "blue potion",
+    "green potion"
+  ],
+  "player_held_item": null,
+  "npcs": {
+    "west_person": {
+      "location": "west room",
+      "potion_needed": "blue potion",
+      "potion_given": true
+    },
+    "marie": {
+      "location": "east room",
+      "potion_needed": "green potion",
+      "potion_given": false
+    },
+    "john": {
+      "location": "north block",
+      "potion_needed": null,
+      "potion_given": null
+    }
+  },
+  "active_quests": {
+    "collect_potion": "deliver to west_person",
+    "deliver_message": "deliver to marie"
+  }
+}
