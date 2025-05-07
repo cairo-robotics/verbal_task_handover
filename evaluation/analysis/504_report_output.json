@@ -1,0 +1,8 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": null,
+  "active_quests": {
+    "message passing": "north, west, south"
+  }
+}

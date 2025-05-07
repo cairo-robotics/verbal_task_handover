@@ -1,0 +1,49 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": {
+    "Donna": {
+      "location": null,
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "Nick": {
+      "location": null,
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "Lily": {
+      "location": "right of the main room",
+      "potion_needed": "gold potion",
+      "potion_given": null
+    },
+    "Oliver": {
+      "location": "right of the main room",
+      "potion_needed": "blue potion",
+      "potion_given": null
+    },
+    "Steve": {
+      "location": "bottom left of the main room",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "Eliza": {
+      "location": "bottom left of the main room",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "John": {
+      "location": "top right doorway",
+      "potion_needed": null,
+      "potion_given": null
+    },
+    "Unknown Character": {
+      "location": "top left",
+      "potion_needed": "green potion",
+      "potion_given": null
+    }
+  },
+  "active_quests": {
+    "7": "give out potions"
+  }
+}

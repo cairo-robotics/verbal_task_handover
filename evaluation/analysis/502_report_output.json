@@ -1,0 +1,19 @@
+{
+  "player_items": null,
+  "player_held_item": null,
+  "npcs": {
+    "NPC": {
+      "location": "storage room 1",
+      "potion_needed": "red",
+      "potion_given": null
+    },
+    "NPC2": {
+      "location": "storage room 2",
+      "potion_needed": "blue",
+      "potion_given": null
+    }
+  },
+  "active_quests": {
+    "request_complete": "request for new task"
+  }
+}
