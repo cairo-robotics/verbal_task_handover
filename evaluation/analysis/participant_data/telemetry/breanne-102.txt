@@ -1,5 +1,0 @@
-2025-04-28 08:58:53 - Room entered: SOUTH to room0
-2025-04-28 08:59:18 - Room entered: WEST to hallway_1
-2025-04-28 08:59:23 - Room entered: SOUTH to room2
-2025-04-28 08:59:25 - Room entered: NORTH to hallway_1
-2025-04-28 08:59:32 - Room entered: EAST to room0

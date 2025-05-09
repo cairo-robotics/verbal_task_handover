@@ -1,3 +1,0 @@
-The game consists of one central room (Room 0) with various pathways leading to the other rooms (Rooms 1-5). The main task is to find specific potions and hand them over to the relevant people. Then, a series of messages must be transported within these people.
-Currently, I am yet to find the Blue potion and hand it over to the dude who is on the southwest side of the central room. Everyone else has received their potions and have asked me to transport their messages to specific Individuals. Currently, I need to finish tasks given by Lola, Eliza and John. GO and speak to them and identify who they want you to talk to.
-If I remember, the people who I need to talk to are Brittany, Steve and Donna.
