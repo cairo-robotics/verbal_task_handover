@@ -25,6 +25,7 @@ def merge_participant_files(data_dir):
     
     merged_df = pd.merge(p1_df, p2_df, on="PID", suffixes=("_p1", "_p2"))
     merged_df.drop(columns=["Visit 1 Experimenter", "Visit 2 Experimenter", "Experimenter"], inplace=True)
+    merged_df.rename(columns={"Date": "p2_date"}, inplace=True)
 
     return merged_df
 
@@ -55,6 +56,31 @@ def process_state_data(data_dir, participant_df):
             pids_to_process.append(pid)
 
     process_bulk_saves(pids_to_process, os.path.join(data_dir, "participant_data"), os.path.join(data_dir, "processed_output"))
+
+def merge_survey_data(data_dir, participant_df):
+    survey_1, survey_2 = ["survey_visit_1.csv", "survey_visit_2.csv"]
+    survey_1_df = pd.read_csv(os.path.join(data_dir, survey_1))
+    survey_1_df.drop(columns="Timestamp", inplace=True)
+    survey_1_df.columns = ["PID", "mentally_demanding", "hurried", "successful", "hard_work", "understood", "all_relevant_info", "difficulty_remembering", "resume_task_me", "resume_task_others"]
+    survey_1_df.replace("1 (Very low)", 1, inplace=True)
+    survey_1_df.replace("7 (Very high)", 7, inplace=True)
+    survey_1_df.replace("1 (Strongly disagree)", 1, inplace=True)
+    survey_1_df.replace("7 (Strongly agree)", 7, inplace=True)
+
+
+    survey_2_df = pd.read_csv(os.path.join(data_dir, survey_2))
+    survey_2_df.drop(columns="Timestamp", inplace=True)
+    survey_2_df.columns = ["PID", "mentally_demanding", "hurried", "successful", "hard_work", "understood", "helped_completion", "easy_to_understand", "confusing", "missing_info"]
+    survey_2_df.replace("1 (Very low)", 1, inplace=True)
+    survey_2_df.replace("7 (Very high", 7, inplace=True)
+    survey_2_df.replace("1 (Strongly disagree)", 1, inplace=True)
+    survey_2_df.replace("7 (Strongly agree", 7, inplace=True)
+
+    participant_df = pd.merge(participant_df, survey_1_df, on="PID", how="left")
+    participant_df = pd.merge(participant_df, survey_2_df, on="PID", how="left", suffixes=("_v1", "_v2"))
+    participant_df = pd.merge(participant_df, survey_2_df, left_on="p2_PID", right_on="PID", how="left", suffixes=("", "_p2"))
+    participant_df.drop(columns=["PID_p2"], inplace=True)
+    return participant_df
     
 
 def main(data_dir, participant_df):
@@ -70,12 +96,12 @@ def main(data_dir, participant_df):
             r1_score = read_meta_score(pid, data_dir)
         if not pd.isna(row["Visit 2 date"]):
             r2_score = read_meta_score(str(pid) + "_1", data_dir)
-        if not pd.isna(row["Date"]):
+        if not pd.isna(row["p2_date"]):
             r3_score = read_meta_score(row["p2_PID"], data_dir)
 
         data_df.loc[index] = [pid, r1_score, r2_score, r3_score]
 
-    output_df = pd.merge(participant_df, data_df, on="PID", how="left")
+    output_df = pd.merge(data_df, participant_df, on="PID", how="right")
     output_df.to_csv(os.path.join(data_dir, output_csv), index=False)
 
 if __name__ == "__main__":
@@ -85,5 +111,6 @@ if __name__ == "__main__":
     raw_data_directory = os.path.join(main_data_dir, "participant_data")
 
     participant_df = merge_participant_files(raw_data_directory)
+    participant_df = merge_survey_data(raw_data_directory, participant_df)
     # process_state_data(main_data_dir, participant_df)
     main(data_directory, participant_df)
