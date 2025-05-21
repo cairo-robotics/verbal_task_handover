@@ -1,0 +1,94 @@
+from openai import OpenAI
+
+from string import Template
+import argparse
+import os
+
+from graph import TelemetryGraph
+
+PROMPT_TRACE_ONLY = Template("""\
+You are an assistant that generates a written handover report about the current state of a video game task.\
+The purpose of this report is to summarize the user's progress and game knowledge in order to help another player\
+                  continue the task from where the user left off as efficiently as possible.\
+You have access to a knowledge graph representing what you know about the game and the user's history so far.
+Your role is to combine this information to compose a complete and accurate report.\
+                  
+The current knowledge graph is:
+```
+$knowledge_graph
+```
+""")
+
+PROMPT_WITH_REPORT = Template("""\
+You are an assistant that generates a written handover report about the current state of a video game task.\
+The purpose of this report is to summarize the user's progress and game knowledge in order to help another player\
+                  continue the task from where the user left off as efficiently as possible.\
+You have access to a knowledge graph representing what you know about the game and the user's history so far.
+You also have access to a set of notes that the user has written about the task.
+Your role is to combine this information to compose a complete and accurate report.\
+                  
+The current knowledge graph is:
+```
+$knowledge_graph
+```
+The user's notes are:
+$report
+""")
+
+def generate_graph(telemetry_file):
+    g = TelemetryGraph()
+    g.parse_from_file(telemetry_file)
+    return g
+
+def retrieve_user_report(report_file):
+    with open(report_file, 'r') as f:
+        report = f.read()
+    return report
+
+def save_generated_report(report, save_file):
+    with open(save_file, 'w') as f:
+        f.write(report)
+
+def get_gpt_response(prompt):
+    client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+    model = 'gpt-4o-mini'
+    response = client.completions.create(
+        model=model,
+        prompt=prompt,
+        max_tokens=1500,
+        temperature=0.1,
+        top_p=1.0,
+        n=1,
+        stop=None
+    )
+    return response.choices[0].text.strip()
+
+def main(pid, telemetry_dir, report_dir, save_dir):
+    # Generate the knowledge graph
+    telemetry_file = os.path.join(telemetry_dir, f"{pid}.txt")
+    g = generate_graph(telemetry_file)
+
+    # Retrieve the user's report
+    report_file = os.path.join(report_dir, f"{pid}_user_report.txt")
+    report = retrieve_user_report(report_file)
+
+    # Generate the final report
+    prompt = PROMPT_WITH_REPORT.substitute(knowledge_graph=str(g), report=report)
+    # prompt = PROMPT_TRACE_ONLY.substitute(knowledge_graph=str(g))
+
+    # Use OpenAI API to generate the report
+    response = get_gpt_response(prompt)
+    
+    # Save the generated report
+    save_file = os.path.join(save_dir, f"{pid}_hybrid_report.txt")
+    save_generated_report(response, save_file)
+
+if __name__ == "__main__":
+    data_dir = os.environ.get('DATA_DIR')
+    report_dir = os.path.join(data_dir, 'participant_data')
+    telemetry_dir = os.path.join(report_dir, 'telemetry')
+    save_dir = os.path.join(data_dir, 'processed_output', 'generated_reports')
+
+    for pid in range(501, 510):
+        pid = str(pid)
+        main(pid, telemetry_dir, report_dir, save_dir)
