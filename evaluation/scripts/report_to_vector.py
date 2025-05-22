@@ -45,6 +45,13 @@ def convert_to_vector(text_filename, output_filename):
         print("Failed to parse response.")
         print(message.refusal)
 
+def batch_convert_to_vector(input_dir, output_dir):
+    for filename in os.listdir(input_dir):
+        if filename.endswith("report.txt"):
+            text_filename = os.path.join(input_dir, filename)
+            output_filename = os.path.join(output_dir, filename.replace(".txt", "_output.json"))
+            convert_to_vector(text_filename, output_filename)
+
 def main():
     if len(sys.argv) != 3:
         print("Usage: python report_to_vector.py <text_filename> <output_filename>")
@@ -54,6 +61,12 @@ def main():
     output_filename = sys.argv[2]
     convert_to_vector(text_filename, output_filename)
 
+def batch_convert():
+    data_dir = os.environ.get("DATA_DIR")
+    input_dir = os.path.join(data_dir, "processed_output", "generated_reports")
+    output_dir = os.path.join(data_dir, "processed_output")
+    batch_convert_to_vector(input_dir, output_dir)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    batch_convert()
