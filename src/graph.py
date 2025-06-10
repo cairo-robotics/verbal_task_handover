@@ -149,6 +149,7 @@ class TelemetryGraph:
             
             elif event.startswith("NPC interact"):
                 npc_name = event.split(": ")[1]
+                npc_name = npc_name.split(" ")[0]  # Get the NPC name before any additional info
 
                 if not G.has_edge(last_added_position_node, npc_name):
                     G.add_edge(last_added_position_node, npc_name, action="Contains")

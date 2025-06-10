@@ -48,7 +48,7 @@
             }
           ],
           "default": false,
-          "description": "Whether the character needs (or previously needed) a potion or not.",
+          "description": "Whether the character needs a potion or not.",
           "title": "Needs Potion"
         },
         "potion_needed": {
@@ -61,7 +61,7 @@
             }
           ],
           "default": null,
-          "description": "The potion the character needs OR has previously received, or null if unknown or if no potion is needed.",
+          "description": "The potion the character needs, or null if unknown or if no potion is needed.",
           "title": "Potion Needed"
         }
       },
