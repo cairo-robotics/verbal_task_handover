@@ -3,11 +3,13 @@ better code breakdown incoming
 
 Code for Kaleb's verbal task handover project. Includes `treasure_hunt_py`, a simple pygame environment designed for multi-object search tasks with included telemetry for player actions and game states.
 
+Also in `/evaluation` is code used to generate, process, and score reports for information content.
+
 ## System requirements
 * Python 3.8
 * Python dependencies (see `requirements.txt`)
 
-## Key components - game task (treasure_hunt_py)
+## game task (treasure_hunt_py)
 * `treasure_hunt/`
     * `src/`
         * `core.py`: Contains `GameMap` class, which loads & stores current room map, texture data (if specifies), and collision checking / movement information (e.g. `is_valid_move`, `check_transition`)
@@ -24,3 +26,14 @@ Code for Kaleb's verbal task handover project. Includes `treasure_hunt_py`, a si
         * `telemetry.py`: has the `Event` and `Telemetry` classes which is really just to make it easier for other scripts to dump telemetry info to the textfile
 
 [more detail WIP]
+
+## evaluation code
+* *requires*: a configued `.env` file (or manually set environment variable `DATA_DIR`)
+* `analytics/`: mostly deprecated, except for
+    * `report_statistics.py`: [WIP]: currently compiles easy-to-access information about report data, including word counts, across conditions
+* `scripts/`:
+    * `aggregate_scores.py`: collects & sorts meta-scores (i.e. how far each participant progressed) into a csv
+    * `process_all_states_and_reports.py`: bulk generates processed state (ground truth) data & associated report vector data; current needs updating
+    * `report_to_vector.py`: makes an API call to GPT (using the new `response_format` argument) to convert natural language reports into the pydantic JSON schema specified in `vector_schema.py`
+    * `telemetry_to_vector`: currently deprecated; objective is to produce a version of the ground truth data consisting of what the LLM could actually deduce from its limited telemetry input
+    * `vector_schema.py`: defines a pydantic object `GameState` designed to contain all potential information used to determine a next-best action
