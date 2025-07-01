@@ -1,0 +1,40 @@
+2025-07-01 12:15:19 - Room entered: SOUTH to hallway_3
+2025-07-01 12:15:21 - Room entered: EAST to room5
+2025-07-01 12:15:21 - Room entered: WEST to hallway_3
+2025-07-01 12:15:22 - Room entered: SOUTH to storage_1
+2025-07-01 12:15:23 - Item obtained: gold_potion
+2025-07-01 12:15:24 - Room entered: NORTH to hallway_3
+2025-07-01 12:15:24 - Room entered: NORTH to room0
+2025-07-01 12:15:25 - Room entered: WEST to hallway_1
+2025-07-01 12:15:26 - Room entered: NORTH to room1
+2025-07-01 12:15:27 - Gave item to NPC: gold_potion lily
+2025-07-01 12:15:32 - Room entered: SOUTH to hallway_1
+2025-07-01 12:15:33 - Room entered: EAST to room0
+2025-07-01 12:15:35 - Room entered: SOUTH to hallway_3
+2025-07-01 12:15:35 - Room entered: NORTH to room0
+2025-07-01 12:15:37 - Room entered: SOUTH to hallway_2
+2025-07-01 12:15:38 - Room entered: SOUTH to lounge_1
+2025-07-01 12:15:39 - Room entered: NORTH to hallway_2
+2025-07-01 12:15:40 - Room entered: SOUTH to lounge_1
+2025-07-01 12:15:41 - Room entered: NORTH to hallway_2
+2025-07-01 12:15:43 - Room entered: NORTH to room0
+2025-07-01 12:15:44 - Room entered: NORTH to hallway_5
+2025-07-01 12:15:45 - Room entered: NORTH to lounge_2
+2025-07-01 12:15:46 - Room entered: SOUTH to hallway_5
+2025-07-01 12:15:46 - Room entered: EAST to lounge_2
+2025-07-01 12:15:49 - NPC interact: lola about request from room 1
+2025-07-01 12:33:31 - Room entered: SOUTH to hallway_5
+2025-07-01 12:33:32 - Room entered: SOUTH to room0
+2025-07-01 12:33:33 - Room entered: WEST to hallway_1
+2025-07-01 12:33:34 - Room entered: NORTH to room1
+2025-07-01 12:33:38 - NPC interact: lily about response from Lola
+2025-07-01 12:33:41 - Room entered: SOUTH to hallway_1
+2025-07-01 12:33:43 - Room entered: EAST to room0
+2025-07-01 12:33:44 - Room entered: NORTH to hallway_5
+2025-07-01 12:33:45 - Room entered: EAST to storage_2
+2025-07-01 12:33:47 - Item obtained: blue_potion
+2025-07-01 12:33:47 - Room entered: WEST to hallway_5
+2025-07-01 12:33:49 - Room entered: SOUTH to room0
+2025-07-01 12:33:50 - Room entered: WEST to hallway_1
+2025-07-01 12:33:51 - Room entered: SOUTH to room2
+2025-07-01 12:33:52 - Gave item to NPC: blue_potion oliver
