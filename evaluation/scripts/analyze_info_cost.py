@@ -63,31 +63,36 @@ PATIENT_DATA = {
         "name" : "lily",
         "potion" : "gold_potion",
         "npc_target" : "lola",
-        "treasure" : "treasure1"
+        "treasure" : "treasure1",
+        "location" : "room1"
     },
     2 : {
         "name" : "oliver",
         "potion" : "blue_potion",
         "npc_target" : "john",
-        "treasure" : "treasure2"
+        "treasure" : "treasure2",
+        "location" : "room2"
     },
     3 : {
         "name" : "nick",
         "potion": "red_potion",
         "npc_target": "donna",
-        "treasure": "treasure3"
+        "treasure": "treasure3",
+        "location": "room3"
     },
     4 : {
         "name" : "marie",
         "potion" : "green_potion",
         "npc_target" : "steve",
-        "treasure" : "treasure4"
+        "treasure" : "treasure4",
+        "location" : "room4"
     },
     5: {
         "name" : "james",
         "potion" : "orange_potion",
         "npc_target" : "brittany",
-        "treasure" : "treasure5"
+        "treasure" : "treasure5",
+        "location" : "room5"
     }
 }
 
@@ -164,7 +169,7 @@ def get_current_request_id(game_state: GameState, patient_id: int) -> int:
     
     if f"request from room {patient_id}".lower() in game_state.player.flags:
         return 3
-    if game_state.player.held_item.lower() == PATIENT_DATA[patient_id]['potion']:
+    if game_state.player.held_item is not None and game_state.held_item.lower() == PATIENT_DATA[patient_id]['potion']:
         return 2
     return 1
 
@@ -257,6 +262,7 @@ def is_valid_match(game_state: GameState, report_vector: dict, patient_id: int, 
                     strip_spacing(PATIENT_DATA[patient_id]['location']) in strip_spacing(req["target"]):
                     return True
 
+    return False
 
 def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int) -> float:
     """
@@ -307,32 +313,56 @@ def run_single_condition(save_file_name: str, report_datafile_name: str, data_di
     
     return total_cost
 
+def test_step_matching():
+    """
+    Test the step matching function with a sample game state and report vector.
+    """
+    # Example game state and report vector
+    TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
+    gt_state = GameState.load(os.path.join(TEST_DIR, "kb_test_0701"))
+
+    report_vector = load_report_vector(os.path.join(TEST_DIR, "test_save_state.json"))
+    
+    for patient_id in range(1, 6):
+        current_request_id = get_current_request_id(gt_state, patient_id)
+        for task_step in range(0, 7):  # Assuming task steps are 0-6
+            is_match = is_valid_match(gt_state, report_vector, patient_id, task_step)
+            step_cost = get_step_cost(gt_state, patient_id, task_step)
+            print(f"Patient {patient_id}, Task Step {task_step}: "
+                  f"Current Request ID: {current_request_id}, "
+                  f"Is Match: {is_match}, "
+                  f"Step Cost: {step_cost}")
+
 # for testing
 if __name__ == "__main__":
+
+    test_step_matching()
+
+    # Uncomment the following lines to run the script with command line arguments
     # if len(sys.argv) != 3:
     #     print("Usage: python analyze_info_cost.py <save_file_name> <report_datafile_name>")
     #     sys.exit(1)
     
-    save_file_name = sys.argv[1]
-    # report_datafile_name = sys.argv[2]
+    # save_file_name = sys.argv[1]
+    # # report_datafile_name = sys.argv[2]
 
-    # data_dir = os.environ.get("DATA_DIR", ".")
-    data_dir = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves"
+    # # data_dir = os.environ.get("DATA_DIR", ".")
+    # data_dir = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves"
 
-    # save_file_state = load_game_state(os.path.join(data_dir, "participant_data", save_file_name))
-    save_file_state = load_game_state(os.path.join(data_dir, save_file_name))
-    print("load_game_state:", save_file_state)
-    # report_datafile_state = load_report_vector(os.path.join(data_dir, "processed_output", report_datafile_name))
-    # print("load_report_vector:", report_datafile_state)
-    # telemetry_text = load_telemetry_text(os.path.join(data_dir, "participant_data", "telemetry", save_file_name + ".txt"))
-    telemetry_text = load_telemetry_text(os.path.join(data_dir, "telemetry", save_file_name + ".txt"))
-    print("load_telemetry_text:", telemetry_text)
-    completed_quests = check_completed_quests(telemetry_text)
-    print("check_completed_quests:", completed_quests)
+    # # save_file_state = load_game_state(os.path.join(data_dir, "participant_data", save_file_name))
+    # save_file_state = load_game_state(os.path.join(data_dir, save_file_name))
+    # print("load_game_state:", save_file_state)
+    # # report_datafile_state = load_report_vector(os.path.join(data_dir, "processed_output", report_datafile_name))
+    # # print("load_report_vector:", report_datafile_state)
+    # # telemetry_text = load_telemetry_text(os.path.join(data_dir, "participant_data", "telemetry", save_file_name + ".txt"))
+    # telemetry_text = load_telemetry_text(os.path.join(data_dir, "telemetry", save_file_name + ".txt"))
+    # print("load_telemetry_text:", telemetry_text)
+    # completed_quests = check_completed_quests(telemetry_text)
+    # print("check_completed_quests:", completed_quests)
 
-    print(get_current_request_id(save_file_state, 1))  # Example for patient ID 1
-    print(get_step_cost(save_file_state, 1, 5))  # Example for patient ID 1 at task step 5
+    # print(get_current_request_id(save_file_state, 1))  # Example for patient ID 1
+    # print(get_step_cost(save_file_state, 1, 5))  # Example for patient ID 1 at task step 5
     
     
-    # total_cost = run_single_condition(save_file_name, report_datafile_name, data_dir)
-    # print(f"Total information cost for {report_datafile_name}: {total_cost:.2f}")
+    # # total_cost = run_single_condition(save_file_name, report_datafile_name, data_dir)
+    # # print(f"Total information cost for {report_datafile_name}: {total_cost:.2f}")

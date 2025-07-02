@@ -1,138 +1,209 @@
 import sys
 import json
+import os
 
 from treasure_hunt.src.game_mdp import GameState, Direction, start_state
-
+from analyze_info_cost import strip_spacing
 """
 For extracting the "ground truth" game state in json format, regardless of player knowledge.
 Restricted mainly to strictly task-relevant aspects, like rooms entered, NPCs interacted, and so on.
 """
 
-def extract_ground_truth_data(state):
-    # print(state.player_has_items)
-    json_data = {
-        "player_items" : state.player.flags,
-        "npcs": {}, # dict - names as unique identifiers
+CHARACTERS = [
+    {
+        "name": "lily",
+        "location": "room1",
+        "needs_potion": True,
+        "potion_needed": "gold_potion",
+    },
+    {
+        "name": "oliver",
+        "location": "room2",
+        "needs_potion": True,
+        "potion_needed": "blue_potion",
+    },
+    {
+        "name": "nick",
+        "location": "room3",
+        "needs_potion": True,
+        "potion_needed": "red_potion",
+    },
+    {
+        "name": "marie",
+        "location": "room4",
+        "needs_potion": True,
+        "potion_needed": "green_potion",
+    },
+    {
+        "name": "guy",
+        "location": "room5",
+        "needs_potion": True,
+        "potion_needed": "orange_potion",
+    },
+    {
+        "name": "eliza",
+        "location": "lounge_1",
+        "needs_potion": False,
+        "potion_needed": None,
+    },
+    {
+        "name": "lola",
+        "location": "lounge_2",
+        "needs_potion": False,
+        "potion_needed": None,
+    },
+    {
+        "name": "john",
+        "location": "lounge_2",
+        "needs_potion": False,
+        "potion_needed": None,
+    },
+    {
+        "name": "donna",
+        "location": "lounge_3",
+        "needs_potion": False,
+        "potion_needed": None,
+    },
+    {
+        "name": "steve",
+        "location": "lounge_1",
+        "needs_potion": False,
+        "potion_needed": None,
+    },
+    {
+        "name": "brittany",
+        "location": "lounge_3",
+        "needs_potion": False,
+        "potion_needed": None,
     }
+]
 
-    for room in state._objects:
-        # json_data["rooms"].append(room)
-        for obj in state._objects[room].values():
-            if obj.type == "npc":
-                npc = {
-                    "location" : room,
-                    "potion_needed" : list(obj.held_item_interact_data.keys())[0] if obj.held_item_interact_data else None,
-                    "potion_given" : obj.held_item_interact_complete
-                }
-                # TODO: will this cause issues if regular interaction did not occur before conditional interaction?
-                json_data["npcs"][obj.name] = npc
-
-    return json_data
-
-def update_quest_info(state, json_data):
-    # json_data["npcs"]["lily"].update({
-    #     "given_request" : ("request from room1" in json_data["player_items"]),
-    #     "got_treasure" : ("treasure1" in json_data["player_items"]) 
-    #     })
-    # json_data["npcs"]["oliver"].update({
-    #     "given_request" : ("request from room2" in json_data["player_items"]),
-    #     "got_treasure" : ("treasure2" in json_data["player_items"]) 
-    #     }),
-    # json_data["npcs"]["nick"].update({
-    #     "given_request" : ("request from room3" in json_data["player_items"]),
-    #     "got_treasure" : ("treasure3" in json_data["player_items"]) 
-    #     }),
-    # json_data["npcs"]["marie"].update({
-    #     "given_request" : ("request from room4" in json_data["player_items"]),
-    #     "got_treasure" : ("treasure4" in json_data["player_items"]) 
-    #     }),
-    # json_data["npcs"]["guy"].update({
-    #     "given_request" : ("request from room5" in json_data["player_items"]),
-    #     "got_treasure" : ("treasure5" in json_data["player_items"]) 
-    #     }),
-    
-    potions_needed = {
-        "lily" : "gold_potion",
-        "oliver" : "blue_potion",
-        "nick" : "red_potion",
-        "marie" : "green_potion",
-        "guy" : "orange_potion",
+def update_quest_info(state):
+    state_vector = {
+        "characters": CHARACTERS,
     }
-    active_quests = {}
+    flags = state.player.flags
+
+    # TODO: fix because the treasure items are not in the flags
+
+    active_requests = []
     overall_progress = 0
 
-
-    for i, npc, potion in zip(range(1, 6), potions_needed.keys(), potions_needed.values()):
-        if not(json_data["npcs"][npc]["potion_given"] and "treasure" + str(i) not in json_data["player_items"]):
-            active_quests[potion] = "bring to " + npc
-
-    for item in json_data["player_items"]:
+    for item in flags:
         if item == "request from room 1":
             overall_progress += 1
-            if not ("response from eliza" in json_data["player_items"]):
-                active_quests[item] = "bring to eliza"
-            elif not ("response from lola" in json_data["player_items"]):
+            if not ("response from Lola" in flags):
+                if not ("response from Eliza" in flags):
+                    request = {
+                        "target": "eliza",
+                        "item": "request from room 1",
+                    }
+                    active_requests.append(request)
+                    continue
+                
                 overall_progress += 1
-                active_quests[item] = "bring to lola"
+                request = {
+                    "target": "lola",
+                    "item": "request from room 1",
+                }
+                active_requests.append(request)
         elif item == "request from room 2":
-            overall_progress += 1            
-            if not ("response from John" in json_data["player_items"]):
-                active_quests[item] = "bring to john"
+            overall_progress += 1
+            if not ("response from John" in flags):
+                active_requests.append({
+                    "target": "john",
+                    "item": "request from room 2"
+                })
         elif item == "request from room 3":
             overall_progress += 1
-            if not ("response from Donna" in json_data["player_items"]):
-                active_quests[item] = "bring to donna"
+            if not ("response from Donna" in flags):
+                active_requests.append({
+                    "target": "donna",
+                    "item": "request from room 3"
+                })
         elif item == "request from room 4":
             overall_progress += 1
-            if not ("response from steve" in json_data["player_items"] or "letter from steve" in json_data["player_items"]):
-                active_quests[item] = "bring to steve"
+            if not ("response from Steve" in flags or "letter from steve" in flags):
+                active_requests.append({
+                    "target": "Steve",
+                    "item": "request from room 4"
+                })
         elif item == "request from room 5":
             overall_progress += 1
-            if not ("response from Brittany" in json_data["player_items"]):
-                active_quests[item] = "bring to brittany"
-        
-        elif item == "response from lola":
+            if not ("response from Brittany" in flags):
+                active_requests.append({
+                    "target": "Brittany",
+                    "item": "request from room 5"
+                })
+
+        elif item == "response from Lola":
             overall_progress += 1
-            if not ("treasure1" in json_data["player_items"]):
-                active_quests[item] = "bring to lily"
-        elif item == "response from steve" or item == "letter from steve":
+            if not ("treasure1" in flags):
+                active_requests.append({
+                    "target": "lily",
+                    "item": "response from Lola"
+                })
+        elif item == "response from Steve" or item == "letter from steve":
             overall_progress += 1
-            if not ("treasure4" in json_data["player_items"]):
-                active_quests[item] = "bring to marie"
+            if not ("treasure4" in flags):
+                active_requests.append({
+                    "target": "marie",
+                    "item": "response from Steve"
+                })
         elif item == "response from John":
             overall_progress += 1
-            if not ("treasure2" in json_data["player_items"]):
-                active_quests[item] = "bring to oliver"
+            if not ("treasure2" in flags):
+                active_requests.append({
+                    "target": "nick",
+                    "item": "response from John"
+                })
         elif item == "response from Donna":
             overall_progress += 1
-            if not ("treasure3" in json_data["player_items"]):
-                active_quests[item] = "bring to nick"
+            if not ("treasure3" in flags):
+                active_requests.append({
+                    "target": "oliver",
+                    "item": "response from Donna"
+                })
         elif item == "response from Brittany":
             overall_progress += 1
-            if not ("treasure5" in json_data["player_items"]):
-                active_quests[item] = "bring to guy"
+            if not ("treasure5" in flags):
+                active_requests.append({
+                    "target": "guy",
+                    "item": "response from Brittany"
+                })
 
         elif "treasure" in item:
             overall_progress += 1
 
-    json_data["active_quests"] = active_quests
-    json_data["meta_score"] = overall_progress       
+    state_vector["character_requests"] = active_requests
+    state_vector["meta_score"] = overall_progress
+    return state_vector
 
-def output_ground_truth(state_filename, output_filename):   
+def output_ground_truth(state_filename, output_filename):
+    print(f"Loading game state from {state_filename}")
+
     state = GameState.load(state_filename)
-    json_data = extract_ground_truth_data(state)
-    update_quest_info(state, json_data)
+    state_vector = update_quest_info(state)
+
     with open(output_filename, 'w') as f:
-        print(json_data)
-        print(type(json_data))
-        json.dump(json_data, f, indent=4)
+        print(state_vector)
+        json.dump(state_vector, f, indent=4)
     print(f"Ground truth data saved to {output_filename}")
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print("Usage: python extract_save_state.py <save_state> <output_file>")
-        sys.exit(1)
-    filename = sys.argv[1]
-    output_file = sys.argv[2]
-    output_ground_truth(filename, output_file)
+    # if len(sys.argv) != 3:
+    #     print("Usage: python extract_save_state.py <save_state> <output_file>")
+    #     sys.exit(1)
+
+    # save_dir = os.environ.get("DATA_DIR", ".")
+
+
+    # filename = os.path.join(save_dir, "participant_data", sys.argv[1])
+    # output_file = os.path.join(save_dir, "processed_output", sys.argv[2])
+    # output_ground_truth(filename, output_file)
+
+    TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
+    filename = os.path.join(TEST_DIR, "test_save_state.json")
+    input_file = os.path.join(TEST_DIR, sys.argv[1])
+    output_ground_truth(input_file, filename)
