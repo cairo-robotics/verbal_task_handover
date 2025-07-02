@@ -290,8 +290,19 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int)
         
         total_cost += incurred_cost
     """
+    current_req_id = get_current_request_id(gt_state, patient_id)
+    current_report_req_id = current_req_id
+    criteria_met = False
+    incurred_cost = 0.0
+
+    while not criteria_met and current_report_req_id >= 0:
+        if is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
+            criteria_met = True
+        else:
+            incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id)
+        current_report_req_id -= 1
     
-    return total_cost
+    return incurred_cost
 
 def run_single_condition(save_file_name: str, report_datafile_name: str, data_dir: str) -> None:
     """
