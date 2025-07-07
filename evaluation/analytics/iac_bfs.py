@@ -79,8 +79,9 @@ def find_steps_between_rooms(rooms_dir, start_room, start_pos, end_room, end_pos
 
         # Then, move through doors
         for door_num, (dx, dy) in doors.items():
-            if (dx, dy) == current_pos and door_num in connections.get(current_room, {}):
-                target_room, target_door_num = connections[current_room][door_num]
+            if (dx, dy) == current_pos and str(door_num) in connections.get(current_room, {}).keys():
+                # import pdb; pdb.set_trace()  # Debugging breakpoint
+                target_room, target_door_num = connections[current_room][str(door_num)]
                 _, target_doors = load_room(target_room)
                 if target_door_num in target_doors:
                     target_pos = target_doors[target_door_num]
@@ -93,3 +94,15 @@ def load_transitions(transition_filename):
     with open(transition_filename, 'r') as f:
         transitions = json.load(f)
     return transitions
+
+if __name__ == "__main__":
+    # Example usage
+    transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
+    
+    start_room = "room1"
+    start_pos = (3, 4)
+    end_room = "room0"
+    end_pos = (1, 1)
+
+    steps = find_steps_between_rooms(MAP_DIR, start_room, start_pos, end_room, end_pos, transitions)
+    print(f"Steps from {start_room} at {start_pos} to {end_room} at {end_pos}: {steps}")
