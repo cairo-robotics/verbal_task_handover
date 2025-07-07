@@ -1,10 +1,10 @@
 # from vector_schema import GameState as GameStateSchema
-from treasure_hunt.src.game_mdp import GameState
 import os
 import json
-import sys
-
 import re
+
+from treasure_hunt.src.game_mdp import GameState
+from iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
 
 """
 Basic IAC algorithm pseudocode:
@@ -29,6 +29,9 @@ for pt in range(1, 6):
 	net_cost += incurred_cost
 return net_cost
 """
+
+# GAME_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt"
+# MAP_DIR = os.path.join(GAME_DIR, "maps", "map2")
 
 ROOM_WALK_COST = 25.0 # TODO replace with more nuanced cost based on distance, etc.
 
@@ -88,7 +91,7 @@ PATIENT_DATA = {
         "location" : "room4"
     },
     5: {
-        "name" : "james",
+        "name" : "guy",
         "potion" : "orange_potion",
         "npc_target" : "brittany",
         "treasure" : "treasure5",
@@ -173,7 +176,7 @@ def get_current_request_id(game_state: GameState, patient_id: int) -> int:
         return 2
     return 1
 
-def get_step_cost(game_state: GameState, patient_id: int, task_step: int) -> float:
+def get_step_cost(game_state: GameState, patient_id: int, task_step: int, map_transitions: dict) -> float:
     """
     Calculate the cost of a step based on the game state and report vector.
     Step cost assessment based on this outline: https://www.notion.so/kalebishop/basic-algorithm-for-information-access-cost-IAC-218e358fbe66801691bfef74f10ceedd?source=copy_link
@@ -183,24 +186,65 @@ def get_step_cost(game_state: GameState, patient_id: int, task_step: int) -> flo
     :param task_step: The step number in the task for which the cost is being calculated (0-6)
     :return: Cost of the step as a float.
     """
+    patient_pos = game_state._objects[PATIENT_DATA[patient_id]['location']][PATIENT_DATA[patient_id]["name"]].position
+    target_npc_pos = game_state._objects[QUEST_NPC_LOCATIONS[PATIENT_DATA[patient_id]['npc_target']]][PATIENT_DATA[patient_id]['npc_target']].position
+
+    # import pdb; pdb.set_trace()  # Debugging breakpoint
     if task_step == 0:
         # must go to patient room
-        return ROOM_WALK_COST
+        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        PATIENT_DATA[patient_id]['location'], patient_pos, 
+                                        map_transitions)
     elif task_step == 1:
-        # must locate correct potion, assuming no prior knowledge of map
-        return ROOM_WALK_COST*11 # 11 rooms in the game
+        # must locate correct potion, assuming no prior knowledge of map -- checking both rooms
+        default_storage_room_pos = (2, 2)  # Default position in storage room, can be adjusted
+        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_1", default_storage_room_pos,
+                                        map_transitions) + \
+               find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_2", default_storage_room_pos,
+                                        map_transitions)
+
     elif task_step == 2:
-        # must give potion (or simply talk agian) and get request
-        return ROOM_WALK_COST
+        # must give potion (or simply talk again) and get request
+        potion_pos = game_state._objects[POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]][PATIENT_DATA[patient_id]['potion']].position
+        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        PATIENT_DATA[patient_id]['location'], patient_pos,
+                                        map_transitions)
     elif task_step == 3:
         # locate target NPC, assuming no prior knowledge of map
-        return ROOM_WALK_COST*11 # 11 rooms in the game
+        # return total distance cost to locate all NPCs
+        total_dist_cost = 0
+        for npc_name, npc_data in QUEST_NPC_LOCATIONS.items():
+            npc_pos = game_state._objects[npc_data][npc_name].position
+            if npc_name == PATIENT_DATA[patient_id]['npc_target']:
+                total_dist_cost += find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                            npc_data, target_npc_pos,
+                                                            map_transitions)
+            else:
+                total_dist_cost += 2 * find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                                npc_data, npc_pos,
+                                                                map_transitions)
+        return total_dist_cost
     elif task_step == 4:
         # must ask about correct item
         return len(game_state.player.flags) - 1
     elif task_step == 5:
         # must bring response to correct patient
-        return ROOM_WALK_COST*11 # 11 rooms in the game
+        total_dist_cost = 0
+        patient_room = PATIENT_DATA[patient_id]['location']
+        for room_no in range(1, 6):
+            room_name = f"room{room_no}"
+            if room_name == patient_room:
+                total_dist_cost += find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                            room_name, patient_pos,
+                                                            map_transitions)
+            else:
+                room_pos = game_state._objects[room_name][PATIENT_DATA[room_no]['name']].position
+                total_dist_cost += 2 * find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                            room_name, room_pos,
+                                                            map_transitions)
+        return total_dist_cost
     elif task_step == 6:
         # must ask about the correct response
         return len(game_state.player.flags) - 1
@@ -264,7 +308,7 @@ def is_valid_match(game_state: GameState, report_vector: dict, patient_id: int, 
 
     return False
 
-def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int) -> float:
+def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int, map_transitions: dict) -> float:
     """
     Analyze the information cost for a given patient based on the game state and report vector.
     
@@ -299,7 +343,7 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int)
         if is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
             criteria_met = True
         else:
-            incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id)
+            incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
         current_report_req_id -= 1
     
     return incurred_cost
@@ -316,10 +360,12 @@ def run_single_condition(save_file_name: str, report_datafile_name: str, data_di
     
     gt_state = load_game_state(gt_save_file)
     report_vector = load_report_vector(report_file)
+
+    map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
     
     total_cost = 0.0
     for patient_id in range(1, 6):  # Assuming patient IDs are 1-5
-        cost = analyze_info_cost(gt_state, report_vector, patient_id)
+        cost = analyze_info_cost(gt_state, report_vector, patient_id, map_transitions)
         total_cost += cost
     
     return total_cost
@@ -332,13 +378,16 @@ def test_step_matching():
     TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
     gt_state = GameState.load(os.path.join(TEST_DIR, "kb_test_0701"))
 
+    map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
+
+
     report_vector = load_report_vector(os.path.join(TEST_DIR, "test_save_state.json"))
     
     for patient_id in range(1, 6):
         current_request_id = get_current_request_id(gt_state, patient_id)
         for task_step in range(0, 7):  # Assuming task steps are 0-6
             is_match = is_valid_match(gt_state, report_vector, patient_id, task_step)
-            step_cost = get_step_cost(gt_state, patient_id, task_step)
+            step_cost = get_step_cost(gt_state, patient_id, task_step, map_transitions)
             print(f"Patient {patient_id}, Task Step {task_step}: "
                   f"Current Request ID: {current_request_id}, "
                   f"Is Match: {is_match}, "

@@ -50,6 +50,9 @@ def find_steps_between_rooms(rooms_dir, start_room, start_pos, end_room, end_pos
     room_grids = {}
     room_doors = {}
 
+    start_pos = tuple(start_pos)
+    end_pos = tuple(end_pos)
+
     def load_room(room_name):
         if room_name not in room_grids:
             grid, doors = parse_room(os.path.join(rooms_dir, f"{room_name}.txt"))
