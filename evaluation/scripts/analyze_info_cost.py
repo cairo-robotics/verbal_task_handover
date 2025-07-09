@@ -33,7 +33,17 @@ return net_cost
 # GAME_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt"
 # MAP_DIR = os.path.join(GAME_DIR, "maps", "map2")
 
-ROOM_WALK_COST = 25.0 # TODO replace with more nuanced cost based on distance, etc.
+class ActiveGameRequest:
+    POTION = 0
+    REQUEST = 1
+    RESPONSE = 2
+    def __init__(self, req_type=0):
+        self.type = req_type
+        self.known_properties = {
+            "item": False,  # e.g. potion color, request item, response item
+            "target": False,  # e.g. patient name, NPC name
+            "location": False  # e.g. room name, NPC location
+        }
 
 POTION_ROOM_CONTENTS = {
     "storage_1" : [
@@ -153,7 +163,7 @@ def check_completed_quests(telemetry_text: list) -> list:
                 break
     return completed_quests
         
-def get_current_request_id(game_state: GameState, patient_id: int) -> int:
+def get_current_request(game_state: GameState, patient_id: int) -> int:
     """
     Get the current request ID for a given patient in the game state.
     
@@ -168,86 +178,138 @@ def get_current_request_id(game_state: GameState, patient_id: int) -> int:
     
     for flag in game_state.player.flags:
         if flag.lower() == f"response from {PATIENT_DATA[patient_id]['npc_target']}":
-            return 5
+            active_request = ActiveGameRequest(ActiveGameRequest.RESPONSE)
+            active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
+            active_request.known_properties['item'] = flag.lower()
+            return active_request
     
     if f"request from room {patient_id}".lower() in game_state.player.flags:
-        return 3
-    if game_state.player.held_item is not None and game_state.held_item.lower() == PATIENT_DATA[patient_id]['potion']:
-        return 2
-    return 1
+        active_request = ActiveGameRequest(ActiveGameRequest.REQUEST)
+        active_request.known_properties['target'] = PATIENT_DATA[patient_id]['npc_target']
+        active_request.known_properties['item'] = f"request from room {patient_id}"
+        return active_request
+    
+    # if game_state.player.held_item is not None and game_state.player.held_item.lower() in PATIENT_DATA[patient_id]['potion']:
+    #     active_request = ActiveGameRequest(ActiveGameRequest.POTION)
+    #     active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
+    #     active_request.known_properties['item'] = game_state.player.held_item.lower()
+    #     return active_request
+    
+    # # if game_state.player.held_item is not None and game_state.held_item.lower() == PATIENT_DATA[patient_id]['potion']:
+    # #     return 2
+    # # return 1
+    else:
+        active_request = ActiveGameRequest(ActiveGameRequest.POTION)
+        active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
+        active_request.known_properties['item'] = PATIENT_DATA[patient_id]['potion']
+        return active_request
 
-def get_step_cost(game_state: GameState, patient_id: int, task_step: int, map_transitions: dict) -> float:
+def get_step_cost(game_state: GameState, patient_id: int, active_request: ActiveGameRequest, map_transitions: dict) -> float:
     """
     Calculate the cost of a step based on the game state and report vector.
     Step cost assessment based on this outline: https://www.notion.so/kalebishop/basic-algorithm-for-information-access-cost-IAC-218e358fbe66801691bfef74f10ceedd?source=copy_link
     
     :param game_state: GameState object representing the current state of the game.
     :param patient_id: ID of the patient for whom the cost is being calculated (1-5).
-    :param task_step: The step number in the task for which the cost is being calculated (0-6)
-    :return: Cost of the step as a float.
+    :param active_request: ActiveGameRequest object representing the *available information* about the current request for the patient.
+    :return: Cost of accessing missing information, as a float.
     """
     patient_pos = game_state._objects[PATIENT_DATA[patient_id]['location']][PATIENT_DATA[patient_id]["name"]].position
     target_npc_pos = game_state._objects[QUEST_NPC_LOCATIONS[PATIENT_DATA[patient_id]['npc_target']]][PATIENT_DATA[patient_id]['npc_target']].position
+    
+    total_cost = 0.0
 
-    # import pdb; pdb.set_trace()  # Debugging breakpoint
-    if task_step == 0:
-        # must go to patient room
-        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                        PATIENT_DATA[patient_id]['location'], patient_pos, 
-                                        map_transitions)
-    elif task_step == 1:
-        # must locate correct potion, assuming no prior knowledge of map -- checking both rooms
-        default_storage_room_pos = (2, 2)  # Default position in storage room, can be adjusted
-        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                        "storage_1", default_storage_room_pos,
-                                        map_transitions) + \
-               find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                        "storage_2", default_storage_room_pos,
-                                        map_transitions)
+    def shortest_patient_lap(start_room, start_pos):
+        valid_visit_orders = {
+            "room1": ["room2", "room5", "room3", "room4"],
+            "room2": ["room1", "room5", "room3", "room4"],
+            "room3": ["room4", "room5", "room1", "room2"],
+            "room4": ["room3", "room5", "room1", "room2"],
+            "room5": ["room1", "room2", "room3", "room4"]
+        }
 
-    elif task_step == 2:
-        # must give potion (or simply talk again) and get request
-        potion_pos = game_state._objects[POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]][PATIENT_DATA[patient_id]['potion']].position
-        return find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                        PATIENT_DATA[patient_id]['location'], patient_pos,
-                                        map_transitions)
-    elif task_step == 3:
-        # locate target NPC, assuming no prior knowledge of map
-        # return total distance cost to locate all NPCs
-        total_dist_cost = 0
-        for npc_name, npc_data in QUEST_NPC_LOCATIONS.items():
-            npc_pos = game_state._objects[npc_data][npc_name].position
-            if npc_name == PATIENT_DATA[patient_id]['npc_target']:
-                total_dist_cost += find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                                            npc_data, target_npc_pos,
-                                                            map_transitions)
-            else:
-                total_dist_cost += 2 * find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                                                npc_data, npc_pos,
-                                                                map_transitions)
-        return total_dist_cost
-    elif task_step == 4:
-        # must ask about correct item
-        return len(game_state.player.flags) - 1
-    elif task_step == 5:
-        # must bring response to correct patient
-        total_dist_cost = 0
-        patient_room = PATIENT_DATA[patient_id]['location']
-        for room_no in range(1, 6):
-            room_name = f"room{room_no}"
-            if room_name == patient_room:
-                total_dist_cost += find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                                            room_name, patient_pos,
-                                                            map_transitions)
-            else:
-                room_pos = game_state._objects[room_name][PATIENT_DATA[room_no]['name']].position
-                total_dist_cost += 2 * find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
-                                                            room_name, room_pos,
-                                                            map_transitions)
-        return total_dist_cost
-    elif task_step == 6:
-        # must ask about the correct response
-        return len(game_state.player.flags) - 1
+        patient_positions = {room: game_state._objects[room][PATIENT_DATA[i+1]['name']].position for i, room in enumerate(valid_visit_orders.keys())}
+        total_steps = 0
+
+        if start_room in valid_visit_orders:
+            visit_order = valid_visit_orders[start_room]
+            current_pos = start_pos
+            current_room = start_room
+        else:
+            # find closest room to start lap
+            closest_room = min(valid_visit_orders.keys(), key=lambda room: find_steps_between_rooms(MAP_DIR, start_room, start_pos, room, patient_positions[room], map_transitions))
+            visit_order = valid_visit_orders[closest_room]
+            current_pos = patient_positions[closest_room]
+            current_room = closest_room
+            total_steps += find_steps_between_rooms(MAP_DIR, start_room, start_pos, closest_room, current_pos, map_transitions)
+
+        for room in visit_order:
+            steps = find_steps_between_rooms(MAP_DIR, current_pos, current_room,
+                                             patient_positions[room], room,
+                                            map_transitions)
+            total_steps += steps
+            current_pos = patient_positions[room]
+            current_room = room
+        return total_steps
+        
+    if active_request.type == ActiveGameRequest.POTION:
+        if not active_request.known_properties['item']:
+            # if the potion is not known, must talk to patient
+            total_cost += find_steps_between_rooms(MAP_DIR,
+                                            game_state.current_room, game_state.player.pos,
+                                            PATIENT_DATA[patient_id]["location"], patient_pos,
+                                            map_transitions)
+        elif not active_request.known_properties['target']:
+            # if we have the potion but not the patient, we have to check each room
+            total_cost += shortest_patient_lap(game_state.current_room, game_state.player.pos)
+        
+        if not active_request.known_properties['location']:
+            # if we have the potion and the patient, but not the location, we have to check each (storage) room
+            total_cost += (min(
+                find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_1", (5, 1), map_transitions),
+                find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_2", (1, 3), map_transitions)
+            ) + find_steps_between_rooms(MAP_DIR, "storage_1", (5, 1),
+                                        "storage_2", (1, 3), map_transitions))
+            
+    elif active_request.type == ActiveGameRequest.REQUEST:
+        if not active_request.known_properties['target']:
+            # must get target from patient
+            total_cost += find_steps_between_rooms(MAP_DIR,
+                                            game_state.current_room, game_state.player.pos,
+                                            PATIENT_DATA[patient_id]["location"], patient_pos,
+                                            map_transitions)
+            total_cost += shortest_patient_lap(game_state.current_room, game_state.player.pos)
+        
+        elif not active_request.known_properties['item']:
+            # if we have the target NPC but don't know the request's origin, we'll have to try each one
+            total_cost += len(game_state.player.flags) * 3  # each takes 3 keypresses
+
+        if not active_request.known_properties['location']:
+            # it target npc's location is unknown we have to check each (lounge) room
+            total_cost += (min(
+                find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_1", (4, 1), map_transitions),
+                find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_2", (2, 2), map_transitions),
+                find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_3", (6, 2), map_transitions)
+            ) + find_steps_between_rooms(MAP_DIR, "lounge_1", (4, 1),
+                                        "lounge_2", (2, 2), map_transitions) +
+                find_steps_between_rooms(MAP_DIR, "lounge_2", (2, 2),
+                                        "lounge_3", (6, 2), map_transitions))
+
+    elif active_request.type == ActiveGameRequest.RESPONSE:
+        if not active_request.known_properties['item']:
+            # if we don't know the response item, we have to check each request
+            total_cost += len(game_state.player.flags) * 3
+        if not active_request.known_properties['location']:
+            # if we don't know the target, we have to check each patient room
+            total_cost += shortest_patient_lap(game_state.current_room, game_state.player.pos)
+
+    return total_cost
+                
 
 def is_valid_match(game_state: GameState, report_vector: dict, patient_id: int, task_step: int) -> bool:
     """
@@ -260,10 +322,12 @@ def is_valid_match(game_state: GameState, report_vector: dict, patient_id: int, 
     :return: True if the report vector matches the game state for this field, False otherwise.
     """
     # TODO: needs testing!
-    # Example validation logic, replace with actual logic (which will vary based on the step and patient)
+    import pdb; pdb.set_trace()  # Debugging breakpoint
+
     if task_step == 0: # identity of correct potion
         for npc in report_vector['characters']:
-            if strip_spacing(npc["potion_needed"]) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
+            if npc["potion_needed"] is not None and strip_spacing(npc["potion_needed"]) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
+                # Check if the NPC's name or location matches the patient's name or location
                 if strip_spacing(npc["name"]) == strip_spacing(PATIENT_DATA[patient_id]['name']) or \
                    strip_spacing(npc["location"]) == strip_spacing(PATIENT_DATA[patient_id]['location']):
                     return True
@@ -317,35 +381,22 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int,
     :param patient_id: ID of the patient for whom the cost is being calculated (1-5).
     :return: Total information cost as a float.
     """
-    total_cost = 0.0
-    
-    """
-        current_req_id = get_current_request_id(gt_state, patient_id)
-        current_report_req_id = current_req_id
-        criteria_met = False
-        incurred_cost = 0.0
-        
-        while not criteria_met and current_report_req_id > 0:
-            if is_valid_match(gt_state, report_vector, patient_id, task_step):
-                criteria_met = True
-            else:
-                incurred_cost += get_step_cost(gt_state, report_vector, patient_id, task_step)
-            current_report_req_id -= 1
-        
-        total_cost += incurred_cost
-    """
     current_req_id = get_current_request_id(gt_state, patient_id)
     current_report_req_id = current_req_id
-    criteria_met = False
-    incurred_cost = 0.0
 
-    while not criteria_met and current_report_req_id >= 0:
-        if is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
-            criteria_met = True
-        else:
-            incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
-        current_report_req_id -= 1
+    # import pdb; pdb.set_trace()  # Debugging breakpoint
+
+    # while not criteria_met and current_report_req_id >= 0:
+    #     if is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
+    #         criteria_met = True
+    #     else:
+    #         incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
+    #     current_report_req_id -= 1
+    incurred_cost = 0.0
+    if not is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
+        incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
     
+
     return incurred_cost
 
 def run_single_condition(save_file_name: str, report_datafile_name: str, data_dir: str) -> None:
@@ -355,9 +406,11 @@ def run_single_condition(save_file_name: str, report_datafile_name: str, data_di
     :param participant_id: ID of the participant to analyze.
     :param data_dir: Directory containing the game state and report vector files.
     """
-    gt_save_file = os.path.join(data_dir, "participant_data", save_file_name)
-    report_file = os.path.join(data_dir, "processed_output", report_datafile_name)
-    
+    # gt_save_file = os.path.join(data_dir, "participant_data", save_file_name)
+    # report_file = os.path.join(data_dir, "processed_output", report_datafile_name)
+    gt_save_file = os.path.join(data_dir, save_file_name)
+    report_file = os.path.join(data_dir, report_datafile_name)
+
     gt_state = load_game_state(gt_save_file)
     report_vector = load_report_vector(report_file)
 
@@ -385,18 +438,33 @@ def test_step_matching():
     
     for patient_id in range(1, 6):
         current_request_id = get_current_request_id(gt_state, patient_id)
-        for task_step in range(0, 7):  # Assuming task steps are 0-6
+        for task_step in range(1, 8):  # Assuming task steps are 1-6 inclusive
             is_match = is_valid_match(gt_state, report_vector, patient_id, task_step)
             step_cost = get_step_cost(gt_state, patient_id, task_step, map_transitions)
             print(f"Patient {patient_id}, Task Step {task_step}: "
                   f"Current Request ID: {current_request_id}, "
                   f"Is Match: {is_match}, "
                   f"Step Cost: {step_cost}")
+            
+def test_single_condition():
+    """
+    Test the information cost analysis for a single condition.
+    """
+    # Example save file and report vector file
+    TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
+    save_file_name = "kb_test_0701"
+    report_datafile_name = "kb_test_0701_gt.json"
+
+    total_cost = run_single_condition(save_file_name, report_datafile_name, TEST_DIR)
+    print(f"Total information cost for {report_datafile_name}: {total_cost:.2f}")
 
 # for testing
 if __name__ == "__main__":
 
-    test_step_matching()
+    # test_step_matching()
+    test_single_condition()
+    # test_step_matching()
+
 
     # Uncomment the following lines to run the script with command line arguments
     # if len(sys.argv) != 3:
