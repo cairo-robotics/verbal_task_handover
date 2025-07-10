@@ -126,3 +126,48 @@
 2025-04-17 13:31:41 - NPC interact: None
 2025-04-17 13:31:44 - Room entered: SOUTH to hallway_1
 2025-04-18 17:22:00 - Room entered: NORTH to hallway_5
+2025-06-30 14:27:11 - Room entered: WEST to hallway_1
+2025-06-30 14:27:16 - Room entered: NORTH to room1
+2025-06-30 14:27:41 - NPC interact: lily
+2025-06-30 14:27:50 - Room entered: SOUTH to hallway_1
+2025-06-30 14:27:55 - Room entered: EAST to room0
+2025-06-30 14:27:58 - Room entered: SOUTH to hallway_3
+2025-06-30 14:28:04 - Room entered: SOUTH to storage_1
+2025-06-30 14:28:06 - Item obtained: gold_potion
+2025-06-30 14:28:09 - Room entered: NORTH to hallway_3
+2025-06-30 14:28:12 - Room entered: NORTH to room0
+2025-06-30 14:28:15 - Room entered: WEST to hallway_1
+2025-06-30 14:28:21 - Room entered: NORTH to room1
+2025-06-30 14:28:23 - Gave item to NPC: gold_potion lily
+2025-06-30 14:28:30 - Room entered: SOUTH to hallway_1
+2025-07-01 12:23:43 - Room entered: SOUTH to hallway_5
+2025-07-01 12:23:46 - Room entered: SOUTH to room0
+2025-07-01 12:23:46 - Room entered: WEST to hallway_1
+2025-07-01 12:23:48 - Room entered: NORTH to room1
+2025-07-01 12:23:50 - NPC interact: lily about response from Lola
+2025-07-01 12:23:57 - Room entered: SOUTH to hallway_1
+2025-07-01 12:24:00 - Room entered: SOUTH to room2
+2025-07-01 12:24:00 - NPC interact: oliver
+2025-07-01 12:24:02 - Room entered: NORTH to hallway_1
+2025-07-01 12:24:04 - Room entered: EAST to room0
+2025-07-01 12:24:06 - Room entered: NORTH to hallway_5
+2025-07-01 12:24:07 - Room entered: EAST to storage_2
+2025-07-01 12:24:08 - Item obtained: blue_potion
+2025-07-01 12:24:09 - Room entered: WEST to hallway_5
+2025-07-01 12:24:10 - Room entered: SOUTH to room0
+2025-07-01 12:24:11 - Room entered: WEST to hallway_1
+2025-07-01 12:24:12 - Room entered: SOUTH to room2
+2025-07-01 12:24:14 - Gave item to NPC: blue_potion oliver
+2025-07-01 12:32:53 - Room entered: SOUTH to hallway_5
+2025-07-01 12:32:55 - Room entered: SOUTH to room0
+2025-07-01 12:32:56 - Room entered: WEST to hallway_1
+2025-07-01 12:32:59 - Room entered: SOUTH to room2
+2025-07-01 12:33:00 - Room entered: NORTH to hallway_1
+2025-07-01 12:33:00 - Room entered: NORTH to room1
+2025-07-01 12:33:01 - Room entered: SOUTH to hallway_1
+2025-07-01 12:33:02 - Room entered: SOUTH to room2
+2025-07-01 12:33:03 - NPC interact: oliver
+2025-07-01 14:43:13 - Room entered: SOUTH to hallway_5
+2025-07-01 14:43:15 - Room entered: SOUTH to room0
+2025-07-01 14:43:18 - Room entered: WEST to hallway_1
+2025-07-01 14:43:27 - Room entered: SOUTH to room2

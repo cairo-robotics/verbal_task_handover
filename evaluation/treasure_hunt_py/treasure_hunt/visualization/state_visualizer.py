@@ -10,8 +10,8 @@ import time
 
 from treasure_hunt import assets
 
-GRAPHICS_DIR = os.path.dirname(assets.__file__)
-# GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
+# GRAPHICS_DIR = os.path.dirname(assets.__file__)
+GRAPHICS_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/assets/"
 
 # Colors
 BLACK = (0, 0, 0)

@@ -4,7 +4,7 @@ import json
 import re
 
 from treasure_hunt.src.game_mdp import GameState
-from iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
+from analytics.iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
 
 """
 Basic IAC algorithm pseudocode:
@@ -244,8 +244,8 @@ def get_step_cost(game_state: GameState, patient_id: int, active_request: Active
             total_steps += find_steps_between_rooms(MAP_DIR, start_room, start_pos, closest_room, current_pos, map_transitions)
 
         for room in visit_order:
-            steps = find_steps_between_rooms(MAP_DIR, current_pos, current_room,
-                                             patient_positions[room], room,
+            steps = find_steps_between_rooms(MAP_DIR, current_room, current_pos,
+                                             room, patient_positions[room],
                                             map_transitions)
             total_steps += steps
             current_pos = patient_positions[room]
@@ -259,12 +259,12 @@ def get_step_cost(game_state: GameState, patient_id: int, active_request: Active
                                             game_state.current_room, game_state.player.pos,
                                             PATIENT_DATA[patient_id]["location"], patient_pos,
                                             map_transitions)
-        elif not active_request.known_properties['target']:
+        elif not (active_request.known_properties['target']):
             # if we have the potion but not the patient, we have to check each room
             total_cost += shortest_patient_lap(game_state.current_room, game_state.player.pos)
         
         if not active_request.known_properties['location']:
-            # if we have the potion and the patient, but not the location, we have to check each (storage) room
+            # if we have the potion color and the patient, but not the location, we have to check each (storage) room
             total_cost += (min(
                 find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
                                         "storage_1", (5, 1), map_transitions),
@@ -423,74 +423,3 @@ def run_single_condition(save_file_name: str, report_datafile_name: str, data_di
     
     return total_cost
 
-def test_step_matching():
-    """
-    Test the step matching function with a sample game state and report vector.
-    """
-    # Example game state and report vector
-    TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
-    gt_state = GameState.load(os.path.join(TEST_DIR, "kb_test_0701"))
-
-    map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
-
-
-    report_vector = load_report_vector(os.path.join(TEST_DIR, "test_save_state.json"))
-    
-    for patient_id in range(1, 6):
-        current_request_id = get_current_request_id(gt_state, patient_id)
-        for task_step in range(1, 8):  # Assuming task steps are 1-6 inclusive
-            is_match = is_valid_match(gt_state, report_vector, patient_id, task_step)
-            step_cost = get_step_cost(gt_state, patient_id, task_step, map_transitions)
-            print(f"Patient {patient_id}, Task Step {task_step}: "
-                  f"Current Request ID: {current_request_id}, "
-                  f"Is Match: {is_match}, "
-                  f"Step Cost: {step_cost}")
-            
-def test_single_condition():
-    """
-    Test the information cost analysis for a single condition.
-    """
-    # Example save file and report vector file
-    TEST_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/test"
-    save_file_name = "kb_test_0701"
-    report_datafile_name = "kb_test_0701_gt.json"
-
-    total_cost = run_single_condition(save_file_name, report_datafile_name, TEST_DIR)
-    print(f"Total information cost for {report_datafile_name}: {total_cost:.2f}")
-
-# for testing
-if __name__ == "__main__":
-
-    # test_step_matching()
-    test_single_condition()
-    # test_step_matching()
-
-
-    # Uncomment the following lines to run the script with command line arguments
-    # if len(sys.argv) != 3:
-    #     print("Usage: python analyze_info_cost.py <save_file_name> <report_datafile_name>")
-    #     sys.exit(1)
-    
-    # save_file_name = sys.argv[1]
-    # # report_datafile_name = sys.argv[2]
-
-    # # data_dir = os.environ.get("DATA_DIR", ".")
-    # data_dir = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt/saves"
-
-    # # save_file_state = load_game_state(os.path.join(data_dir, "participant_data", save_file_name))
-    # save_file_state = load_game_state(os.path.join(data_dir, save_file_name))
-    # print("load_game_state:", save_file_state)
-    # # report_datafile_state = load_report_vector(os.path.join(data_dir, "processed_output", report_datafile_name))
-    # # print("load_report_vector:", report_datafile_state)
-    # # telemetry_text = load_telemetry_text(os.path.join(data_dir, "participant_data", "telemetry", save_file_name + ".txt"))
-    # telemetry_text = load_telemetry_text(os.path.join(data_dir, "telemetry", save_file_name + ".txt"))
-    # print("load_telemetry_text:", telemetry_text)
-    # completed_quests = check_completed_quests(telemetry_text)
-    # print("check_completed_quests:", completed_quests)
-
-    # print(get_current_request_id(save_file_state, 1))  # Example for patient ID 1
-    # print(get_step_cost(save_file_state, 1, 5))  # Example for patient ID 1 at task step 5
-    
-    
-    # # total_cost = run_single_condition(save_file_name, report_datafile_name, data_dir)
-    # # print(f"Total information cost for {report_datafile_name}: {total_cost:.2f}")
