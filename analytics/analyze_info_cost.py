@@ -179,29 +179,30 @@ def get_current_request(game_state: GameState, patient_id: int) -> int:
     for flag in game_state.player.flags:
         if flag.lower() == f"response from {PATIENT_DATA[patient_id]['npc_target']}":
             active_request = ActiveGameRequest(ActiveGameRequest.RESPONSE)
-            active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
-            active_request.known_properties['item'] = flag.lower()
+            active_request.known_properties['target'] = True
+            active_request.known_properties['item'] = True
+            active_request.known_properties['location'] = True
             return active_request
     
     if f"request from room {patient_id}".lower() in game_state.player.flags:
         active_request = ActiveGameRequest(ActiveGameRequest.REQUEST)
-        active_request.known_properties['target'] = PATIENT_DATA[patient_id]['npc_target']
-        active_request.known_properties['item'] = f"request from room {patient_id}"
+        active_request.known_properties['target'] = True
+        active_request.known_properties['item'] = True
+        active_request.known_properties['location'] = True # in theory P1 might not actually know the correct room --- something to consider for later
         return active_request
     
-    # if game_state.player.held_item is not None and game_state.player.held_item.lower() in PATIENT_DATA[patient_id]['potion']:
-    #     active_request = ActiveGameRequest(ActiveGameRequest.POTION)
-    #     active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
-    #     active_request.known_properties['item'] = game_state.player.held_item.lower()
-    #     return active_request
+    if game_state.player.held_item is not None and game_state.player.held_item.lower() in PATIENT_DATA[patient_id]['potion']:
+        active_request = ActiveGameRequest(ActiveGameRequest.POTION)
+        active_request.known_properties['target'] = True
+        active_request.known_properties['item'] = False # if the player already has the potion, they don't need to communicate which it is
+        active_request.known_properties['location'] = False # similarly, the location is no longer needed if they have the potion
+        return active_request
     
-    # # if game_state.player.held_item is not None and game_state.held_item.lower() == PATIENT_DATA[patient_id]['potion']:
-    # #     return 2
-    # # return 1
     else:
         active_request = ActiveGameRequest(ActiveGameRequest.POTION)
-        active_request.known_properties['target'] = PATIENT_DATA[patient_id]['name']
-        active_request.known_properties['item'] = PATIENT_DATA[patient_id]['potion']
+        active_request.known_properties['target'] = True
+        active_request.known_properties['item'] = True
+        active_request.known_properties['location'] = True # in theory P1 might not actually know the correct room --- something to consider for later
         return active_request
 
 def get_step_cost(game_state: GameState, patient_id: int, active_request: ActiveGameRequest, map_transitions: dict) -> float:
@@ -310,67 +311,70 @@ def get_step_cost(game_state: GameState, patient_id: int, active_request: Active
 
     return total_cost
                 
-
-def is_valid_match(game_state: GameState, report_vector: dict, patient_id: int, task_step: int) -> bool:
+def reconstruct_active_request(game_state: GameState, report_vector: dict, actual_active_request: ActiveGameRequest, patient_id: int) -> ActiveGameRequest:
     """
-    Check if the report vector matches the game state for a given patient and task step.
+    Reconstruct the active request for a given patient based on the game state and report vector.
     
     :param game_state: GameState object representing the current state of the game.
     :param report_vector: Dictionary representing the report vector.
-    :param patient_id: ID of the patient for whom the match is being checked (1-5).
-    :param task_step: The step number in the task for which the match is being checked (0-6)
-    :return: True if the report vector matches the game state for this field, False otherwise.
+    :param patient_id: ID of the patient for whom the request is being reconstructed (1-5).
+    :return: ActiveGameRequest object representing the reconstructed request.
     """
-    # TODO: needs testing!
-    import pdb; pdb.set_trace()  # Debugging breakpoint
+    # Example logic, replace with actual logic to reconstruct active request
+    # raise NotImplementedError
+    if patient_id < 1 or patient_id > 5:
+        raise ValueError("Patient ID must be between 1 and 5.")
+    
 
-    if task_step == 0: # identity of correct potion
-        for npc in report_vector['characters']:
-            if npc["potion_needed"] is not None and strip_spacing(npc["potion_needed"]) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
-                # Check if the NPC's name or location matches the patient's name or location
-                if strip_spacing(npc["name"]) == strip_spacing(PATIENT_DATA[patient_id]['name']) or \
-                   strip_spacing(npc["location"]) == strip_spacing(PATIENT_DATA[patient_id]['location']):
-                    return True
-    elif task_step == 1: # location of correct potion
-        for room in report_vector["location_map"]:
-            if strip_spacing(room["name"]) == strip_spacing(POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]):
-                for potion in room["contains_potions"]:
-                    if strip_spacing(potion) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
-                        return True
-                
-    elif task_step == 2: # identity of request npc
-        for request in report_vector["character_requests"]:
-            if strip_spacing(request["target"]) == strip_spacing(PATIENT_DATA[patient_id]['npc_target']):
-                return True
+    reconstructed_request = ActiveGameRequest(actual_active_request.type)
+    reconstructed_request.known_properties = {p: False for p in actual_active_request.known_properties}
+
+    if actual_active_request.type == ActiveGameRequest.POTION:
+        # verify item type and/or target
+        for character in report_vector['characters']:
+            if (character['name'] and character['name'].lower() == PATIENT_DATA[patient_id]["name"].lower()) or \
+                (character["location"] and strip_spacing(character["location"]) == PATIENT_DATA[patient_id]["location"]):
+                if character['potion_needed'] and strip_spacing(character['potion_needed']) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
+                    reconstructed_request.known_properties['item'] = True
+                    reconstructed_request.known_properties['target'] = True
+                elif character['needs_potion'] and character['potion_needed'] is None:
+                    reconstructed_request.known_properties['item'] = False
+                    reconstructed_request.known_properties['target'] = True
+
+                if strip_spacing(character['location']) == strip_spacing(PATIENT_DATA[patient_id]['location']):
+                    reconstructed_request.known_properties['location'] = True
+    
+    elif actual_active_request.type == ActiveGameRequest.REQUEST:
+        for req in report_vector['character_requests']:
+            if req["item"] and strip_spacing(req["item"]) == strip_spacing(f"request from {patient_id}"):
+                reconstructed_request.known_properties['item'] = True
+            if req["target"] and req["target"].lower() == PATIENT_DATA[patient_id]['npc_target'].lower():
+                if reconstructed_request.known_properties['item'] or not req['item']:
+                    reconstructed_request.known_properties['target'] = True
+
+            # do we know the location of the target NPC?
+            for character in report_vector['characters']:
+                if character["name"] and character['name'].lower() == PATIENT_DATA[patient_id]['npc_target'].lower():
+                    if character["location"] and strip_spacing(character['location']) == strip_spacing(QUEST_NPC_LOCATIONS[PATIENT_DATA[patient_id]['npc_target']]):
+                        reconstructed_request.known_properties['location'] = True
+
+    elif actual_active_request.type == ActiveGameRequest.RESPONSE:
+        for req in report_vector['character_requests']:
+            if req["item"] and strip_spacing(req["item"]) == strip_spacing(f"response from {PATIENT_DATA[patient_id]['npc_target']}"):
+                reconstructed_request.known_properties['item'] = True
             
-    elif task_step == 3: # locating request npc
-        for npc in report_vector["characters"]:
-            if strip_spacing(npc["name"]) == strip_spacing(PATIENT_DATA[patient_id]['npc_target']) and \
-                strip_spacing(npc["location"]) == QUEST_NPC_LOCATIONS[PATIENT_DATA[patient_id]['npc_target']]:
-                return True
+            if req["target"] and req["target"].lower() == PATIENT_DATA[patient_id]['name'].lower():
+                reconstructed_request.known_properties['target'] = True
+                for character in report_vector['characters']:
+                    if character["name"] and character['name'].lower() == PATIENT_DATA[patient_id]['name'].lower():
+                        if character["location"] and strip_spacing(character['location']) == strip_spacing(PATIENT_DATA[patient_id]['location']):
+                            reconstructed_request.known_properties['location'] = True
+            elif req["target"] and strip_spacing(PATIENT_DATA[patient_id]['location']) in strip_spacing(req['target']): 
+                # knowing the correct room is sufficient to know the target
+                reconstructed_request.known_properties['target'] = True
+                reconstructed_request.known_properties['location'] = True
 
-    # TODO: i don't feel great about the ordering of these
-    elif task_step == 4:
-        # asking about correct item
-        for req in report_vector["character_requests"]:
-            if strip_spacing(req["target"]) == strip_spacing(PATIENT_DATA[patient_id]['npc_target']) and \
-                strip_spacing(req["item"]) == strip_spacing(f"request from room {patient_id}"):
-                return True
-            
-    elif task_step == 5: # bringing response to correct patient
-        for req in report_vector["character_requests"]:
-            if strip_spacing(req["target"]) == strip_spacing(PATIENT_DATA[patient_id]['name']) or \
-                    strip_spacing(PATIENT_DATA[patient_id]['location']) in strip_spacing(req["target"]):
-                    return True
-
-    elif task_step == 6: # asking about the correct response
-        for req in report_vector["character_requests"]:
-            if strip_spacing(req["item"]) == strip_spacing(f"response from {PATIENT_DATA[patient_id]['npc_target']}"):
-                if strip_spacing(req["target"]) == strip_spacing(PATIENT_DATA[patient_id]['name']) or \
-                    strip_spacing(PATIENT_DATA[patient_id]['location']) in strip_spacing(req["target"]):
-                    return True
-
-    return False
+    return reconstructed_request
 
 def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int, map_transitions: dict) -> float:
     """
@@ -381,20 +385,7 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int,
     :param patient_id: ID of the patient for whom the cost is being calculated (1-5).
     :return: Total information cost as a float.
     """
-    current_req_id = get_current_request_id(gt_state, patient_id)
-    current_report_req_id = current_req_id
-
-    # import pdb; pdb.set_trace()  # Debugging breakpoint
-
-    # while not criteria_met and current_report_req_id >= 0:
-    #     if is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
-    #         criteria_met = True
-    #     else:
-    #         incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
-    #     current_report_req_id -= 1
-    incurred_cost = 0.0
-    if not is_valid_match(gt_state, report_vector, patient_id, current_report_req_id):
-        incurred_cost += get_step_cost(gt_state, patient_id, current_report_req_id, map_transitions)
+    raise NotImplementedError
     
 
     return incurred_cost
