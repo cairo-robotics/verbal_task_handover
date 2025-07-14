@@ -9,6 +9,22 @@ Also in `/evaluation` is code used to generate, process, and score reports for i
 * Python 3.8
 * Python dependencies (see `requirements.txt`)
 
+## evaluation code
+* *requires*: a configued `.env` file (or manually set environment variable `DATA_DIR`)
+* `analytics/`:
+    * `analyze_info_cost.py`: [WIP] assess differential information access cost of missing info from a given vectorized report in a givne save state
+    * `iac_bfs.py`: simple BFS implementation to measure steps between two points. Used in assessing information access cost (IAC)
+    * `aggregate_scores.py`: collects & sorts meta-scores (i.e. how far each participant progressed) into a csv
+    * `report_statistics.py`: [WIP]: currently compiles easy-to-access information about report data, including word counts, across conditions
+    * `process_all_states_and_reports.py`: bulk generates processed state (ground truth) data & associated report vector data; currently needs updating
+    * `report_to_vector.py`: makes an API call to GPT (using the new `response_format` argument) to convert natural language reports into the pydantic JSON schema specified in `vector_schema.py`
+    * `telemetry_to_vector`: currently deprecated; objective is to produce a version of the ground truth data consisting of what the LLM could actually deduce from its limited telemetry input
+    * `vector_schema.py`: defines a pydantic object `GameState` designed to contain all potential information used to determine a next-best action
+
+
+## post-hoc autonomous report generation
+* `scripts/generate_hybrid_report.py`: prompts GPT to generate a handover report for a given participant save file's telemetry and (optionally) user-written report
+
 ## game task (treasure_hunt_py)
 * `treasure_hunt/`
     * `src/`
@@ -27,13 +43,3 @@ Also in `/evaluation` is code used to generate, process, and score reports for i
 
 [more detail WIP]
 
-## evaluation code
-* *requires*: a configued `.env` file (or manually set environment variable `DATA_DIR`)
-* `analytics/`: mostly deprecated, except for
-    * `report_statistics.py`: [WIP]: currently compiles easy-to-access information about report data, including word counts, across conditions
-* `scripts/`:
-    * `aggregate_scores.py`: collects & sorts meta-scores (i.e. how far each participant progressed) into a csv
-    * `process_all_states_and_reports.py`: bulk generates processed state (ground truth) data & associated report vector data; current needs updating
-    * `report_to_vector.py`: makes an API call to GPT (using the new `response_format` argument) to convert natural language reports into the pydantic JSON schema specified in `vector_schema.py`
-    * `telemetry_to_vector`: currently deprecated; objective is to produce a version of the ground truth data consisting of what the LLM could actually deduce from its limited telemetry input
-    * `vector_schema.py`: defines a pydantic object `GameState` designed to contain all potential information used to determine a next-best action
