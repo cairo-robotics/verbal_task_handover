@@ -1,0 +1,180 @@
+2025-04-19 17:38:42 - Room entered: EAST to room5
+2025-04-19 17:38:43 - Room entered: WEST to hallway_3
+2025-04-19 17:38:45 - Room entered: NORTH to room0
+2025-04-19 17:38:46 - Room entered: NORTH to hallway_5
+2025-04-19 17:39:15 - Room entered: NORTH to room0
+2025-04-19 17:39:16 - Room entered: WEST to hallway_1
+2025-04-19 17:39:19 - Room entered: NORTH to room1
+2025-04-19 17:39:23 - NPC interact: lily
+2025-04-19 17:39:27 - Room entered: SOUTH to hallway_1
+2025-04-19 17:39:28 - Room entered: SOUTH to room2
+2025-04-19 17:41:54 - Room entered: SOUTH to storage_1
+2025-04-19 17:41:55 - Item obtained: gold_potion
+2025-04-19 17:41:55 - Room entered: NORTH to hallway_3
+2025-04-19 17:41:57 - Room entered: NORTH to room0
+2025-04-19 17:41:57 - Room entered: EAST to hallway_4
+2025-04-19 17:41:58 - Room entered: WEST to room0
+2025-04-19 17:41:59 - Room entered: WEST to hallway_1
+2025-04-19 17:42:01 - Room entered: NORTH to room1
+2025-04-19 17:42:02 - Gave item to NPC: gold_potion lily
+2025-04-19 17:42:05 - Room entered: SOUTH to hallway_1
+2025-04-19 17:42:06 - Room entered: SOUTH to room2
+2025-04-19 17:42:08 - Room entered: NORTH to hallway_1
+2025-04-19 17:42:15 - Room entered: EAST to room0
+2025-04-19 17:42:15 - Room entered: WEST to hallway_1
+2025-04-19 17:42:18 - Room entered: NORTH to room1
+2025-04-19 17:42:18 - Room entered: SOUTH to hallway_1
+2025-04-19 17:42:19 - Room entered: SOUTH to room2
+2025-04-19 17:42:19 - Room entered: NORTH to hallway_1
+2025-04-19 17:42:21 - Room entered: EAST to room0
+2025-04-19 17:42:22 - Room entered: WEST to hallway_1
+2025-04-19 17:42:23 - Room entered: NORTH to room1
+2025-04-19 17:42:25 - Room entered: SOUTH to hallway_1
+2025-04-19 17:42:27 - Room entered: EAST to room0
+2025-04-19 17:42:28 - Room entered: WEST to hallway_1
+2025-04-19 17:42:30 - Room entered: EAST to room0
+2025-04-19 17:42:31 - Room entered: SOUTH to hallway_3
+2025-04-19 17:42:32 - Room entered: NORTH to room0
+2025-04-19 17:42:33 - Room entered: EAST to hallway_4
+2025-04-19 17:42:35 - Room entered: WEST to room0
+2025-04-19 17:42:36 - Room entered: SOUTH to hallway_2
+2025-04-19 17:42:37 - Room entered: NORTH to room0
+2025-04-19 17:42:38 - Room entered: NORTH to hallway_5
+2025-04-19 17:42:39 - Room entered: SOUTH to room0
+2025-04-19 20:41:37 - Room entered: NORTH to room1
+2025-04-19 20:41:38 - Room entered: SOUTH to hallway_1
+2025-04-19 20:41:40 - Room entered: EAST to room0
+2025-04-19 20:41:41 - Room entered: SOUTH to hallway_3
+2025-04-19 20:41:42 - Room entered: SOUTH to storage_1
+2025-04-19 20:41:43 - Item obtained: gold_potion
+2025-04-19 20:41:43 - Room entered: NORTH to hallway_3
+2025-04-19 20:41:44 - Room entered: NORTH to room0
+2025-04-19 20:41:46 - Room entered: WEST to hallway_1
+2025-04-19 20:41:48 - Room entered: NORTH to room1
+2025-04-19 20:41:49 - NPC interact: lily
+2025-04-19 20:41:50 - NPC interact: lily
+2025-04-19 20:41:51 - NPC interact: lily
+2025-04-19 20:41:52 - NPC interact: lily
+2025-04-19 20:41:52 - NPC interact: lily
+2025-04-19 20:41:53 - NPC interact: lily
+2025-04-19 20:41:53 - NPC interact: lily
+2025-04-19 20:41:53 - NPC interact: lily
+2025-04-19 20:41:54 - NPC interact: lily
+2025-04-19 20:41:54 - NPC interact: lily
+2025-04-19 20:41:55 - NPC interact: lily
+2025-04-19 20:41:55 - NPC interact: lily
+2025-04-19 20:41:55 - NPC interact: lily
+2025-04-19 20:41:56 - NPC interact: lily
+2025-04-19 20:41:56 - NPC interact: lily
+2025-04-19 20:41:57 - NPC interact: lily
+2025-04-19 20:41:57 - NPC interact: lily
+2025-04-19 20:42:44 - Room entered: EAST to room0
+2025-04-19 20:42:46 - Room entered: SOUTH to hallway_3
+2025-04-19 20:42:48 - Room entered: SOUTH to storage_1
+2025-04-19 20:42:48 - Item obtained: gold_potion
+2025-04-19 20:42:49 - Room entered: NORTH to hallway_3
+2025-04-19 20:42:50 - Room entered: NORTH to room0
+2025-04-19 20:42:51 - Room entered: WEST to hallway_1
+2025-04-19 20:42:53 - Room entered: NORTH to room1
+2025-04-19 20:42:54 - NPC interact: lily
+2025-04-19 20:42:56 - NPC interact: lily
+2025-04-19 20:42:56 - NPC interact: lily
+2025-04-19 20:42:56 - NPC interact: lily
+2025-04-19 20:42:57 - NPC interact: lily
+2025-04-19 20:42:57 - NPC interact: lily
+2025-04-19 20:42:57 - NPC interact: lily
+2025-04-19 20:42:58 - NPC interact: lily
+2025-04-19 20:42:58 - NPC interact: lily
+2025-04-19 20:44:17 - Room entered: SOUTH to hallway_1
+2025-04-19 20:44:19 - Room entered: EAST to room0
+2025-04-19 20:44:20 - Room entered: SOUTH to hallway_3
+2025-04-19 20:44:21 - Room entered: SOUTH to storage_1
+2025-04-19 20:44:22 - Item obtained: gold_potion
+2025-04-19 20:44:23 - Room entered: NORTH to hallway_3
+2025-04-19 20:44:24 - Room entered: NORTH to room0
+2025-04-19 20:44:25 - Room entered: WEST to hallway_1
+2025-04-19 20:44:27 - Room entered: NORTH to room1
+2025-04-19 20:45:07 - Room entered: SOUTH to hallway_1
+2025-04-19 20:45:09 - Room entered: EAST to room0
+2025-04-19 20:45:10 - Room entered: SOUTH to hallway_3
+2025-04-19 20:45:11 - Room entered: SOUTH to storage_1
+2025-04-19 20:45:11 - Item obtained: gold_potion
+2025-04-19 20:45:12 - Room entered: NORTH to hallway_3
+2025-04-19 20:45:13 - Room entered: NORTH to room0
+2025-04-19 20:45:15 - Room entered: WEST to hallway_1
+2025-04-19 20:45:17 - Room entered: NORTH to room1
+2025-04-19 20:47:38 - Room entered: SOUTH to hallway_3
+2025-04-19 20:47:40 - Room entered: SOUTH to storage_1
+2025-04-19 20:47:40 - Item obtained: gold_potion
+2025-04-19 20:47:41 - Room entered: NORTH to hallway_3
+2025-04-19 20:47:42 - Room entered: NORTH to room0
+2025-04-19 20:47:43 - Room entered: WEST to hallway_1
+2025-04-19 20:47:45 - Room entered: NORTH to room1
+2025-04-19 20:48:38 - Room entered: EAST to room0
+2025-04-19 20:48:39 - Room entered: SOUTH to hallway_3
+2025-04-19 20:48:42 - Room entered: SOUTH to storage_1
+2025-04-19 20:48:43 - Item obtained: gold_potion
+2025-04-19 20:48:44 - Room entered: NORTH to hallway_3
+2025-04-19 20:48:45 - Room entered: NORTH to room0
+2025-04-19 20:48:46 - Room entered: WEST to hallway_1
+2025-04-19 20:48:48 - Room entered: NORTH to room1
+2025-04-19 20:49:25 - NPC interact: gold_potion lily
+2025-04-19 20:50:27 - Item obtained: gold_potion
+2025-04-19 20:50:27 - Room entered: NORTH to hallway_3
+2025-04-19 20:50:29 - Room entered: NORTH to room0
+2025-04-19 20:50:30 - Room entered: WEST to hallway_1
+2025-04-19 20:50:32 - Room entered: NORTH to room1
+2025-04-19 20:50:36 - Gave item to NPC: gold_potion lily
+2025-04-19 20:52:49 - Room entered: EAST to room5
+2025-04-19 20:52:50 - Room entered: WEST to hallway_3
+2025-04-19 20:52:51 - Room entered: SOUTH to storage_1
+2025-04-19 20:52:52 - Item obtained: gold_potion
+2025-04-19 20:52:53 - Room entered: NORTH to hallway_3
+2025-04-19 20:52:54 - Room entered: NORTH to room0
+2025-04-19 20:52:55 - Room entered: WEST to hallway_1
+2025-04-19 20:52:57 - Room entered: NORTH to room1
+2025-04-19 20:53:01 - Gave item to NPC: gold_potion lily
+2025-04-19 20:54:45 - Room entered: SOUTH to hallway_3
+2025-04-19 20:54:46 - Room entered: SOUTH to storage_1
+2025-04-19 20:54:47 - Item obtained: gold_potion
+2025-04-19 20:54:47 - Room entered: NORTH to hallway_3
+2025-04-19 20:54:49 - Room entered: NORTH to room0
+2025-04-19 20:54:50 - Room entered: WEST to hallway_1
+2025-04-19 20:54:52 - Room entered: NORTH to room1
+2025-04-19 20:54:53 - Gave item to NPC: gold_potion lily
+2025-04-19 20:55:51 - Room entered: EAST to room5
+2025-04-19 20:55:52 - Room entered: WEST to hallway_3
+2025-04-19 20:55:54 - Room entered: SOUTH to storage_1
+2025-04-19 20:55:54 - Item obtained: gold_potion
+2025-04-19 20:55:55 - Room entered: NORTH to hallway_3
+2025-04-19 20:55:56 - Room entered: NORTH to room0
+2025-04-19 20:55:57 - Room entered: WEST to hallway_1
+2025-04-19 20:55:59 - Room entered: NORTH to room1
+2025-04-19 20:56:00 - Gave item to NPC: gold_potion lily
+2025-04-19 20:56:03 - NPC interact: lily
+2025-04-19 20:56:05 - Room entered: SOUTH to hallway_1
+2025-04-19 20:56:06 - Room entered: EAST to room0
+2025-04-27 23:37:25 - Room entered: NORTH to room0
+2025-04-27 23:37:27 - Room entered: EAST to hallway_4
+2025-04-27 23:37:29 - Room entered: WEST to room0
+2025-04-27 23:37:30 - Room entered: EAST to hallway_4
+2025-04-27 23:37:35 - Room entered: NORTH to room3
+2025-04-27 23:37:36 - NPC interact: nick
+2025-04-27 23:37:39 - Room entered: SOUTH to hallway_4
+2025-04-27 23:37:44 - Room entered: WEST to room0
+2025-04-27 23:37:47 - Room entered: WEST to hallway_1
+2025-04-27 23:37:53 - Room entered: NORTH to room1
+2025-04-27 23:38:11 - NPC interact: lily
+2025-04-28 08:57:12 - Room entered: NORTH to room0
+2025-04-28 08:57:15 - Room entered: WEST to hallway_1
+2025-04-28 08:57:20 - Room entered: NORTH to room1
+2025-04-28 08:57:22 - NPC interact: lily
+2025-04-28 08:57:23 - NPC interact: lily
+2025-04-28 08:57:26 - Room entered: SOUTH to hallway_1
+2025-04-28 08:57:32 - Room entered: EAST to room0
+2025-04-28 08:57:38 - Room entered: SOUTH to hallway_3
+2025-04-28 08:57:41 - Room entered: SOUTH to storage_1
+2025-04-28 08:57:43 - Room entered: NORTH to hallway_3
+2025-04-28 08:58:24 - Room entered: SOUTH to storage_1
+2025-04-28 08:58:26 - Room entered: NORTH to hallway_3
+2025-04-28 08:58:30 - Room entered: NORTH to room0

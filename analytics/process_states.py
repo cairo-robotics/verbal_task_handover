@@ -1,6 +1,6 @@
 import os
 import sys
-from save_to_vector import output_ground_truth
+from analytics.save_to_vector import output_ground_truth
 
 # PARTICIPANTS = list(range(502, 510, 2))
 # PARTICIPANTS = ["504_1", "509_1", "601", "602", "603", "604"]

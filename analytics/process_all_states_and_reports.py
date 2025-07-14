@@ -1,7 +1,7 @@
 import os
 import sys
-from save_to_vector import output_ground_truth
-from report_to_vector import convert_to_vector
+from analytics.save_to_vector import output_ground_truth
+from analytics.report_to_vector import convert_to_vector
 
 PARTICIPANTS = list(range(501, 510, 1))  # Example participant IDs from 501 to 509
 
