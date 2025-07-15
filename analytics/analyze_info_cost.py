@@ -385,10 +385,15 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int,
     :param patient_id: ID of the patient for whom the cost is being calculated (1-5).
     :return: Total information cost as a float.
     """
-    raise NotImplementedError
-    
+    gt_request = get_current_request(gt_state, patient_id)
+    reconstructed_request = reconstruct_active_request(gt_state, report_vector, gt_request, patient_id)
 
-    return incurred_cost
+    for prop in gt_request.known_properties:
+       reconstructed_request.known_properties[prop] = (reconstructed_request.known_properties.get(prop, False) == gt_request.known_properties[prop])
+
+    step_cost = get_step_cost(gt_state, patient_id, reconstructed_request, map_transitions)
+    return step_cost
+
 
 def run_single_condition(save_file_name: str, report_datafile_name: str, data_dir: str) -> None:
     """
