@@ -7,7 +7,8 @@ from analytics.analyze_info_cost import (
     check_completed_quests,
     get_step_cost,
     get_current_request,
-    reconstruct_active_request
+    reconstruct_active_request,
+    run_single_condition
 )
 
 import os
@@ -116,3 +117,10 @@ def test_reconstruct_request():
 
     reconstructed_request = reconstruct_active_request(gt_state, report_vector, actual_active_request, patient_id)
     print(reconstructed_request.known_properties)
+
+def test_on_existing_files():
+    TEST_DIR = "/home/kaleb/code/verbal_task_handover/test"
+    gt_save_file = "kb_test_0717"
+    report_file = "kb_test_report_output.json"
+
+    print(run_single_condition(gt_save_file, report_file, TEST_DIR))

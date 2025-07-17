@@ -6,30 +6,6 @@ import re
 from treasure_hunt.src.game_mdp import GameState
 from analytics.iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
 
-"""
-Basic IAC algorithm pseudocode:
-given gt_state, report_state as dicts
-net_cost = 0
-for pt in range(1, 6):
-	# what is the gt_state progress in this questline?
-	current_req_id = gt_state[pt]
-	# is the information required to complete this request available in the report?
-	current_report_req_id = current_req_id
-	criteria_met = False
-	incurred_cost = 0
-	while not criteria_met and current_report_req_id > 0:
-		for criterion in info_criteria[current_report_req_id]:
-			if is_valid_match(criterion, gt_state[pt], report_state[pt]):
-				criteria_met = True # we can safely assume next player (p2) will start from this request
-			else:
-				incurred_cost += apply_cost(criterion)
-		# if p2 has nothing to go off of, we assume they'll have to default to the previous step
-		if not criteria_met:
-			current_report_req_id -= 1
-	net_cost += incurred_cost
-return net_cost
-"""
-
 # GAME_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt"
 # MAP_DIR = os.path.join(GAME_DIR, "maps", "map2")
 
@@ -47,16 +23,16 @@ class ActiveGameRequest:
 
 POTION_ROOM_CONTENTS = {
     "storage_1" : [
-        "red_potion",
-        "pale_blue_potion",
-        "gold_potion"
+        "red",
+        "pale_blue",
+        "gold"
     ],
     "storage_2": [
-        "pink_potion",
-        "green_potion",
-        "blue_potion",
-        "orange_potion",
-        "purple_potion"
+        "pink",
+        "green",
+        "blue",
+        "orange",
+        "purple"
     ]
 }
 
@@ -74,35 +50,35 @@ QUEST_NPC_LOCATIONS = {
 PATIENT_DATA = {
     1 : {
         "name" : "lily",
-        "potion" : "gold_potion",
+        "potion" : "gold",
         "npc_target" : "lola",
         "treasure" : "treasure1",
         "location" : "room1"
     },
     2 : {
         "name" : "oliver",
-        "potion" : "blue_potion",
+        "potion" : "blue",
         "npc_target" : "john",
         "treasure" : "treasure2",
         "location" : "room2"
     },
     3 : {
         "name" : "nick",
-        "potion": "red_potion",
+        "potion": "red",
         "npc_target": "donna",
         "treasure": "treasure3",
         "location": "room3"
     },
     4 : {
         "name" : "marie",
-        "potion" : "green_potion",
+        "potion" : "green",
         "npc_target" : "steve",
         "treasure" : "treasure4",
         "location" : "room4"
     },
     5: {
         "name" : "guy",
-        "potion" : "orange_potion",
+        "potion" : "orange",
         "npc_target" : "brittany",
         "treasure" : "treasure5",
         "location" : "room5"
@@ -171,8 +147,6 @@ def get_current_request(game_state: GameState, patient_id: int) -> int:
     :param patient_id: ID of the patient for whom the request ID is being retrieved (1-5).
     :return: Current request ID as an integer.
     """
-    # Example logic, replace with actual logic to retrieve current request ID (i.e. what P2 should be working on next)
-    # raise NotImplementedError
     if patient_id < 1 or patient_id > 5:
         raise ValueError("Patient ID must be between 1 and 5.")
     
@@ -416,6 +390,8 @@ def run_single_condition(save_file_name: str, report_datafile_name: str, data_di
     for patient_id in range(1, 6):  # Assuming patient IDs are 1-5
         cost = analyze_info_cost(gt_state, report_vector, patient_id, map_transitions)
         total_cost += cost
+
+        print("Cost for patient", patient_id, ":", cost)
     
     return total_cost
 

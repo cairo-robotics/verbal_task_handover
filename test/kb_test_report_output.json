@@ -1,0 +1,99 @@
+{
+  "character_requests": [
+    {
+      "item": "response from Lola",
+      "target": "Lily"
+    },
+    {
+      "item": "request from room 2",
+      "target": "John"
+    }
+  ],
+  "characters": [
+    {
+      "name": "Lily",
+      "description": "Patient in room 1",
+      "location": "room 1",
+      "needs_potion": false,
+      "potion_needed": null
+    },
+    {
+      "name": "Patient in room 2",
+      "description": "Patient in room 2",
+      "location": "room 2",
+      "needs_potion": false,
+      "potion_needed": null
+    },
+    {
+      "name": "Patient in room 3",
+      "description": "Patient in room 3",
+      "location": "room 3",
+      "needs_potion": true,
+      "potion_needed": "red"
+    },
+    {
+      "name": "John",
+      "description": "Character to whom requests are delivered",
+      "location": null,
+      "needs_potion": false,
+      "potion_needed": null
+    },
+    {
+      "name": "Lola",
+      "description": "Character who sent a response",
+      "location": null,
+      "needs_potion": false,
+      "potion_needed": null
+    }
+  ],
+  "locations_visited": [
+    "room 1",
+    "room 2",
+    "room 3",
+    "storage_1"
+  ],
+  "location_map": [
+    {
+      "name": "room 1",
+      "connects_to": [
+        "room 2",
+        "room 3"
+      ],
+      "contains_characters": [
+        "Lily"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "room 2",
+      "connects_to": [
+        "room 1",
+        "room 3"
+      ],
+      "contains_characters": [
+        "Patient in room 2"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "room 3",
+      "connects_to": [
+        "room 1",
+        "room 2"
+      ],
+      "contains_characters": [
+        "Patient in room 3"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "storage_1",
+      "connects_to": [],
+      "contains_characters": [],
+      "contains_potions": [
+        "red",
+        "gold"
+      ]
+    }
+  ]
+}
