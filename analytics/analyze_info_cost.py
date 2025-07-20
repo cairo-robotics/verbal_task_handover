@@ -4,7 +4,7 @@ import json
 import re
 
 from treasure_hunt.src.game_mdp import GameState
-from analytics.iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
+from iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
 
 # GAME_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt"
 # MAP_DIR = os.path.join(GAME_DIR, "maps", "map2")
@@ -101,7 +101,9 @@ def load_game_state(file_path) -> GameState:
     :param file_path: Path to the pkl file containing the game state save file.
     :return: GameState object.
     """
-    return GameState.load(file_path)
+    state = GameState.load(file_path)
+    state.player.pos = int(state.player.pos[0]), int(state.player.pos[1])  # Ensure position is a tuple of integers
+    return state
 
 def load_report_vector(file_path) -> dict:
     """
@@ -165,7 +167,11 @@ def get_current_request(game_state: GameState, patient_id: int) -> int:
         active_request.known_properties['location'] = True # in theory P1 might not actually know the correct room --- something to consider for later
         return active_request
     
-    if game_state.player.held_item is not None and game_state.player.held_item.lower() in PATIENT_DATA[patient_id]['potion']:
+    # if game_state.player.held_item is not None:
+    #     for attr in dir(game_state.player.held_item):
+    #         if not attr.startswith("__"):
+    #             print(f"{attr}: {getattr(game_state.player.held_item, attr)}")
+    if game_state.player.held_item is not None and game_state.player.held_item.name.lower() in PATIENT_DATA[patient_id]['potion']:
         active_request = ActiveGameRequest(ActiveGameRequest.POTION)
         active_request.known_properties['target'] = True
         active_request.known_properties['item'] = False # if the player already has the potion, they don't need to communicate which it is
@@ -193,6 +199,7 @@ def get_step_cost(game_state: GameState, patient_id: int, active_request: Active
     target_npc_pos = game_state._objects[QUEST_NPC_LOCATIONS[PATIENT_DATA[patient_id]['npc_target']]][PATIENT_DATA[patient_id]['npc_target']].position
     
     total_cost = 0.0
+
 
     def shortest_patient_lap(start_room, start_pos):
         valid_visit_orders = {
@@ -276,6 +283,8 @@ def get_step_cost(game_state: GameState, patient_id: int, active_request: Active
                                         "lounge_3", (6, 2), map_transitions))
 
     elif active_request.type == ActiveGameRequest.RESPONSE:
+        # TODO: if we don't know we even have the response, we might check back with the request npc, rather than checking each patient room --
+        # this could be another way to reward included information
         if not active_request.known_properties['item']:
             # if we don't know the response item, we have to check each request
             total_cost += len(game_state.player.flags) * 3
@@ -315,7 +324,7 @@ def reconstruct_active_request(game_state: GameState, report_vector: dict, actua
                     reconstructed_request.known_properties['item'] = False
                     reconstructed_request.known_properties['target'] = True
 
-                if strip_spacing(character['location']) == strip_spacing(PATIENT_DATA[patient_id]['location']):
+                if character["location"] and strip_spacing(character['location']) == strip_spacing(PATIENT_DATA[patient_id]['location']):
                     reconstructed_request.known_properties['location'] = True
     
     elif actual_active_request.type == ActiveGameRequest.REQUEST:

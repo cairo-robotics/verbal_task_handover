@@ -3,8 +3,12 @@ from openai import OpenAI
 from string import Template
 import argparse
 import os
+import sys
 
+sys.path.append('..')
 from graph import TelemetryGraph
+
+
 
 PROMPT_TRACE_ONLY = Template("""\
 You are an assistant that generates a written handover report about the current state of a video game task. \
@@ -57,7 +61,7 @@ def save_generated_report(report, save_file):
 
 def get_gpt_response(prompt):
     client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-    model = 'gpt-4o-mini'
+    model = os.environ.get('GPT_MODEL', 'gpt-4o-mini-2024-07-18')
     response = client.completions.create(
         model=model,
         prompt=prompt,
@@ -69,27 +73,34 @@ def get_gpt_response(prompt):
     )
     return response.choices[0].text.strip()
 
-def main(pid, telemetry_dir, report_dir, save_dir):
+def generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid"):
     # Generate the knowledge graph
     telemetry_file = os.path.join(telemetry_dir, f"{pid}.txt")
     g = generate_graph(telemetry_file)
     graph_save_file = os.path.join(save_dir, f"{pid}_knowledge_graph.txt")
     save_knowledge_graph(g, graph_save_file)
 
-    # Retrieve the user's report
-    report_file = os.path.join(report_dir, f"{pid}_user_report.txt")
-    report = retrieve_user_report(report_file)
-
     # Generate the final report
-    # prompt = PROMPT_WITH_REPORT.substitute(knowledge_graph=str(g), report=report)
-    prompt = PROMPT_TRACE_ONLY.substitute(knowledge_graph=str(g))
+    if mode == "hybrid":
+
+    # Retrieve the user's report
+        report_file = os.path.join(report_dir, f"{pid}_user_report.txt")
+        report = retrieve_user_report(report_file)
+        prompt = PROMPT_WITH_REPORT.substitute(knowledge_graph=str(g), report=report)
+    
+    else:
+        prompt = PROMPT_TRACE_ONLY.substitute(knowledge_graph=str(g))
 
     # Use OpenAI API to generate the report
     response = get_gpt_response(prompt)
     
     # Save the generated report
-    # save_file = os.path.join(save_dir, f"{pid}_hybrid_report.txt")
-    save_file = os.path.join(save_dir, f"{pid}_generated_report.txt")
+    if mode == "hybrid":
+        save_file = os.path.join(save_dir, f"{pid}_hybrid_report.txt")
+    else:
+        save_file = os.path.join(save_dir, f"{pid}_generated_report.txt")
+    
+    
     save_generated_report(response, save_file)
 
 
@@ -101,5 +112,5 @@ if __name__ == "__main__":
 
     for pid in range(501, 510):
         pid = str(pid)
-        main(pid, telemetry_dir, report_dir, save_dir)
+        generate_report(pid, telemetry_dir, report_dir, save_dir)
     # main(502, telemetry_dir, report_dir, save_dir)  # Example for a single participant
