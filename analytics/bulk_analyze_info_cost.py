@@ -17,16 +17,17 @@ def main():
         writer = csv.writer(csvfile)
         writer.writerow(column_titles)
 
-        for pid in range(501, 510):
+        for pid in range(501, 502):
             pid = str(pid)
             save_file_name = pid
             game_state = load_game_state(os.path.join(save_dir, pid))
-            telemetry_text = load_telemetry_text(os.path.join(telemetry_dir, f"{pid}.txt"))
+            telemetry_text = load_telemetry_text(os.path.join(telemetry_dir, f"{pid}_updated.txt"))
             completed_quests = check_completed_quests(telemetry_text)
             print("completed_quests for participant {pid}:", completed_quests)
 
             map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
-            for report_type in ["user", "generated", "hybrid"]:
+            # for report_type in ["user", "generated", "hybrid"]:
+            for report_type in ["generated", "hybrid"]:
                 report_filename = f"{pid}_{report_type}_report_output.json"
                 print(f"Analyzing info cost for {report_filename}...")
                 report_vector = load_report_vector(os.path.join(report_file_dir, report_filename))
@@ -36,8 +37,9 @@ def main():
                     if completed_quests[patient_id-1]:
                         patient_cost = 0.0
                     else:
-                        patient_cost = analyze_info_cost(
+                        patient_cost, true_request, recon_request = analyze_info_cost(
                             game_state, report_vector, patient_id, map_transitions)    
+                        print(f"{pid} {patient_id} {report_type} {true_request.type} {true_request.known_properties} {recon_request.known_properties} {patient_cost}")
                     total_cost += patient_cost
                     row.append(patient_cost)
                 row.append(total_cost)

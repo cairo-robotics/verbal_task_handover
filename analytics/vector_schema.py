@@ -39,12 +39,12 @@ from typing import List, Optional
 import json
 
 
-class Request(BaseModel):
+class Quest(BaseModel):
     item: Optional[str] = Field(
-        None, description="The specific request to be brought to the target character (e.g. 'request from room 1'), or null if unknown."
+        None, description="The item to be brought to the target character (e.g. 'request from room 1'), or null if unknown."
     )
     target: Optional[str] = Field(
-        None, description="The target character to the player must bring the request to, or null if unknown."
+        None, description="The target character to whom the player must bring the item, or null if unknown."
     )
 
 class Character(BaseModel):
@@ -65,8 +65,8 @@ class Location(BaseModel):
     contains_potions: List[str] = Field(default_factory=list)
 
 class GameState(BaseModel):
-    character_requests: List[Request] = Field(
-        description="A list of currently active (i.e. not yet completed) requests from characters",
+    character_quests: List[Quest] = Field(
+        description="A list of currently active (i.e. not yet completed) quests from characters",
         default_factory=list
         )
     characters: List[Character] = Field(

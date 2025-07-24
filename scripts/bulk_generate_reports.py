@@ -8,7 +8,7 @@ def main():
     telemetry_dir = os.path.join(report_dir, 'telemetry')
     save_dir = os.path.join(data_dir, 'reports')
 
-    for pid in range(501, 510):
+    for pid in range(501, 502):
         pid = str(pid)
         print(f"Generating reports for participant {pid}...")
         # Generate both hybrid and trace-only reports

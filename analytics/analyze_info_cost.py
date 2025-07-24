@@ -328,8 +328,8 @@ def reconstruct_active_request(game_state: GameState, report_vector: dict, actua
                     reconstructed_request.known_properties['location'] = True
     
     elif actual_active_request.type == ActiveGameRequest.REQUEST:
-        for req in report_vector['character_requests']:
-            if req["item"] and strip_spacing(req["item"]) == strip_spacing(f"request from {patient_id}"):
+        for req in report_vector['character_quests']:
+            if req["item"] and strip_spacing(PATIENT_DATA[patient_id]['location']) in strip_spacing(req["item"]):
                 reconstructed_request.known_properties['item'] = True
             if req["target"] and req["target"].lower() == PATIENT_DATA[patient_id]['npc_target'].lower():
                 if reconstructed_request.known_properties['item'] or not req['item']:
@@ -342,7 +342,7 @@ def reconstruct_active_request(game_state: GameState, report_vector: dict, actua
                         reconstructed_request.known_properties['location'] = True
 
     elif actual_active_request.type == ActiveGameRequest.RESPONSE:
-        for req in report_vector['character_requests']:
+        for req in report_vector['character_quests']:
             if req["item"] and strip_spacing(req["item"]) == strip_spacing(f"response from {PATIENT_DATA[patient_id]['npc_target']}"):
                 reconstructed_request.known_properties['item'] = True
             
@@ -375,7 +375,7 @@ def analyze_info_cost(gt_state: GameState, report_vector: dict, patient_id: int,
        reconstructed_request.known_properties[prop] = (reconstructed_request.known_properties.get(prop, False) == gt_request.known_properties[prop])
 
     step_cost = get_step_cost(gt_state, patient_id, reconstructed_request, map_transitions)
-    return step_cost
+    return step_cost, gt_request, reconstructed_request
 
 
 def run_single_condition(save_file_name: str, report_datafile_name: str, data_dir: str) -> None:

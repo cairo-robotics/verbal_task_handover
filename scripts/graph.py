@@ -158,7 +158,7 @@ class TelemetryGraph:
                 if "about" in event:
                     key = event.split("about ")[1]
                     G.add_node(key)
-                    G.add_edge(npc_name, key, action="asked about")
+                    G.add_edge(npc_name, key, action="was asked about")
 
             elif event.startswith("Gave item to NPC"):
                 details = event.split(": ")[1]

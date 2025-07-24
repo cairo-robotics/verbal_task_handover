@@ -7,9 +7,11 @@ def main():
     input_dir = os.path.join(data_dir, "reports")
     output_dir = os.path.join(data_dir, "processed_output")
 
-    for filename in os.listdir(input_dir):
-        if filename.endswith("user_report.txt"):
-        # if filename.endswith("hybrid_report.txt") or filename.endswith("generated_report.txt"):
+    # for filename in os.listdir(input_dir):
+    for pid in range(501, 502):
+        pid = str(pid)
+        for suffix in ["user", "generated", "hybrid"]:
+            filename = f"{pid}_{suffix}_report.txt"
             text_filename = os.path.join(input_dir, filename)
             output_filename = os.path.join(output_dir, filename.replace(".txt", "_output.json"))
             print(f"Converting {text_filename} to vector format...")

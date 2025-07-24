@@ -66,8 +66,8 @@ def get_gpt_response(prompt):
         model=model,
         prompt=prompt,
         max_tokens=1500,
-        temperature=0.1,
-        top_p=1.0,
+        temperature=0,
+        top_p=0.3,
         n=1,
         stop=None
     )
@@ -75,7 +75,7 @@ def get_gpt_response(prompt):
 
 def generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid"):
     # Generate the knowledge graph
-    telemetry_file = os.path.join(telemetry_dir, f"{pid}.txt")
+    telemetry_file = os.path.join(telemetry_dir, f"{pid}_updated.txt")
     g = generate_graph(telemetry_file)
     graph_save_file = os.path.join(save_dir, f"{pid}_knowledge_graph.txt")
     save_knowledge_graph(g, graph_save_file)
