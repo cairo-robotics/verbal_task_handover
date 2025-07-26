@@ -4,5 +4,7 @@
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "-s"
-    ]
+    ],
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.useEnvironmentsExtension": true
 }
