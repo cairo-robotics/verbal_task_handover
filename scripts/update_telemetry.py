@@ -105,13 +105,21 @@ def update_telem_file(telem_dir: str, filename: str):
     
     print(f"Telemetry file {filepath} updated successfully.")
 
-def main():
-    telemetry_dir = os.environ.get("DATA_DIR")
-    telemetry_dir = os.path.join(telemetry_dir, "participant_data", "telemetry")
+# def main():
+#     telemetry_dir = os.environ.get("DATA_DIR")
+#     telemetry_dir = os.path.join(telemetry_dir, "participant_data", "telemetry")
 
-    for filename in os.listdir(telemetry_dir):
-        if filename.endswith(".txt") and not "_updated" in filename:
-            update_telem_file(telemetry_dir, filename)
+#     for filename in os.listdir(telemetry_dir):
+#         if filename.endswith(".txt") and not "_updated" in filename:
+#             update_telem_file(telemetry_dir, filename)
+
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python update_telemetry.py <telemetry_dir> <telemetry_file>")
+        return
+
+
+    update_telem_file(sys.argv[1], sys.argv[2])
 
 if __name__ == "__main__":
     main()

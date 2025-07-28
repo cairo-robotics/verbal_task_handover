@@ -1,0 +1,105 @@
+{
+  "character_quests": [
+    {
+      "item": "request from Room 1",
+      "sender": "Room 1",
+      "target": "Lola"
+    }
+  ],
+  "characters": [
+    {
+      "name": "Lily",
+      "location": "Room 1",
+      "needs_potion": false,
+      "potion_needed": null
+    },
+    {
+      "name": "Lola",
+      "location": "Lounge 2",
+      "needs_potion": null,
+      "potion_needed": null
+    }
+  ],
+  "locations_visited": [
+    "Room 0",
+    "Room 1",
+    "Lounge 2",
+    "Hallway 4",
+    "Hallway 3",
+    "Hallway 1",
+    "Hallway 5",
+    "Hallway 2"
+  ],
+  "location_map": [
+    {
+      "name": "Room 0",
+      "connects_to": [
+        "Hallway 1",
+        "Hallway 2"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Room 1",
+      "connects_to": [
+        "Room 0",
+        "Lounge 2"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Lounge 2",
+      "connects_to": [
+        "Room 1",
+        "Hallway 3"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Storage 1",
+      "connects_to": [],
+      "contains_potions": [
+        "gold potion"
+      ]
+    },
+    {
+      "name": "Hallway 1",
+      "connects_to": [
+        "Room 0",
+        "Hallway 2"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Hallway 2",
+      "connects_to": [
+        "Hallway 1",
+        "Hallway 3"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Hallway 3",
+      "connects_to": [
+        "Lounge 2",
+        "Hallway 4"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Hallway 4",
+      "connects_to": [
+        "Hallway 3",
+        "Hallway 5"
+      ],
+      "contains_potions": []
+    },
+    {
+      "name": "Hallway 5",
+      "connects_to": [
+        "Hallway 4"
+      ],
+      "contains_potions": []
+    }
+  ]
+}

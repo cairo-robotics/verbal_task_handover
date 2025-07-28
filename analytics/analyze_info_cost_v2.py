@@ -3,10 +3,8 @@ import json
 import re
 
 from treasure_hunt.src.game_mdp import GameState
-from iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
-
-import sys
-from graph import TelemetryGraph
+from analytics.iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
+from analytics.graph import TelemetryGraph
 
 PATIENT_DATA = {
     1 : {
@@ -68,6 +66,14 @@ POTION_ROOM_CONTENTS = {
 
 POTION_LOCATIONS = {value: key for key, values in POTION_ROOM_CONTENTS.items() for value in values}
 
+class QuestState:
+    FETCH = 0
+    DELIVER = 1
+    RETURN = 2
+    def __init__(self, quest_type=FETCH):
+        self.quest_type = quest_type
+        self.known_properties = {}  
+
 def load_game_state(file_path) -> GameState:
     """
     Load a game state from a pkl file.
@@ -89,42 +95,16 @@ def load_report_vector(file_path) -> dict:
     with open(file_path, 'r') as f:
         return json.load(f)
     
-def load_telemetry_text(file_path) -> list:
-    """
-    Load telemetry text from a file.
-    
-    :param file_path: Path to the file containing the telemetry text.
-    :return: Telemetry text as a string.
-    """
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-        return [line.lower() for line in lines]
-    
-def retrieve_knowledge_graph(telemetry_file: str) -> TelemetryGraph:
+def retrieve_knowledge_dict(telemetry_file: str) -> dict:
     """
     Retrieve the knowledge graph from a telemetry file.
     
     :param telemetry_file: Path to the telemetry file.
-    :return: TelemetryGraph object.
+    :return: dict representing the TelemetryGraph object.
     """
     graph = TelemetryGraph()
     graph.parse_from_file(telemetry_file)
-    return graph
-
-def check_completed_quests(telemetry_text: list) -> list:
-    """
-    Check which quests have been completed based on the telemetry text.
-    
-    :param telemetry_text: Telemetry text as a string.
-    :return: List of completed quests.
-    """
-    completed_quests = [False, False, False, False, False]  # Assuming 5 patients
-    for patient_id in range(1, 6):  # Assuming patient IDs are 1-5
-        for line in telemetry_text:
-            if PATIENT_DATA[patient_id]['name'] in line and f"response from {PATIENT_DATA[patient_id]['npc_target']}" in line:
-                completed_quests[patient_id-1] = True
-                break
-    return completed_quests
+    return graph.to_dict()
 
 def strip_spacing(text: str) -> str:
     """
@@ -135,34 +115,80 @@ def strip_spacing(text: str) -> str:
     """
     return re.sub(r"\s|_", "", text.lower())
 
-# def get_current_request(game_state: GameState, state_graph_dict: dict, patient_id: int) -> dict:
-#     """
-#     Get the current active request for a patient based on the game state and state graph.
+def is_known_property(property_name: str, state_dict: dict) -> bool:
+    """
+    Check if a room is known in the game state.
     
-#     :param game_state: Current game state.
-#     :param state_graph: TelemetryGraph object representing the knowledge graph.
-#     :param patient_id: ID of the patient for whom to retrieve the request.
-#     :return: Dictionary representing the active request for the patient.
-#     """
-#     patient_data = PATIENT_DATA[patient_id]
-    
-#     active_request = {}
+    :param state_dict: Dictionary representing the game state.
+    :param property: Name of the property (npc or room name) to check.
+    :return: True if the room is known, False otherwise.
+    """
+    return any(strip_spacing(key) == strip_spacing(property_name) for key in state_dict.keys())
 
-#     for flag in game_state.player.flags:
-#         if flag.lower() == f"response from {PATIENT_DATA[patient_id]['npc_target']}":
-#             active_request['type'] = 'RESPONSE'
-#             active_request['item'] = f"response from {PATIENT_DATA['npc_target']}"
-#             active_request['sender'] = PATIENT_DATA[patient_id]['npc_target']
-#             active_request['target'] = PATIENT_DATA['name']
-#             active_request['target_location'] = patient_data['location']
+def retrieve_groundtruth_quest_state(patient_id: int, game_state: GameState, state_dict: dict):
+    if f"response from {PATIENT_DATA[patient_id]['npc_target']}" in game_state.player.flags:
+        current = QuestState(QuestState.RETURN)
+        current.known_properties['target'] = True
+        current.known_properties['target_location'] = True
+        current.known_properties['item'] = True
+        current.known_properties['sender'] = True
+        current.known_properties['sender_location'] = True
+        return current
+    elif any(f"request from room {patient_id}".lower() == flag.lower() for flag in game_state.player.flags):
+        current = QuestState(QuestState.DELIVER)
+        current.known_properties['target'] = True
+        current.known_properties['target_location'] = is_known_property(PATIENT_DATA[patient_id]['target_location'], state_dict)
+        current.known_properties['item'] = True
+        current.known_properties['sender'] = True
+        current.known_properties['sender_location'] = True
+        return current
+    else:
+        current = QuestState(QuestState.FETCH)
+        current.known_properties['target'] = True
 
-#             sender_location = state_graph_dict
-#             break
+        required_potion = PATIENT_DATA[patient_id]['potion']
+        potion_location = POTION_LOCATIONS[required_potion]
+        current.known_properties['target_location'] = is_known_property(potion_location, state_dict)
+
+        current.known_properties['item'] = True
+
+        current.known_properties['sender'] = is_known_property(PATIENT_DATA[patient_id]['name'], state_dict)
+        current.known_properties['sender_location'] = True # players are given the room name at the start of the quest
+        return current
     
-#     return active_request
+def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector: dict, game_state: GameState) -> QuestState:
+    reconstructed_quest = QuestState(gt_quest.quest_type)
+
+    if gt_quest.quest_type == QuestState.FETCH:
+        for character in report_vector['characters']:
+            # known patient in that location?
+            if character["location"] and strip_spacing(character["location"]) == strip_spacing(PATIENT_DATA[patient_id]['location']):
+                # known (correct) patient name?
+                if character["name"] and character["name"].lower() == PATIENT_DATA[patient_id]['name'].lower():
+                    reconstructed_quest.known_properties['sender'] = True
+                    reconstructed_quest.known_properties['sender_location'] = True
+                # name unknown (but not incorrect)? 
+                elif not character['name']:
+                    reconstructed_quest.known_properties['sender'] = False
+                    reconstructed_quest.known_properties['sender_location'] = True
+
+                # correct potion known?
+                if character["needs_potion"] and strip_spacing(character["potion_needed"]) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
+                    reconstructed_quest.known_properties['item'] = True
+
+                break
+
+        # known target location?
+        for known_location in report_vector["location_map"]:
+            if strip_spacing(known_location['name']) == strip_spacing(POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]):
+                if any(strip_spacing(PATIENT_DATA[patient_id]['potion']) == strip_spacing(potion) for potion in known_location['contains_potions']):
+                    reconstructed_quest.known_properties['target_location'] = True
+                break
+
+    return reconstructed_quest
 
 if __name__ == "__main__":
     data_dir = os.environ.get('DATA_DIR')
     telemetry_dir = os.path.join(data_dir, 'participant_data', 'telemetry')
-    g = retrieve_knowledge_graph(os.path.join(telemetry_dir, '501_updated.txt'))
-    print(g.to_dict())
+    g = retrieve_knowledge_dict(os.path.join(telemetry_dir, '501_updated.txt'))
+    print(g)

@@ -72,7 +72,7 @@ class TelemetryGraph:
             "player history": event_list
         }
 
-        return output_dict
+        return json.dumps(output_dict)
     
     def parse_from_string(self, graph_string: str):
         graph_string = graph_string.replace("'", '"')

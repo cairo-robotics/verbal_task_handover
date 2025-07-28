@@ -1,0 +1,27 @@
+2025-07-28 16:33:20 - Room entered: EAST to hallway_4
+2025-07-28 16:33:21 - Room entered: NORTH to room3
+2025-07-28 16:33:22 - Room entered: SOUTH to hallway_4
+2025-07-28 16:33:23 - Room entered: WEST to room0
+2025-07-28 16:33:24 - Room entered: SOUTH to hallway_3
+2025-07-28 16:33:25 - Room entered: SOUTH to storage_1
+2025-07-28 16:33:26 - Room entered: NORTH to hallway_3
+2025-07-28 16:33:26 - Room entered: SOUTH to storage_1
+2025-07-28 16:33:27 - Item obtained: gold_potion
+2025-07-28 16:33:28 - Room entered: NORTH to hallway_3
+2025-07-28 16:33:29 - Room entered: NORTH to room0
+2025-07-28 16:33:30 - Room entered: WEST to hallway_1
+2025-07-28 16:33:31 - Room entered: NORTH to room1
+2025-07-28 16:33:32 - Gave item to NPC: gold_potion lily
+2025-07-28 16:33:35 - Room entered: SOUTH to hallway_1
+2025-07-28 16:33:36 - Room entered: EAST to room0
+2025-07-28 16:33:38 - Room entered: EAST to hallway_4
+2025-07-28 16:33:38 - Room entered: WEST to room0
+2025-07-28 16:33:39 - Room entered: NORTH to hallway_5
+2025-07-28 16:33:41 - Room entered: NORTH to lounge_2
+2025-07-28 16:33:42 - Room entered: SOUTH to hallway_5
+2025-07-28 16:33:43 - Room entered: NORTH to lounge_2
+2025-07-28 16:33:45 - NPC interact: lola about request from room 1
+2025-07-28 16:33:47 - Room entered: SOUTH to hallway_5
+2025-07-28 16:33:49 - Room entered: SOUTH to room0
+2025-07-28 16:33:50 - Room entered: SOUTH to hallway_2
+2025-07-28 16:33:51 - Room entered: NORTH to room0
