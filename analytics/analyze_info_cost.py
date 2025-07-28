@@ -52,6 +52,7 @@ PATIENT_DATA = {
         "name" : "lily",
         "potion" : "gold",
         "npc_target" : "lola",
+        "target_location" : "lounge_2",
         "treasure" : "treasure1",
         "location" : "room1"
     },
@@ -59,6 +60,7 @@ PATIENT_DATA = {
         "name" : "oliver",
         "potion" : "blue",
         "npc_target" : "john",
+        "target_location" : "longue_2",
         "treasure" : "treasure2",
         "location" : "room2"
     },
@@ -66,6 +68,7 @@ PATIENT_DATA = {
         "name" : "nick",
         "potion": "red",
         "npc_target": "donna",
+        "target_location": "lounge_3",
         "treasure": "treasure3",
         "location": "room3"
     },
@@ -73,6 +76,7 @@ PATIENT_DATA = {
         "name" : "marie",
         "potion" : "green",
         "npc_target" : "steve",
+        "target_location" : "lounge_1",
         "treasure" : "treasure4",
         "location" : "room4"
     },
@@ -80,6 +84,7 @@ PATIENT_DATA = {
         "name" : "guy",
         "potion" : "orange",
         "npc_target" : "brittany",
+        "target_location" : "lounge_3",
         "treasure" : "treasure5",
         "location" : "room5"
     }
@@ -184,6 +189,10 @@ def get_current_request(game_state: GameState, patient_id: int) -> int:
         active_request.known_properties['item'] = True
         active_request.known_properties['location'] = True # in theory P1 might not actually know the correct room --- something to consider for later
         return active_request
+    
+def get_player_visited_rooms(game_state: GameState) -> list:
+    # TODO
+    raise NotImplementedError
 
 def get_step_cost(game_state: GameState, patient_id: int, active_request: ActiveGameRequest, map_transitions: dict) -> float:
     """

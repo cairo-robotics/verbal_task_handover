@@ -2,7 +2,6 @@ import os
 import csv
 from analyze_info_cost import analyze_info_cost, MAP_DIR, load_transitions, load_game_state, load_report_vector, load_telemetry_text, check_completed_quests
 
-
 def main():
     data_dir = os.environ.get("DATA_DIR")
     save_dir = os.path.join(data_dir, "participant_data")

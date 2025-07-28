@@ -27,6 +27,12 @@ class TelemetryGraph:
     def __init__(self):
         self.graph  = nx.MultiDiGraph()
 
+    def to_dict(self):
+        connections = defaultdict(lambda: {})
+        for u, v, k, data in self.graph.edges(keys=True, data=True):
+            connections[u][v] = data['action']
+        return connections
+
     def __str__(self):
         events = []
         general_data = defaultdict(lambda: [])
@@ -66,7 +72,7 @@ class TelemetryGraph:
             "player history": event_list
         }
 
-        return NoStringWrappingPrettyPrinter().pformat(output_dict)        
+        return output_dict
     
     def parse_from_string(self, graph_string: str):
         graph_string = graph_string.replace("'", '"')
