@@ -173,17 +173,29 @@ def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector
                     reconstructed_quest.known_properties['sender_location'] = True
 
                 # correct potion known?
-                if character["needs_potion"] and strip_spacing(character["potion_needed"]) == strip_spacing(PATIENT_DATA[patient_id]['potion']):
+                if character["needs_potion"] and PATIENT_DATA[patient_id]['potion'] in character["potion_needed"]:
                     reconstructed_quest.known_properties['item'] = True
-
+                
                 break
 
         # known target location?
         for known_location in report_vector["location_map"]:
             if strip_spacing(known_location['name']) == strip_spacing(POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]):
-                if any(strip_spacing(PATIENT_DATA[patient_id]['potion']) == strip_spacing(potion) for potion in known_location['contains_potions']):
+                if any(PATIENT_DATA[patient_id]['potion'] in potion for potion in known_location['contains_potions']):
                     reconstructed_quest.known_properties['target_location'] = True
                 break
+
+    elif gt_quest.quest_type == QuestState.DELIVER:
+        for req in report_vector["character_quests"]:
+            if req["item"] and PATIENT_DATA[patient_id]["location"] in strip_spacing(req["item"]):
+                reconstructed_quest.known_properties["item"] = True
+                reconstructed_quest.known_properties["sender_location"] = True
+                if req["sender"] and strip_spacing(PATIENT_DATA[patient_id]["name"]) == strip_spacing(req["sender"]):
+                    reconstructed_quest.known_properties["sender"] = True
+            
+            elif not req["item"] and req["sender"] and strip_spacing(PATIENT_DATA[patient_id]["name"]) == strip_spacing(req["sender"]):
+                reconstructed_quest.known_properties["sender"] = True
+
 
     return reconstructed_quest
 
