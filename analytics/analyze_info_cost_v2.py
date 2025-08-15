@@ -199,6 +199,60 @@ def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector
 
     return reconstructed_quest
 
+def score_reconstruction(reconstructed_quest: QuestState) -> float:
+    """
+    Score the reconstruction of a quest state.
+    
+    :param gt_quest: Ground truth quest state.
+    :param reconstructed_quest: Reconstructed quest state.
+    :return: Score as an integer representing info access cost.
+    """
+
+    score = 0
+    if reconstructed_quest.quest_type == QuestState.FETCH:
+        if not reconstructed_quest.known_properties.get("item", False):
+            # must talk to patient
+            score += 1 # PLACEHOLDER
+        elif not reconstructed_quest.known_properties.get("sender_location", False):
+            # must talk to all patients
+            score += 1 # PLACEHOLDER
+        
+        if not reconstructed_quest.known_properties.get("target_location", False):
+            # must check both storage rooms
+            score += 1 # PLACEHOLDER
+
+    elif reconstructed_quest.quest_type == QuestState.DELIVER:
+        if not reconstructed_quest.known_properties.get("target", False):
+            # must talk to patient
+            if not reconstructed_quest.known_properties.get("sender_location", False) and not reconstructed_quest.known_properties.get("item", False): # item id contains sender location regardless
+                # must talk to all patients
+                score += 2 # PLACEHOLDER
+            else:
+                # must talk to specific patient
+                score += 1 # PLACEHOLDER
+        elif not reconstructed_quest.known_properties.get("item", False) and not reconstructed_quest.known_properties.get("sender_location", False):
+            # must try all menu items
+            score += 1  # PLACEHOLDER
+
+        if not reconstructed_quest.known_properties.get("target_location", False):
+            # TODO: check if "target_location" can be marked true even if target is unknown (so when we learn the name, we learn the location)
+            # must check all 3 lounges
+            score += 1  # PLACEHOLDER
+
+    elif reconstructed_quest.quest_type == QuestState.RETURN:
+        if not reconstructed_quest.known_properties.get("target_location", False):
+            if reconstructed_quest.known_properties.get("sender_location", False):
+                # return to sender
+                score += 1 # PLACEHOLDER
+            else:
+                # check all patients
+                score += 2 # PLACEHOLDER
+        elif not reconstructed_quest.known_properties.get("item", False):
+            # must try all menu items
+            score += 1 # PLACEHOLDER
+
+    return score
+
 if __name__ == "__main__":
     data_dir = os.environ.get('DATA_DIR')
     telemetry_dir = os.path.join(data_dir, 'participant_data', 'telemetry')
