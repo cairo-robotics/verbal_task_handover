@@ -30,3 +30,20 @@ def test_reconstruct_quest_state():
         gt_quest = retrieve_groundtruth_quest_state(patient_id, gt_state, state_dict)
         reconstructed_quest = reconstruct_quest_state(patient_id, gt_quest, report_vector, gt_state)
         print(f"Reconstructed quest for patient {patient_id}: {reconstructed_quest.quest_type} {reconstructed_quest.known_properties}")
+
+def test_score_reconstruction():
+    print("Testing quest state reconstruction scoring...")
+    """
+    Test the scoring of reconstructed quest states.
+    """
+    gt_state = load_game_state(os.path.join(TEST_DIR, "kb_test_0728"))
+
+    reconstructed_quest = QuestState(quest_type=QuestState.FETCH)
+    reconstructed_quest.known_properties = {
+        "item": False,
+        "target_location": True,
+        "sender_location": False
+    }
+
+    score = score_reconstruction(1, reconstructed_quest, gt_state)
+    print(f"Reconstruction score: {score}")
