@@ -199,7 +199,7 @@ def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector
 
     return reconstructed_quest
 
-def score_reconstruction(reconstructed_quest: QuestState) -> float:
+def score_reconstruction(patient_id, reconstructed_quest: QuestState, game_state: GameState) -> float:
     """
     Score the reconstruction of a quest state.
     
@@ -208,49 +208,143 @@ def score_reconstruction(reconstructed_quest: QuestState) -> float:
     :return: Score as an integer representing info access cost.
     """
 
+    map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
+
     score = 0
+    patient_pos = game_state._objects[PATIENT_DATA[patient_id]['location']][PATIENT_DATA[patient_id]["name"]].position
+
+    def shortest_patient_lap(start_room, start_pos):
+        valid_visit_orders = {
+            "room1": ["room2", "room5", "room3", "room4"],
+            "room2": ["room1", "room5", "room3", "room4"],
+            "room3": ["room4", "room5", "room1", "room2"],
+            "room4": ["room3", "room5", "room1", "room2"],
+            "room5": ["room1", "room2", "room3", "room4"]
+        }
+
+        patient_positions = {room: game_state._objects[room][PATIENT_DATA[i+1]['name']].position for i, room in enumerate(valid_visit_orders.keys())}
+        total_steps = 0
+
+        if start_room in valid_visit_orders:
+            visit_order = valid_visit_orders[start_room]
+            current_pos = start_pos
+            current_room = start_room
+        else:
+            # find closest room to start lap
+            closest_room = min(valid_visit_orders.keys(), key=lambda room: find_steps_between_rooms(MAP_DIR, start_room, start_pos, room, patient_positions[room], map_transitions))
+            visit_order = valid_visit_orders[closest_room]
+            current_pos = patient_positions[closest_room]
+            current_room = closest_room
+            total_steps += find_steps_between_rooms(MAP_DIR, start_room, start_pos, closest_room, current_pos, map_transitions)
+
+        for room in visit_order:
+            steps = find_steps_between_rooms(MAP_DIR, current_room, current_pos,
+                                             room, patient_positions[room],
+                                            map_transitions)
+            total_steps += steps
+            current_pos = patient_positions[room]
+            current_room = room
+        return total_steps
+
     if reconstructed_quest.quest_type == QuestState.FETCH:
         if not reconstructed_quest.known_properties.get("item", False):
-            # must talk to patient
-            score += 1 # PLACEHOLDER
+            if reconstructed_quest.known_properties.get("sender_location", False):
+                # must talk to patient
+                print("must talk to patient")
+                score += find_steps_between_rooms(
+                    MAP_DIR, 
+                    game_state.current_room,
+                    game_state.player.pos, 
+                    PATIENT_DATA[patient_id]['location'],
+                    patient_pos,
+                    map_transitions
+                )
+            else:
+                # must talk to all patients
+                print("must talk to all patients")
+                score += shortest_patient_lap(game_state.current_room, game_state.player.pos)
+
         elif not reconstructed_quest.known_properties.get("sender_location", False):
             # must talk to all patients
-            score += 1 # PLACEHOLDER
+            print("must talk to all patients")
+            score += shortest_patient_lap(game_state.current_room, game_state.player.pos)
         
         if not reconstructed_quest.known_properties.get("target_location", False):
             # must check both storage rooms
-            score += 1 # PLACEHOLDER
+            print("must check both storage rooms")
+            score += (min(  find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_1", (5, 1), map_transitions),
+                            find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "storage_2", (1, 3), map_transitions)) + 
+                    find_steps_between_rooms(MAP_DIR, "storage_1", (5, 1),
+                        "storage_2", (1, 3), map_transitions))
 
     elif reconstructed_quest.quest_type == QuestState.DELIVER:
-        if not reconstructed_quest.known_properties.get("target", False):
-            # must talk to patient
+        if not reconstructed_quest.known_properties.get("target", False) or (not reconstructed_quest.known_properties.get("item", False) and not reconstructed_quest.known_properties.get("sender_location", False)):
             if not reconstructed_quest.known_properties.get("sender_location", False) and not reconstructed_quest.known_properties.get("item", False): # item id contains sender location regardless
                 # must talk to all patients
-                score += 2 # PLACEHOLDER
-            else:
+                score += shortest_patient_lap(game_state.current_room, game_state.player.pos)
+            else:   
                 # must talk to specific patient
-                score += 1 # PLACEHOLDER
-        elif not reconstructed_quest.known_properties.get("item", False) and not reconstructed_quest.known_properties.get("sender_location", False):
-            # must try all menu items
-            score += 1  # PLACEHOLDER
+                score += find_steps_between_rooms(
+                    MAP_DIR, 
+                    game_state.current_room,
+                    game_state.player.pos, 
+                    PATIENT_DATA[patient_id]['location'],
+                    patient_pos,
+                    map_transitions
+                )
 
         if not reconstructed_quest.known_properties.get("target_location", False):
             # TODO: check if "target_location" can be marked true even if target is unknown (so when we learn the name, we learn the location)
             # must check all 3 lounges
-            score += 1  # PLACEHOLDER
+            score += (min(  find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_1", (4, 1), map_transitions),
+                            find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_2", (2, 2), map_transitions),
+                            find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                        "lounge_3", (6, 2), map_transitions)) +
+                    find_steps_between_rooms(MAP_DIR, "lounge_1", (4, 1),
+                                        "lounge_2", (2, 2), map_transitions) +
+                    find_steps_between_rooms(MAP_DIR, "lounge_2", (2, 2),
+                                        "lounge_3", (6, 2), map_transitions))
 
     elif reconstructed_quest.quest_type == QuestState.RETURN:
-        if not reconstructed_quest.known_properties.get("target_location", False):
+        if not reconstructed_quest.known_properties.get("target_location", False) or not reconstructed_quest.known_properties.get("item", False):
             if reconstructed_quest.known_properties.get("sender_location", False):
-                # return to sender
-                score += 1 # PLACEHOLDER
+                # return to sender to get more information
+                score += find_steps_between_rooms(
+                    MAP_DIR, 
+                    game_state.current_room,
+                    game_state.player.pos, 
+                    PATIENT_DATA[patient_id]['target_location'],
+                    game_state._objects[PATIENT_DATA[patient_id]['target_location']][PATIENT_DATA[patient_id]['npc_target']].position,
+                    map_transitions
+                )
             else:
-                # check all patients
-                score += 2 # PLACEHOLDER
-        elif not reconstructed_quest.known_properties.get("item", False):
-            # must try all menu items
-            score += 1 # PLACEHOLDER
+                if reconstructed_quest.known_properties.get("sender_location", False):
+                    # replay previous step by returning to patient and then going to target location again
+                    score += find_steps_between_rooms(
+                        MAP_DIR, 
+                        game_state.current_room,
+                        game_state.player.pos, 
+                        PATIENT_DATA[patient_id]['location'],
+                        patient_pos,
+                        map_transitions
+                    )
 
+                if not reconstructed_quest.known_properties.get("target_location", False):
+                    # must check all 3 lounges
+                    score += (min(  find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                "lounge_1", (4, 1), map_transitions),
+                                    find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                "lounge_2", (2, 2), map_transitions),
+                                    find_steps_between_rooms(MAP_DIR, game_state.current_room, game_state.player.pos,
+                                                "lounge_3", (6, 2), map_transitions)) +
+                            find_steps_between_rooms(MAP_DIR, "lounge_1", (4, 1),
+                                                "lounge_2", (2, 2), map_transitions) +
+                            find_steps_between_rooms(MAP_DIR, "lounge_2", (2, 2),
+                                        "lounge_3", (6, 2), map_transitions))
     return score
 
 if __name__ == "__main__":
