@@ -347,6 +347,21 @@ def score_reconstruction(patient_id, reconstructed_quest: QuestState, game_state
                                         "lounge_3", (6, 2), map_transitions))
     return score
 
+def compare_patient_status_cost(patient_id, report_vector: dict, state_dict: dict, game_state: GameState) -> float:
+    """
+    Compare the cost of the current patient status with the report vector.
+    
+    :param patient_id: ID of the patient to compare.
+    :param report_vector: Report vector containing the current patient status.
+    :param game_state: Current game state.
+    :return: Cost of the current patient status.
+    """
+    gt_quest = retrieve_groundtruth_quest_state(patient_id, game_state, state_dict)
+    reconstructed_quest = reconstruct_quest_state(patient_id, gt_quest, report_vector, game_state)
+    print("Expected known properties:", gt_quest.known_properties)
+    print("Reconstructed known properties:", reconstructed_quest.known_properties)
+    return score_reconstruction(patient_id, reconstructed_quest, game_state), score_reconstruction(patient_id, gt_quest, game_state)
+
 if __name__ == "__main__":
     data_dir = os.environ.get('DATA_DIR')
     telemetry_dir = os.path.join(data_dir, 'participant_data', 'telemetry')
