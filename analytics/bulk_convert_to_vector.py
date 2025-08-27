@@ -1,4 +1,6 @@
 import os
+import dotenv
+dotenv.load_dotenv()
 
 from report_to_vector import convert_to_vector
 
@@ -8,7 +10,7 @@ def main():
     output_dir = os.path.join(data_dir, "processed_output")
 
     # for filename in os.listdir(input_dir):
-    for pid in range(501, 502):
+    for pid in range(501, 510):
         pid = str(pid)
         for suffix in ["user", "generated", "hybrid"]:
             filename = f"{pid}_{suffix}_report.txt"

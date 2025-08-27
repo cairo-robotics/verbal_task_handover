@@ -71,5 +71,11 @@ def main():
 #     batch_convert_to_vector(input_dir, output_dir)
 
 if __name__ == "__main__":
-    main()
+    from dotenv import load_dotenv
+    load_dotenv()
+    # main()
     # batch_convert()
+
+    text_filename = sys.argv[1]
+    output_filename = sys.argv[2]
+    convert_to_vector(text_filename, output_filename)

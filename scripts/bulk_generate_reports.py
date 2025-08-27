@@ -1,4 +1,6 @@
 import os
+import dotenv
+dotenv.load_dotenv()
 
 from generate_hybrid_report import generate_report
 
@@ -8,7 +10,7 @@ def main():
     telemetry_dir = os.path.join(report_dir, 'telemetry')
     save_dir = os.path.join(data_dir, 'reports')
 
-    for pid in range(501, 502):
+    for pid in range(501, 510):
         pid = str(pid)
         print(f"Generating reports for participant {pid}...")
         # Generate both hybrid and trace-only reports

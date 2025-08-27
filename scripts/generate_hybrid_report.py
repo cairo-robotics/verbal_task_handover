@@ -5,8 +5,8 @@ import argparse
 import os
 import sys
 
-sys.path.append('..')
-from graph import TelemetryGraph
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from analytics.graph import TelemetryGraph
 
 
 
@@ -104,13 +104,28 @@ def generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid"):
     save_generated_report(response, save_file)
 
 
-if __name__ == "__main__":
-    data_dir = os.environ.get('DATA_DIR')
-    report_dir = os.path.join(data_dir, 'participant_data')
-    telemetry_dir = os.path.join(report_dir, 'telemetry')
-    save_dir = os.path.join(data_dir, 'reports')
+# if __name__ == "__main__":
+#     data_dir = os.environ.get('DATA_DIR')
+#     report_dir = os.path.join(data_dir, 'participant_data')
+#     telemetry_dir = os.path.join(report_dir, 'telemetry')
+#     save_dir = os.path.join(data_dir, 'reports')
 
-    for pid in range(501, 510):
-        pid = str(pid)
-        generate_report(pid, telemetry_dir, report_dir, save_dir)
+#     for pid in range(501, 510):
+#         pid = str(pid)
+#         generate_report(pid, telemetry_dir, report_dir, save_dir)
     # main(502, telemetry_dir, report_dir, save_dir)  # Example for a single participant
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    parser = argparse.ArgumentParser(description="Generate a hybrid report for a video game task.")
+    parser.add_argument("pid", type=str, help="Participant ID")
+    parser.add_argument("--telemetry_dir", type=str, required=True, help="Directory containing telemetry files")
+    parser.add_argument("--report_dir", type=str, required=False, help="Directory containing user reports")
+    parser.add_argument("--save_dir", type=str, required=True, help="Directory to save the generated report")
+    parser.add_argument("--mode", type=str, choices=["hybrid", "trace_only"], default="trace_only", help="Mode of report generation")
+
+    args = parser.parse_args()
+
+    generate_report(args.pid, args.telemetry_dir, args.report_dir, args.save_dir, args.mode)
