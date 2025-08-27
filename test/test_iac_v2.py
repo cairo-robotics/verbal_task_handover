@@ -38,7 +38,7 @@ def test_score_reconstruction():
     """
     gt_state = load_game_state(os.path.join(TEST_DIR, "kb_test_0728"))
 
-    reconstructed_quest = QuestState(quest_type=QuestState.FETCH)
+    reconstructed_quest = QuestState(quest_type=QuestState.DELIVER)
     reconstructed_quest.known_properties = {
         "item": False,
         "target_location": True,
@@ -47,3 +47,27 @@ def test_score_reconstruction():
 
     score = score_reconstruction(1, reconstructed_quest, gt_state)
     print(f"Reconstruction score: {score}")
+
+def test_compare_status_cost():
+    print("Testing comparison of status costs...")
+    """
+    Test the comparison of status costs between ground truth and reconstructed quests.
+    """
+    gt_state = load_game_state(os.path.join(TEST_DIR, "kb_test_0728"))
+    report_vector = load_report_vector(os.path.join(TEST_DIR, "kb_test_0728_generated_report_output.json"))
+    state_dict = retrieve_knowledge_dict(os.path.join(TEST_DIR, "telemetry", 'kb_test_0728_updated.txt'))
+
+    for patient_id in range(2, 6):
+        cost_comparison = compare_patient_status_cost(patient_id, report_vector, state_dict, gt_state)
+        print(f"Cost comparison for patient {patient_id}: {cost_comparison}")
+
+def test_completed_quests():
+    print("Testing completed quests...")
+    """
+    Test the identification of completed quests.
+    """
+    # gt_state = load_game_state(os.path.join(TEST_DIR, "kb_test_0728"))
+    state_dict = retrieve_knowledge_dict(os.path.join(TEST_DIR, "telemetry", 'kb_test_0728_updated.txt'))
+
+    completed_quests = check_completed_quests(state_dict)
+    print(f"Completed quests: {completed_quests}")

@@ -106,6 +106,13 @@ def retrieve_knowledge_dict(telemetry_file: str) -> dict:
     graph.parse_from_file(telemetry_file)
     return graph.to_dict()
 
+def check_completed_quests(state_dict: dict) -> list[bool]:
+    completed_quests = [False, False, False, False, False]
+    for patient_id in range(1, 6):
+        if f"response from {PATIENT_DATA[patient_id]['npc_target']}" in state_dict['Player']:
+            completed_quests[patient_id-1] = True
+    return completed_quests
+
 def strip_spacing(text: str) -> str:
     """
     Strip whitespace and underscores from a string.
