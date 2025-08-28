@@ -73,6 +73,7 @@ PATIENTS_TO_ROOMS = {i["name"] : i["location"] for i in PATIENT_DATA.values()}
 ROOMS_TO_PATIENTS = {i["location"] : i["name"] for i in PATIENT_DATA.values()}
 TARGETS_TO_PATIENTS = {i["npc_target"] : i["name"] for i in PATIENT_DATA.values()}
 PATIENTS_TO_TARGETS = {i["name"] : i["npc_target"] for i in PATIENT_DATA.values()}
+PATIENTS_TO_IDS = {i["name"] : key for key, i in PATIENT_DATA.items()}
 
 def update_telem_file(telem_dir: str, filename: str):
     """
@@ -98,8 +99,11 @@ def update_telem_file(telem_dir: str, filename: str):
                 continue
             npc_target, item = parsed_details
             if npc_target in TARGETS_TO_PATIENTS and "request" in item and \
-                PATIENTS_TO_ROOMS[TARGETS_TO_PATIENTS.get(npc_target)] in item:
+                PATIENTS_TO_ROOMS[TARGETS_TO_PATIENTS.get(npc_target)] in item.lower():
                 updated_lines.append(f"{timecode} - Item obtained: response from {npc_target}\n")
+            elif npc_target in PATIENTS_TO_TARGETS and "response" in item and  \
+                PATIENTS_TO_TARGETS.get(npc_target) in item.lower():
+                updated_lines.append(f"{timecode} - Item obtained: treasure{PATIENTS_TO_IDS.get(npc_target)}\n")
         elif "Gave item to NPC" in line:
             patient = line.split(" ")[-1].strip()
             updated_lines.append(f"{timecode} - Item obtained: request from {PATIENTS_TO_ROOMS[patient]}\n")

@@ -3,8 +3,8 @@ import json
 import re
 
 from treasure_hunt.src.game_mdp import GameState
-from analytics.iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
-from analytics.graph import TelemetryGraph
+from iac_bfs import load_transitions, find_steps_between_rooms, MAP_DIR
+from graph import TelemetryGraph
 
 PATIENT_DATA = {
     1 : {
@@ -109,8 +109,9 @@ def retrieve_knowledge_dict(telemetry_file: str) -> dict:
 def check_completed_quests(state_dict: dict) -> list[bool]:
     completed_quests = [False, False, False, False, False]
     for patient_id in range(1, 6):
-        if f"response from {PATIENT_DATA[patient_id]['npc_target']}" in state_dict['Player']:
+        if f"treasure{patient_id}" in state_dict["Player"]:
             completed_quests[patient_id-1] = True
+
     return completed_quests
 
 def strip_spacing(text: str) -> str:
