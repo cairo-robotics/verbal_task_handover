@@ -24,7 +24,7 @@ def convert_to_vector(text_filename, output_filename):
         return
 
     model = "gpt-4o-mini-2024-07-18"
-    temperature = 0.2
+    temperature = 0
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
     response = client.beta.chat.completions.parse(

@@ -8,14 +8,16 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from analytics.graph import TelemetryGraph
 
+import datetime
+
 
 
 PROMPT_TRACE_ONLY = Template("""\
 You are an assistant that generates a written handover report about the current state of a video game task. \
 In this task, players must care for "patient" non-player characters (NPCs) by tracking which "potions" they each need, and delivering requests to and from other characters located around the game world. \
-The purpose of this report is to summarize the user's progress and game knowledge in order to help another player\
+The purpose of this report is to detail the user's progress and game knowledge in order to help another player\
                   continue the task from where the user left off as efficiently as possible.\
-You have access to a knowledge graph representing what you know about the game state and the user's history so far.
+You have access to a knowledge graph representing what data is available about the game state and the user's history so far.
 Your role is to use this information to compose a complete and accurate report.\
                   
 The current knowledge graph is:
@@ -27,9 +29,9 @@ $knowledge_graph
 PROMPT_WITH_REPORT = Template("""\
 You are an assistant that generates a written handover report about the current state of a video game task. \
 In this task, players must care for "patient" non-player characters (NPCs) by tracking which "potions" they each need, and delivering requests to and from other characters located around the game world. \
-The purpose of this report is to summarize the user's progress and game knowledge in order to help another player\
+The purpose of this report is to detail the user's progress and game knowledge in order to help another player\
                   continue the task from where the user left off as efficiently as possible.\
-You have access to a knowledge graph representing what you know about the game and the user's history so far.
+You have access to a knowledge graph representing what data is available about the game state and the user's history so far.
 You also have access to a set of notes that the user has written about the task.
 Your role is to combine this information to compose a complete and accurate report.\
                   
@@ -67,7 +69,6 @@ def get_gpt_response(prompt):
         prompt=prompt,
         max_tokens=1500,
         temperature=0,
-        top_p=0.3,
         n=1,
         stop=None
     )
@@ -93,6 +94,9 @@ def generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid"):
 
     # Use OpenAI API to generate the report
     response = get_gpt_response(prompt)
+
+    response += f"\n\n[This report generated at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n"
+    response += "[Using parameters: model={}, temperature=0, max_tokens=1500]\n".format(os.environ.get('GPT_MODEL', 'gpt-4o-mini-2024-07-18'))
     
     # Save the generated report
     if mode == "hybrid":
