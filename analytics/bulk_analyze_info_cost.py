@@ -37,7 +37,6 @@ def main():
                 print(f"Analyzing info cost for {report_filename}...")
                 report_vector = load_report_vector(os.path.join(report_file_dir, report_filename))
                 row = [pid, report_type]
-                # BUG: why is npc 4 always having a ground truth cost of 0? it's seemingly not always being marked complete
                 total_cost = 0.0
                 for patient_id in range(1, 6):
                     ground_truth_quest = retrieve_groundtruth_quest_state(patient_id, game_state, state_dict)
