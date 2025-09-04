@@ -11,7 +11,7 @@ from vector_schema import GameState
 VECTOR_PROMPT = """You are an AI assistant tasked with converting written descriptions of a game state into JSON schema representing the state.\
 The user has given a verbal description of their current game state and relevant progress in a 2D video game. The game requires the user to care for "patient" non-player characters \
 by tracking which ones need which color of potion. In addition, the user must deliver requests to and from "patients" to other characters located around the game world. \
-Please map the information included in the description into the given JSON schema.
+Extract the information included in the description into the given JSON schema.
 """
 
 # TEST_TEXT = """I have a silver key and a blue key. I found a door with a gold lock, but I don't remember where. I also talked to an NPC named Lily and learned a password 'asdf'. """
@@ -23,25 +23,37 @@ def convert_to_vector(text_filename, output_filename):
         print(f"File {text_filename} not found.")
         return
 
-    model = "gpt-4o-mini-2024-07-18"
     temperature = 0
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-    response = client.beta.chat.completions.parse(
+    # model = "gpt-4.1-2025-04-14"
+    # response = client.beta.chat.completions.parse(
+    #     model=model,
+    #     messages=[
+    #         {"role": "system", "content": VECTOR_PROMPT},
+    #         {"role": "user", "content": prompt}
+    #     ],
+    #     temperature=temperature,
+    #     response_format = GameState
+    # )
+    # message = response.choices[0].message
+    
+    model = "gpt-5-mini"
+    message = client.responses.parse(
         model=model,
-        messages=[
-            {"role": "system", "content": VECTOR_PROMPT},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=temperature,
-        response_format = GameState
+        reasoning={"effort": "low"},
+        instructions = VECTOR_PROMPT,
+        input = prompt,
+        # temperature=temperature,
+        text_format = GameState
     )
-
-    message = response.choices[0].message
-    if message.parsed:
+    message = message.output_parsed
+    # print([attr for attr in dir(message) if not attr.startswith('_')])
+    
+    if message:
         with open(output_filename, 'w') as output_file:
             # output_file.write(response.choices[0].choices[0].message.content.strip())
-            output_file.write(json.dumps(message.parsed.model_dump(), indent=2))
+            output_file.write(json.dumps(message.model_dump(), indent=2))
     else:
         print("Failed to parse response.")
         print(message.refusal)
