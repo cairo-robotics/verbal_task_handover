@@ -181,13 +181,13 @@ def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector
                     reconstructed_quest.known_properties['sender_location'] = True
 
                 # correct potion known?
-                if character["needs_potion"] and PATIENT_DATA[patient_id]['potion'] in character["potion_needed"]:
+                if character["potion_needed"] and PATIENT_DATA[patient_id]['potion'] in character["potion_needed"]:
                     reconstructed_quest.known_properties['item'] = True
                 
                 break
 
         # known target location?
-        for known_location in report_vector["location_map"]:
+        for known_location in report_vector["locations"]:
             if strip_spacing(known_location['name']) == strip_spacing(POTION_LOCATIONS[PATIENT_DATA[patient_id]['potion']]):
                 if any(PATIENT_DATA[patient_id]['potion'] in potion for potion in known_location['contains_potions']):
                     reconstructed_quest.known_properties['target_location'] = True
