@@ -261,7 +261,7 @@ class GameState:
             self.telemetry.log_event(event_type, details)
         if conversation:
             self.text_queue = conversation
-            return self.handle_interact()
+            return self._handle_interact()
 
     def handle_keypress(self, key):
         if self.player_in_module and not self.current_module.on_cooldown:
@@ -299,8 +299,13 @@ class GameState:
             self.displayed_icon = item
 
         return event_type
-
+    
     def handle_interact(self):
+        event_type, details = self._handle_interact()
+        if event_type:
+            self.telemetry.log_event(event_type, details)
+
+    def _handle_interact(self):
         # print("handling interact: ", self.displayed_text, self.text_queue)
 
         # check for item cooldowns before continuing
@@ -355,7 +360,7 @@ class GameState:
                         self.telemetry.log_event(event_type, details)
                     if conversation:
                         self.text_queue = conversation
-                        return self.handle_interact()
+                        return self._handle_interact()
 
             elif obj.type == "potion":
                 if self.player.held_item is not None and self.player.held_item.name == obj.name:
@@ -375,7 +380,7 @@ class GameState:
 
                 if obj.item_text:
                     self.text_queue = deque(obj.item_text)
-                    return self.handle_interact()
+                    return self._handle_interact()
 
         else:
             self.displayed_text = None

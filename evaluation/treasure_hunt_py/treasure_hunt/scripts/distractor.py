@@ -17,7 +17,10 @@ class DistractorTaskManager:
     def launch_distractor(self): # runs in timer thread
         print("Launching distractor task...")
 
-        driver = webdriver.Firefox()
+        geckodriver_path = "/snap/bin/geckodriver"
+        driver_service = webdriver.FirefoxService(executable_path=geckodriver_path)
+
+        driver = webdriver.Firefox(service=driver_service)
 
         try:
             driver.get(self.url)
