@@ -31,8 +31,8 @@ You are an assistant that generates a written handover report about the current 
 In this task, players must care for "patient" non-player characters (NPCs) by tracking which "potions" they each need, and delivering requests to and from other characters located around the game world. \
 The purpose of this report is to detail the user's progress and game knowledge in order to help another player\
                   continue the task from where the user left off as efficiently as possible.\
-You have access to a knowledge graph representing what data is available about the game state and the user's history so far.
-You also have access to a set of notes that the user has written about the task.
+You have access to a knowledge graph representing some observational telemetry data about the game state and the user's history so far.
+You also have access to a "handover report" that the user has written for the next player.\
 Your role is to combine this information to compose a complete and accurate report.\
                   
 The current knowledge graph is:
@@ -76,7 +76,7 @@ def get_gpt_response(prompt):
 
 def generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid"):
     # Generate the knowledge graph
-    telemetry_file = os.path.join(telemetry_dir, f"{pid}_updated.txt")
+    telemetry_file = os.path.join(telemetry_dir, f"{pid}.txt")
     g = generate_graph(telemetry_file)
     graph_save_file = os.path.join(save_dir, f"{pid}_knowledge_graph.txt")
     save_knowledge_graph(g, graph_save_file)
