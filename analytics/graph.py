@@ -159,12 +159,12 @@ class TelemetryGraph:
 
                 if not G.has_edge(last_added_position_node, npc_name):
                     G.add_edge(last_added_position_node, npc_name, action="Contains")
-                G.add_edge("Player", npc_name, action="Interacted", time=timestamp)
+                # G.add_edge("Player", npc_name, action="Interacted", time=timestamp)
 
                 if "about" in event:
                     key = event.split("about ")[1]
                     G.add_node(key)
-                    G.add_edge(npc_name, key, action="was asked about")
+                    G.add_edge(npc_name, key, action="was given")
 
             elif event.startswith("Gave item to NPC"):
                 details = event.split(": ")[1]
@@ -173,7 +173,7 @@ class TelemetryGraph:
 
                 G.add_node(item_name)
                 G.add_node(npc_name)
-                G.add_edge(npc_name, item_name, action="Was given")
+                G.add_edge(npc_name, item_name, action="was given")
 
                 if not G.has_edge(last_added_position_node, npc_name):
                     G.add_edge(last_added_position_node, npc_name, action="Contains")

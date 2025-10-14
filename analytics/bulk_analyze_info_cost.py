@@ -9,7 +9,8 @@ dotenv.load_dotenv()
 
 def main():
     data_dir = os.environ.get("DATA_DIR")
-    save_dir = os.path.join(data_dir, "participant_data")
+    # save_dir = os.path.join(data_dir, "participant_data")
+    save_dir = data_dir
     telemetry_dir = os.path.join(save_dir, "telemetry")
     report_file_dir = os.path.join(data_dir, "processed_output")
 
@@ -21,14 +22,12 @@ def main():
         writer = csv.writer(csvfile)
         writer.writerow(column_titles)
 
-        for pid in range(501, 510):
+        # for pid in range(501, 510):
+        for pid in ["ari_test", "himanshu_test", "shiv_test", "ys_pilot"]:
             pid = str(pid)
             save_file_name = pid
             game_state = load_game_state(os.path.join(save_dir, pid))
-            state_dict = retrieve_knowledge_dict(os.path.join(telemetry_dir, f"{pid}_updated.txt"))
-            completed_quests = check_completed_quests(state_dict)
-            # print(game_state.player.flags)
-            print(f"completed_quests for participant {pid}:", completed_quests)
+            state_dict = retrieve_knowledge_dict(os.path.join(telemetry_dir, f"{pid}.txt"))
 
             map_transitions = load_transitions(os.path.join(MAP_DIR, "transitions.json"))
             for report_type in ["user", "generated", "hybrid"]:
@@ -40,10 +39,7 @@ def main():
                 total_cost = 0.0
                 for patient_id in range(1, 6):
                     ground_truth_quest = retrieve_groundtruth_quest_state(patient_id, game_state, state_dict)
-                    if completed_quests[patient_id-1]:
-                        ground_truth_cost = 0.0
-                    else:
-                        ground_truth_cost = score_reconstruction(patient_id, ground_truth_quest, game_state)
+                    ground_truth_cost = score_reconstruction(patient_id, ground_truth_quest, game_state)
                     row.append(ground_truth_cost)
 
                     reconstructed_quest = reconstruct_quest_state(patient_id, ground_truth_quest, report_vector, game_state)

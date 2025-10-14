@@ -1,0 +1,53 @@
+{
+    "annotator": "KB",
+    "patient1": {
+        "room_name": true,
+        "room_direction": true,
+        "room_exact_location": true,
+        "potion_color": true,
+        "current_quest": false,
+        "potion_location": true,
+        "request_npc_name": true,
+        "request_npc_location": true
+    },
+    "patient2": {
+        "room_name": true,
+        "room_direction": true,
+        "room_exact_location": true,
+        "potion_color": true,
+        "current_quest": false,
+        "potion_location": true,
+        "request_npc_name": true,
+        "request_npc_location": true
+    },
+    "patient3": {
+        "room_name": true,
+        "room_direction": true,
+        "room_exact_location": true,
+        "potion_color": true,
+        "current_quest": false,
+        "potion_location": true,
+        "request_npc_name": true,
+        "request_npc_location": true
+    },
+    "patient4": {
+        "room_name": true,
+        "room_direction": true,
+        "room_exact_location": true,
+        "potion_color": true,
+        "current_quest": false,
+        "potion_location": true,
+        "request_npc_name": true,
+        "request_npc_location": true
+    },
+    "patient5": {
+        "room_name": true,
+        "room_direction": true,
+        "room_exact_location": true,
+        "potion_color": false,
+        "current_quest": true,
+        "potion_location": false,
+        "request_npc_name": false,
+        "request_npc_location": true
+    }
+}

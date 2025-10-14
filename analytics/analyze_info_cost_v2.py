@@ -70,6 +70,7 @@ class QuestState:
     FETCH = 0
     DELIVER = 1
     RETURN = 2
+    FETCH_P2 = 3
     def __init__(self, quest_type=FETCH):
         self.quest_type = quest_type
         self.known_properties = {}  
@@ -106,14 +107,6 @@ def retrieve_knowledge_dict(telemetry_file: str) -> dict:
     graph.parse_from_file(telemetry_file)
     return graph.to_dict()
 
-def check_completed_quests(state_dict: dict) -> list[bool]:
-    completed_quests = [False, False, False, False, False]
-    for patient_id in range(1, 6):
-        if f"treasure{patient_id}" in state_dict["Player"]:
-            completed_quests[patient_id-1] = True
-
-    return completed_quests
-
 def strip_spacing(text: str) -> str:
     """
     Strip whitespace and underscores from a string.
@@ -134,6 +127,18 @@ def is_known_property(property_name: str, state_dict: dict) -> bool:
     return any(strip_spacing(key) == strip_spacing(property_name) for key in state_dict.keys())
 
 def retrieve_groundtruth_quest_state(patient_id: int, game_state: GameState, state_dict: dict):
+    if f"treasure{patient_id}" in state_dict["Player"]:
+        current = QuestState(QuestState.FETCH_P2)
+        required_potion = PATIENT_DATA[patient_id]['potion']
+        potion_location = POTION_LOCATIONS[required_potion]
+        current.known_properties['target_location'] = is_known_property(potion_location, state_dict)
+
+        current.known_properties['item'] = True
+
+        current.known_properties['sender'] = is_known_property(PATIENT_DATA[patient_id]['name'], state_dict)
+        current.known_properties['sender_location'] = True # players are given the room name at the start of the quest
+        return current
+    
     if f"response from {PATIENT_DATA[patient_id]['npc_target']}" in game_state.player.flags:
         current = QuestState(QuestState.RETURN)
         current.known_properties['target'] = True
@@ -167,7 +172,7 @@ def retrieve_groundtruth_quest_state(patient_id: int, game_state: GameState, sta
 def reconstruct_quest_state(patient_id: int, gt_quest: QuestState, report_vector: dict, game_state: GameState) -> QuestState:
     reconstructed_quest = QuestState(gt_quest.quest_type)
 
-    if gt_quest.quest_type == QuestState.FETCH:
+    if gt_quest.quest_type == QuestState.FETCH or gt_quest.quest_type == QuestState.FETCH_P2:
         for character in report_vector['characters']:
             # known patient in that location?
             if character["location"] and strip_spacing(character["location"]) == strip_spacing(PATIENT_DATA[patient_id]['location']):
@@ -254,7 +259,7 @@ def score_reconstruction(patient_id, reconstructed_quest: QuestState, game_state
             current_room = room
         return total_steps
 
-    if reconstructed_quest.quest_type == QuestState.FETCH:
+    if reconstructed_quest.quest_type == QuestState.FETCH or reconstructed_quest.quest_type == QuestState.FETCH_P2:
         if not reconstructed_quest.known_properties.get("item", False):
             if reconstructed_quest.known_properties.get("sender_location", False):
                 # must talk to patient
