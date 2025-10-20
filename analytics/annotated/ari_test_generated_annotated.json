@@ -3,6 +3,7 @@
     "patient1": {
         "room_name": false,
         "room_direction": false,
+        "room_exact_location": false,
         "potion_color": false,
         "potion_is_needed": false,
         "potion_location": false,
@@ -16,6 +17,7 @@
     "patient2": {
         "room_name": false,
         "room_direction": false,
+        "room_exact_location": false,
         "potion_color": false,
         "potion_is_needed": false,
         "potion_location": false,
@@ -29,6 +31,7 @@
     "patient3": {
         "room_name": false,
         "room_direction": false,
+        "room_exact_location": false,
         "potion_color": false,
         "potion_is_needed": false,
         "potion_location": false,
@@ -42,6 +45,7 @@
     "patient4": {
         "room_name": false,
         "room_direction": false,
+        "room_exact_location": false,
         "potion_color": false,
         "potion_is_needed": false,
         "potion_location": false,
@@ -55,6 +59,7 @@
     "patient5": {
         "room_name": false,
         "room_direction": false,
+        "room_exact_location": false,
         "potion_color": false,
         "potion_is_needed": false,
         "potion_location": false,

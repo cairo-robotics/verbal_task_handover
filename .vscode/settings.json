@@ -6,5 +6,6 @@
         "-s"
     ],
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.useEnvironmentsExtension": true
+    "python.useEnvironmentsExtension": true,
+    "python.terminal.useEnvFile": true
 }
