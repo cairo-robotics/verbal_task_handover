@@ -12,15 +12,15 @@ def main():
     report_dir = save_dir
 
     # for pid in range(501, 510):
-    # for pid in ['ari_test', 'shiv_test', 'himanshu_test', 'ys_pilot']:
-    # # for pid in ['shiv_test']:
-    #     # pid = str(pid)
-    #     print(f"Generating reports for participant {pid}...")
-    #     # Generate both hybrid and trace-only reports
-    #     generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid")
-    #     generate_report(pid, telemetry_dir, report_dir, save_dir, mode="trace_only")
-
     for pid in ['ari_test', 'shiv_test', 'himanshu_test', 'ys_pilot']:
+    # for pid in ['shiv_test']:
+        # pid = str(pid)
+        print(f"Generating reports for participant {pid}...")
+        # Generate both hybrid and trace-only reports
+        generate_report(pid, telemetry_dir, report_dir, save_dir, mode="hybrid")
+        generate_report(pid, telemetry_dir, report_dir, save_dir, mode="trace_only")
+
+    # for pid in ['ari_test', 'shiv_test', 'himanshu_test', 'ys_pilot']:
         print(f"Generating combined report for participant {pid}...")
         generate_combined_report(pid, report_dir)
 
