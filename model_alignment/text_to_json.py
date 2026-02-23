@@ -1,84 +1,13 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
-from enum import Enum
 import json
 import os
 import sys
 import dotenv
 from openai import OpenAI
 
+from pydantic_schema import *
+
+
 dotenv.load_dotenv()
-
-# ----------------------------
-# Enums
-# ----------------------------
-
-class EntityType(str, Enum):
-    AGENT = "Agent"
-    LOCATION = "Location"
-    ITEM = "Item"
-    OBJECT = "Object"
-
-class EventType(str, Enum):
-    ENTER = "enter"
-    OBTAIN = "obtain"
-    DROP = "drop"
-    TALK_TO = "talk_to"
-    GIVE = "give"
-
-class RelationType(str, Enum):
-    IN_INVENTORY_OF = "in_inventory_of"
-    LOCATED_IN = "located_in"
-    REQUIRES = "requires"
-
-class ConfidenceLevel(str, Enum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-# ----------------------------
-# Core Models
-# ----------------------------
-
-class Entity(BaseModel):
-    id: str = Field(..., description="Unique identifier for the entity")
-    type: EntityType
-
-class Participants(BaseModel):
-    actor: Optional[str] = None
-    object: Optional[str] = None
-    target: Optional[str] = None
-
-class Event(BaseModel):
-    event_id: str = Field(..., description="Unique identifier for the event")
-    event_type: EventType
-
-    participants: Participants
-
-    location: Optional[str] = Field(
-        None,
-        description="Location where the event occurred"
-    )
-
-    timestamp: Optional[str] = Field(
-        None,
-        description="Time at which the event occurred"
-    )
-
-    confidence: ConfidenceLevel
-
-class StateRelation(BaseModel):
-    subject: str
-    relation: RelationType
-    object: str
-    confidence: ConfidenceLevel
-
-class KnowledgeGraphExtraction(BaseModel):
-    entities: List[Entity]
-    events: List[Event]
-    state_relations: List[StateRelation]
-
 
 # ----------------------------
 # Prompt & model interaction
