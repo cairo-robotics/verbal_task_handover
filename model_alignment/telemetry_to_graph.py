@@ -243,6 +243,6 @@ if __name__ == "__main__":
 
     data_dir = os.environ.get("DATA_DIR")
 
-    text_filename = os.path.join(data_dir, "telemetry", sys.argv[1])
+    text_filename = os.path.join(data_dir, "telemetry", sys.argv[1] + ".txt")
     output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_telemetry_to_kg_output.json")
     create_kg_json(text_filename, output_filename)

@@ -3,34 +3,32 @@ better code breakdown incoming
 
 Code for Kaleb's verbal task handover project. Includes `treasure_hunt_py`, a simple pygame environment designed for multi-object search tasks with included telemetry for player actions and game states.
 
-Also in `/evaluation` is code used to generate, process, and score reports for information content.
-
 ## System requirements
 * Python 3.8
 * Python dependencies (see `requirements.txt`)
 
-## evaluation code
+## model alignment & analysis code
 * *requires*: a configued `.env` file (or manually set environment variable `DATA_DIR`)
+* `model_alignment/`:
+    * various scripts for processing user reports and telemetry into matching belief states
+    * [WIP]
 * `analytics/`:
-    * `analyze_info_cost.py`: [WIP] assess differential information access cost of missing info from a given vectorized report in a givne save state
+    <!-- * `analyze_info_cost.py`: [WIP] assess differential information access cost of missing info from a given vectorized report in a given save state -->
     * `iac_bfs.py`: simple BFS implementation to measure steps between two points. Used in assessing information access cost (IAC)
     * `aggregate_scores.py`: collects & sorts meta-scores (i.e. how far each participant progressed) into a csv
     * `report_statistics.py`: [WIP]: currently compiles easy-to-access information about report data, including word counts, across conditions
-    * `process_all_states_and_reports.py`: bulk generates processed state (ground truth) data & associated report vector data; currently needs updating
-    * `report_to_vector.py`: makes an API call to GPT (using the new `response_format` argument) to convert natural language reports into the pydantic JSON schema specified in `vector_schema.py`
-    * `telemetry_to_vector`: currently deprecated; objective is to produce a version of the ground truth data consisting of what the LLM could actually deduce from its limited telemetry input
-    * `vector_schema.py`: defines a pydantic object `GameState` designed to contain all potential information used to determine a next-best action
 
 
 ## post-hoc autonomous report generation
-* `scripts/generate_hybrid_report.py`: prompts GPT to generate a handover report for a given participant save file's telemetry and (optionally) user-written report
+<!-- * `scripts/generate_hybrid_report.py`: prompts GPT to generate a handover report for a given participant save file's telemetry and (optionally) user-written report -->
+* WIP
 
 ## game task (treasure_hunt_py)
-* `treasure_hunt/`
+* `evaluation/treasure_hunt/`
     * `src/`
         * `core.py`: Contains `GameMap` class, which loads & stores current room map, texture data (if specifies), and collision checking / movement information (e.g. `is_valid_move`, `check_transition`)
         * `game_mdp.py`:
-            * `Player` class: stores player's current position, direction, held items and interaction data (`Player.flags`). Also specifics in player 1 or player 2 via `Player.name`.
+        * `Player` class: stores player's current position, direction, held items and interaction data (`Player.flags`). Also specifics in player 1 or player 2 via `Player.name`.
             * `NPC` class, which handles all the heavy lifting of NPC interaction logic, including controlling player-specific interactions or when to use a menu prompt.
             * `GameState` class: the game state class. Holds all current objects (including NPCs) for the level, current score, elapsed time, the Player class, etc. This is what gets saved + loaded between rounds. Also stores what text is currently being displayed or is queued to display on-screen.
                 * `handle_interact` determines what to do when the player hits SPACE if they're facing an NPC or object (this used to do more in the previous version that had more chests, locked doors, etc.)
