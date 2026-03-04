@@ -119,7 +119,6 @@ def apply_event_effects(event: Event, graph: KnowledgeGraphExtraction) -> None:
                     relation=RelationType.IN_INVENTORY_OF,
                     object=actor,
                     confidence=event.confidence,
-                    source=event.source,
                 )
             )
 
@@ -199,7 +198,6 @@ def merge_graphs(
         if item.get("kind") != "event":
             continue
         ev = Event.model_validate(item["value"])
-        ev.source = "user"
         base.events.append(ev)
         added_events.append(ev.event_id)
         apply_event_effects(ev, base)
@@ -211,7 +209,6 @@ def merge_graphs(
         if item.get("kind") != "state_relation":
             continue
         rel = StateRelation.model_validate(item["value"])
-        rel.source = "user"
         base.state_relations.append(rel)
         added_state_relations.append(_state_relation_id(rel))
 
@@ -222,7 +219,6 @@ def merge_graphs(
         if item.get("kind") != "spatial_relation":
             continue
         rel = SpatialRelation.model_validate(item["value"])
-        rel.source = "user"
         base.spatial_relations.append(rel)
         added_spatial_relations.append(_spatial_relation_id(rel))
 
@@ -235,7 +231,6 @@ def merge_graphs(
 
         if kind == "event":
             new_ev = Event.model_validate(value)
-            new_ev.source = "user"
             base.events.append(new_ev)
             added_events.append(new_ev.event_id)
             apply_event_effects(new_ev, base)
@@ -255,7 +250,6 @@ def merge_graphs(
 
         elif kind == "state_relation":
             new_rel = StateRelation.model_validate(value)
-            new_rel.source = "user"
             base.state_relations.append(new_rel)
             new_rel_id = _state_relation_id(new_rel)
             added_state_relations.append(new_rel_id)
@@ -275,7 +269,6 @@ def merge_graphs(
 
         elif kind == "spatial_relation":
             new_rel = SpatialRelation.model_validate(value)
-            new_rel.source = "user"
             base.spatial_relations.append(new_rel)
             new_rel_id = _spatial_relation_id(new_rel)
             added_spatial_relations.append(new_rel_id)

@@ -61,7 +61,6 @@ class Event(BaseModel):
     event_type: EventType
 
     participants: Participants
-
     location: Optional[str] = Field(
         None,
         description="Location where the event occurred"
@@ -73,38 +72,24 @@ class Event(BaseModel):
     )
 
     confidence: ConfidenceLevel
-    source: str = Field(
-        default="telemetry",
-        description='Origin of the event, e.g. "telemetry" or "user"',
-    )
 
 class StateRelation(BaseModel):
     subject: str
     relation: RelationType
     object: str
     confidence: ConfidenceLevel
-    source: str = Field(
-        default="telemetry",
-        description='Origin of the relation, e.g. "telemetry" or "user"',
-    )
 
 class SpatialRelation(BaseModel):
     subject: str = Field(..., description="Location entity subject")
     relation: SpatialRelationType
     object: str = Field(..., description="Location entity object")
     confidence: ConfidenceLevel
-    source: str = Field(
-        default="telemetry",
-        description='Origin of the relation, e.g. "telemetry" or "user"',
-    )
-
 
 class ConflictRecord(BaseModel):
     conflict_id: str
     new_fact_id: str
     existing_fact_id: str
     conflict_type: str
-
 
 class UpdateRecord(BaseModel):
     added_events: List[str]
