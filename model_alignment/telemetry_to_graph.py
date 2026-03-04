@@ -1,7 +1,7 @@
 import re
 import os
 import sys
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 from collections import defaultdict
 
 import dotenv
@@ -59,11 +59,13 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
     state_relations: List[StateRelation] = []
     spatial_relations: List[SpatialRelation] = []
 
+    # Track unique relations so we don't add duplicates
+    seen_state_relations: Set[Tuple[str, str, str]] = set()
+    seen_spatial_relations: Set[Tuple[str, str, str]] = set()
+
     event_counter = 0
     player_location = "room0"
     held_item = None
-
-    # import pdb; pdb.set_trace()  # DEBUGGING
 
     with open(file_path, "r") as f:
         for raw_line in f:
@@ -76,6 +78,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
 
             event_id = f"event_{event_counter}"
             event_counter += 1
+
 
             # -----------------------------------------
             # ENTER NEW LOCATION
@@ -93,18 +96,27 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
                             type=infer_entity_type(ent)
                         )
 
-                spatial_relations.append(SpatialRelation(
-                    subject=player_location,
-                    relation=SpatialRelationType(f"{direction}_of"),
-                    object=location,
-                    confidence=ConfidenceLevel.HIGH
-                ))
-                spatial_relations.append(SpatialRelation(
-                    subject=location,
-                    relation=SpatialRelationType(f"{invert_direction[direction]}_of"),
-                    object=player_location,
-                    confidence=ConfidenceLevel.HIGH
-                ))
+                # Add spatial relations only if not already present
+                forward_key = (player_location, f"{direction}_of", location)
+                if forward_key not in seen_spatial_relations:
+                    seen_spatial_relations.add(forward_key)
+                    spatial_relations.append(SpatialRelation(
+                        subject=player_location,
+                        relation=SpatialRelationType(f"{direction}_of"),
+                        object=location,
+                        confidence=ConfidenceLevel.HIGH
+                    ))
+
+                inverse_direction = invert_direction[direction]
+                backward_key = (location, f"{inverse_direction}_of", player_location)
+                if backward_key not in seen_spatial_relations:
+                    seen_spatial_relations.add(backward_key)
+                    spatial_relations.append(SpatialRelation(
+                        subject=location,
+                        relation=SpatialRelationType(f"{inverse_direction}_of"),
+                        object=player_location,
+                        confidence=ConfidenceLevel.HIGH
+                    ))
 
                 player_location = location
 
@@ -136,24 +148,30 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
 
                 if entities[item].type == EntityType.ITEM:
                     # log the item as being found in this location
-                    state_relations.append(StateRelation(
-                        subject=item,
-                        relation=RelationType.LOCATED_IN,
-                        object=player_location,
-                        confidence=ConfidenceLevel.HIGH
-                    ))
+                    state_key = (item, RelationType.LOCATED_IN.value, player_location)
+                    if state_key not in seen_state_relations:
+                        seen_state_relations.add(state_key)
+                        state_relations.append(StateRelation(
+                            subject=item,
+                            relation=RelationType.LOCATED_IN,
+                            object=player_location,
+                            confidence=ConfidenceLevel.HIGH
+                        ))
 
                     # also log as held item
                     held_item = item
 
                 if entities[item].type == EntityType.MESSAGE:
                     # requests and responses are permanently owned by the player
-                    state_relations.append(StateRelation(
-                        subject=item,
-                        relation=RelationType.IN_INVENTORY_OF,
-                        object=actor,
-                        confidence=ConfidenceLevel.HIGH
-                    ))
+                    inventory_key = (item, RelationType.IN_INVENTORY_OF.value, actor)
+                    if inventory_key not in seen_state_relations:
+                        seen_state_relations.add(inventory_key)
+                        state_relations.append(StateRelation(
+                            subject=item,
+                            relation=RelationType.IN_INVENTORY_OF,
+                            object=actor,
+                            confidence=ConfidenceLevel.HIGH
+                        ))
 
                 continue
 
@@ -162,31 +180,46 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
             # -----------------------------------------
             match = re.match(r"npc interact: (\w+)", text_lower)
             if match:
-                target = match.groups()[0]
-                actor = "player"
-
-                for ent in [actor, target]:
-                    if ent not in entities:
-                        entities[ent] = Entity(
-                            id=ent,
-                            type=infer_entity_type(ent)
-                        )
+                discussion_match = re.match(r"npc interact: (\w+) about (.+)", text_lower)
+                if discussion_match:
+                    target, topic = discussion_match.groups()
+                    topic = topic.replace(" ", "_")
+                    event_type = EventType.DISCUSS
+                    for ent in [actor, target, topic]:
+                        if ent not in entities:
+                            entities[ent] = Entity(
+                                id=ent,
+                                type=infer_entity_type(ent)
+                            )
+                else:
+                    target = match.groups()[0]
+                    topic = None
+                    event_type = EventType.TALK_TO
+                    for ent in [actor, target]:
+                        if ent not in entities:
+                            entities[ent] = Entity(
+                                id=ent,
+                                type=infer_entity_type(ent)
+                            )
 
                 events.append(Event(
                     event_id=event_id,
-                    event_type=EventType.TALK_TO,
-                    participants={"actor": actor, "target": target},
+                    event_type=event_type,
+                    participants={"actor": actor, "target": target, "object": topic},
                     timestamp=timestamp,
                     confidence=ConfidenceLevel.HIGH
                 ))
 
                 # NPCs are always located in the same room as the player when talked to
-                state_relations.append(StateRelation(
-                    subject=target,
-                    relation=RelationType.LOCATED_IN,
-                    object=player_location,
-                    confidence=ConfidenceLevel.HIGH
-                ))
+                target_located_key = (target, RelationType.LOCATED_IN.value, player_location)
+                if target_located_key not in seen_state_relations:
+                    seen_state_relations.add(target_located_key)
+                    state_relations.append(StateRelation(
+                        subject=target,
+                        relation=RelationType.LOCATED_IN,
+                        object=player_location,
+                        confidence=ConfidenceLevel.HIGH
+                    ))
 
                 continue
 
@@ -214,12 +247,15 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
                 ))
 
                 # NPCs are always located in the same room as the player when given an item
-                state_relations.append(StateRelation(
-                    subject=target,
-                    relation=RelationType.LOCATED_IN,
-                    object=player_location,
-                    confidence=ConfidenceLevel.HIGH
-                ))
+                target_located_key = (target, RelationType.LOCATED_IN.value, player_location)
+                if target_located_key not in seen_state_relations:
+                    seen_state_relations.add(target_located_key)
+                    state_relations.append(StateRelation(
+                        subject=target,
+                        relation=RelationType.LOCATED_IN,
+                        object=player_location,
+                        confidence=ConfidenceLevel.HIGH
+                    ))
 
                 continue
 

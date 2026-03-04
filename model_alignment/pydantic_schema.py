@@ -17,6 +17,7 @@ class EventType(str, Enum):
     DROP = "drop"
     TALK_TO = "talk_to"
     GIVE = "give"
+    DISCUSS = "discuss"
 
 class RelationType(str, Enum):
     IN_INVENTORY_OF = "in_inventory_of"
