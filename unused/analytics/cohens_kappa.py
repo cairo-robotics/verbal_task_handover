@@ -28,6 +28,7 @@ def compute_per_participant_and_global_kappa(folder, reviewer1_prefix="reviewer1
     results = []
     y1_all, y2_all = [], []
     
+    # TODO: replace glob with os.listdir
     reviewer1_files = sorted(glob.glob(os.path.join(folder, f"{reviewer1_prefix}*.json")))
 
     for f1 in reviewer1_files:
