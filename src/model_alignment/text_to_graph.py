@@ -83,6 +83,6 @@ def convert_text_to_knowledge_graph(text_filename, output_filename):
 if __name__ == "__main__":
     data_dir = os.environ.get("DATA_DIR")
 
-    text_filename = os.path.join(data_dir, "reports", sys.argv[1] + ".txt")
+    text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
     output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_text_to_kg_output.json")
     convert_text_to_knowledge_graph(text_filename, output_filename)
