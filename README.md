@@ -128,7 +128,7 @@ into a shared `KnowledgeGraphExtraction` representation, then computes diffs/con
 Defines the Pydantic models and enums used throughout the pipeline:
 
 - `KnowledgeGraphExtraction` : `{ entities, events, state_relations, spatial_relations, conflicts }`
-- `NarrativeView` : `{ player_state, world_state (rooms/characters/items), unresolved_conflicts }`
+- `NarrativeView` : `{ player_state, world_state (rooms + implicit locations + unplaced agents), unresolved_conflicts }`
 
 ### Pipeline steps
 
@@ -168,7 +168,7 @@ Key scripts:
    - Output: `<id>_merge_graphs_output.json`
 
 5. `craft_narrative_view.py`
-   - Converts the merged knowledge graph into `NarrativeView` (player inventory + room graph + characters/items per room + unresolved conflict summaries).
+   - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
    - Output: `<id>_narrative_view_output.json`
 
 6. `generate_reports.py`
