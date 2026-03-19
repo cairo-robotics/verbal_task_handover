@@ -13,6 +13,7 @@ from pydantic_schema import (
     SpatialRelation,
     ConfidenceLevel,
     Entity,
+    Participants,
 )
 
 
@@ -47,8 +48,13 @@ def _spatial_relation_key(rel: SpatialRelation) -> Tuple[str, str, str]:
 
 
 def _normalize_entity_id(entity_id: str) -> str:
-    # Lowercase, replace underscores/spaces, remove leading/trailing whitespace
-    return entity_id.replace("_", " ").strip().lower()
+    """
+    Canonical form for matching ids: lowercase, strip, then remove all
+    underscores and whitespace so e.g. room1, room_1, and "room 1" align,
+    and red_room matches red room.
+    """
+    s = entity_id.strip().lower()
+    return "".join(ch for ch in s if ch not in "_ \t\n\r\f\v")
 
 def _build_entity_mapping(
     base_entities: List[Entity],
@@ -140,6 +146,52 @@ def _map_entity_id(entity_id: str, mapping: Dict[str, str]) -> str:
     return mapping.get(entity_id, entity_id)
 
 
+def _event_with_mapped_entities(ev: Event, mapping: Dict[str, str]) -> Event:
+    p = ev.participants
+    return ev.model_copy(
+        update={
+            "participants": Participants(
+                actor=_map_entity_id(p.actor, mapping) if p.actor is not None else None,
+                object=_map_entity_id(p.object, mapping) if p.object is not None else None,
+                target=_map_entity_id(p.target, mapping) if p.target is not None else None,
+            ),
+            "location": (
+                _map_entity_id(ev.location, mapping)
+                if ev.location is not None
+                else None
+            ),
+        }
+    )
+
+
+def _state_relation_with_mapped_entities(
+    rel: StateRelation, mapping: Dict[str, str]
+) -> StateRelation:
+    return rel.model_copy(
+        update={
+            "subject": _map_entity_id(rel.subject, mapping),
+            "object": _map_entity_id(rel.object, mapping),
+        }
+    )
+
+
+def _spatial_relation_with_mapped_entities(
+    rel: SpatialRelation, mapping: Dict[str, str]
+) -> SpatialRelation:
+    return rel.model_copy(
+        update={
+            "subject": _map_entity_id(rel.subject, mapping),
+            "object": _map_entity_id(rel.object, mapping),
+        }
+    )
+
+
+def _diff_item(
+    kind: str, value: Event | StateRelation | SpatialRelation
+) -> Dict[str, Any]:
+    return {"kind": kind, "value": value.model_dump()}
+
+
 def compare_graphs(
     base: KnowledgeGraphExtraction,
     candidate: KnowledgeGraphExtraction,
@@ -148,7 +200,9 @@ def compare_graphs(
     Compute a diff between two knowledge graphs.
 
     The `base` graph is treated as the reference; `candidate` is compared to it.
-    Before comparison, we attempt to align entity ids between graphs using an LLM.
+    Before comparison, we align entity ids between graphs (normalization + LLM).
+    Serialized fact payloads (already_present, novel_*, conflicts, uncertain) use
+    those mapped ids so consumers such as merge_graphs stay consistent with base.
 
     Returns a JSON-serialisable dict with keys:
       - already_present: events or state/spatial relations that also appear in `base`
@@ -265,10 +319,10 @@ def compare_graphs(
         sig_type = ev.event_type.value
         sig = (sig_type, participants_frozen)
 
+        ev_out = _event_with_mapped_entities(ev, entity_mapping)
+
         if sig in base_event_sigs:
-            result["already_present"].append(
-                {"kind": "event", "value": ev.model_dump()}
-            )
+            result["already_present"].append(_diff_item("event", ev_out))
             continue
 
         # Possible conflict: same participants but different event type
@@ -276,22 +330,16 @@ def compare_graphs(
             participants_frozen
         )
         if base_types_for_participants and sig_type not in base_types_for_participants:
-            result["conflicts"].append(
-                {"kind": "event", "value": ev.model_dump()}
-            )
+            result["conflicts"].append(_diff_item("event", ev_out))
             continue
 
         # Uncertain: low/medium confidence, not present, not conflicting
         if ev.confidence != ConfidenceLevel.HIGH:
-            result["uncertain"].append(
-                {"kind": "event", "value": ev.model_dump()}
-            )
+            result["uncertain"].append(_diff_item("event", ev_out))
             continue
 
         # Otherwise, this is a genuinely novel event
-        result["novel_events"].append(
-            {"kind": "event", "value": ev.model_dump()}
-        )
+        result["novel_events"].append(_diff_item("event", ev_out))
 
     # ----------------------------------------
     # Compare state relations (with mapped entity ids)
@@ -300,11 +348,10 @@ def compare_graphs(
         mapped_subject = _map_entity_id(rel.subject, entity_mapping)
         mapped_object = _map_entity_id(rel.object, entity_mapping)
         key = (mapped_subject, rel.relation.value, mapped_object)
+        rel_out = _state_relation_with_mapped_entities(rel, entity_mapping)
 
         if key in base_state_keys:
-            result["already_present"].append(
-                {"kind": "state_relation", "value": rel.model_dump()}
-            )
+            result["already_present"].append(_diff_item("state_relation", rel_out))
             continue
 
         subj_rel_key = (mapped_subject, rel.relation.value)
@@ -312,21 +359,17 @@ def compare_graphs(
 
         # Conflict: same subject+relation, different object
         if base_objs_for_subj_rel and mapped_object not in base_objs_for_subj_rel:
-            result["conflicts"].append(
-                {"kind": "state_relation", "value": rel.model_dump()}
-            )
+            result["conflicts"].append(_diff_item("state_relation", rel_out))
             continue
 
         # Uncertain: low/medium confidence, not present, not conflicting
         if rel.confidence != ConfidenceLevel.HIGH:
-            result["uncertain"].append(
-                {"kind": "state_relation", "value": rel.model_dump()}
-            )
+            result["uncertain"].append(_diff_item("state_relation", rel_out))
             continue
 
         # Otherwise, this is a genuinely novel state relation
         result["novel_state_relations"].append(
-            {"kind": "state_relation", "value": rel.model_dump()}
+            _diff_item("state_relation", rel_out)
         )
 
     # ----------------------------------------
@@ -336,11 +379,10 @@ def compare_graphs(
         mapped_subject = _map_entity_id(rel.subject, entity_mapping)
         mapped_object = _map_entity_id(rel.object, entity_mapping)
         key = (mapped_subject, rel.relation.value, mapped_object)
+        rel_out = _spatial_relation_with_mapped_entities(rel, entity_mapping)
 
         if key in base_spatial_keys:
-            result["already_present"].append(
-                {"kind": "spatial_relation", "value": rel.model_dump()}
-            )
+            result["already_present"].append(_diff_item("spatial_relation", rel_out))
             continue
 
         subj_rel_key = (mapped_subject, rel.relation.value)
@@ -348,21 +390,17 @@ def compare_graphs(
 
         # Conflict: same subject+relation, different object
         if base_objs_for_subj_rel and mapped_object not in base_objs_for_subj_rel:
-            result["conflicts"].append(
-                {"kind": "spatial_relation", "value": rel.model_dump()}
-            )
+            result["conflicts"].append(_diff_item("spatial_relation", rel_out))
             continue
 
         # Uncertain: low/medium confidence, not present, not conflicting
         if rel.confidence != ConfidenceLevel.HIGH:
-            result["uncertain"].append(
-                {"kind": "spatial_relation", "value": rel.model_dump()}
-            )
+            result["uncertain"].append(_diff_item("spatial_relation", rel_out))
             continue
 
         # Otherwise, this is a genuinely novel spatial relation
         result["novel_spatial_relations"].append(
-            {"kind": "spatial_relation", "value": rel.model_dump()}
+            _diff_item("spatial_relation", rel_out)
         )
 
     return result
