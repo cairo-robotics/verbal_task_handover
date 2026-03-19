@@ -30,8 +30,7 @@ Code for a research paper on LLM's ability to improve task handover performance 
     1b. `text_to_graph.py`: Converting user notes into the same Pydantic representation.
     2. `compare_graphs.py`: Comparing the knowledge graphs from 1a and 1b to find differences and contradictions
     3. Using the diff produced in step 2 to produce a merged graph (`merge_graphs.py`)
-    4. And finally, generating a final report using the merged graph output ([WIP], no code for this yet).
-
+    4. And finally, generating a final report using the merged graph output (`generate_reports.py`)
 ## Current focus / Active work
 1. The final system pipeline to generate reports from graphs
 2. Moving to metrics -- creating an evaluation pipeline to compare report creation methods

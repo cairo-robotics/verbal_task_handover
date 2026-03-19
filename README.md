@@ -172,8 +172,12 @@ Key scripts:
    - Output: `<id>_narrative_view_output.json`
 
 6. `generate_reports.py`
-   - Sends the `NarrativeView` JSON to an OpenAI chat model to generate the final handover report text.
-   - Note: `generate_reports.py` contains a placeholder `SYSTEM_PROMPT = "System prompt goes here"`; you should replace it with the desired reporting instructions.
+   - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
+   - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
+   - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
+     - `full_realization` — structured, exhaustive coverage of the narrative state (default).
+     - `task_aware` — emphasizes patient needs, message delivery, and task-relevant inventory/location.
+   - **`--prompt-set`:** Choose `full_realization`, `task_aware`, or `both`. With `both`, the model is called twice (full realization first, then task-aware); the two replies are output to separate files.
 
 ### Example end-to-end run (participant `302`)
 
@@ -193,6 +197,11 @@ python src/model_alignment/compare_graphs.py 302
 python src/model_alignment/merge_graphs.py 302
 python src/model_alignment/craft_narrative_view.py 302
 python src/model_alignment/generate_reports.py 302
+# Optional: task-focused report, or both prompt styles (two API calls)
+python src/model_alignment/generate_reports.py 302 --prompt-set task_aware
+python src/model_alignment/generate_reports.py 302 --prompt-set both
+# Without DATA_DIR, pass the narrative view path explicitly:
+# python src/model_alignment/generate_reports.py /path/to/302_narrative_view_output.json
 ```
 
 ### Configuration
@@ -205,6 +214,6 @@ Environment variables used by the pipeline:
 ## Notes / Current Limitations
 
 - Telemetry parsing in `telemetry_to_graph.py` only covers a subset of possible in-game events (movement, some interactions, and item/npc give patterns). If you add new telemetry event types, you may need to extend the regex handling.
-- `generate_reports.py` includes a placeholder system prompt; report quality will depend on supplying a good prompt.
+- LLM report quality in `generate_reports.py` depends on the chosen `--prompt-set` and on edits to the in-script prompts if you need different behavior.
 - `distractor.py` requires local Selenium/Firefox setup when enabled.
 
