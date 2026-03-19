@@ -26,14 +26,14 @@ ALL_LOCATION_KEYWORDS = [
 def infer_entity_type(entity_id: str) -> EntityType:
     entity_id = entity_id.lower()
 
-    if any(keyword in entity_id for keyword in ALL_LOCATION_KEYWORDS):
-        return EntityType.LOCATION
+    if "request" in entity_id or "response" in entity_id:
+        return EntityType.MESSAGE
     if entity_id in ["player"] or entity_id in ALL_NPCS:
         return EntityType.AGENT
     if "potion" in entity_id:
         return EntityType.ITEM
-    if "request" in entity_id or "response" in entity_id:
-        return EntityType.MESSAGE
+    if any(keyword in entity_id for keyword in ALL_LOCATION_KEYWORDS):
+        return EntityType.LOCATION
 
     return EntityType.ITEM  # Default to ITEM if unsure
 
