@@ -114,7 +114,7 @@ This requires a working local Selenium environment (Firefox + `geckodriver` path
 
 `evaluation/treasure_hunt_py/treasure_hunt/scripts/tutorial.py` runs a simplified tutorial map (`maps/tutorial_v2/`) and can log telemetry when `--telemetry` is enabled.
 
-## Higher-level pipeline: `src/model_alignment/`
+## Report generation pipeline: `src/model_alignment/`
 
 The `src/model_alignment/` pipeline converts:
 
@@ -169,6 +169,7 @@ Key scripts:
 
 5. `craft_narrative_view.py`
    - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
+   - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character’s `requirements`, or the player’s inventory.
    - Output: `<id>_narrative_view_output.json`
 
 6. `generate_reports.py`
@@ -202,6 +203,11 @@ python src/model_alignment/generate_reports.py 302 --prompt-set task_aware
 python src/model_alignment/generate_reports.py 302 --prompt-set both
 # Without DATA_DIR, pass the narrative view path explicitly:
 # python src/model_alignment/generate_reports.py /path/to/302_narrative_view_output.json
+```
+
+Run the full pipeline using:
+```
+python src/model_alignment/run_full_pipline_for_pids.py {PID1 PID2...}
 ```
 
 ### Configuration
