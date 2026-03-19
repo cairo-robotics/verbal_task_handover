@@ -158,18 +158,18 @@ def main() -> None:
         r1 = call_chatgpt(fr_sys, fr_user, narrative_view)
         r2 = call_chatgpt(ta_sys, ta_user, narrative_view)
 
-        output_path = os.path.join(data_dir, "processed_output", args.input + "_full_realization_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + "_full_realization_report.txt")
         with open(output_path, "w") as f:
             f.write(r1)
         print(f"Full realization report saved to {output_path}")
-        output_path = os.path.join(data_dir, "processed_output", args.input + "_task_aware_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + "_task_aware_report.txt")
         with open(output_path, "w") as f:
             f.write(r2)
         print(f"Task-aware report saved to {output_path}")
     else:
         sys_p, user_p = PROMPT_SETS[args.prompt_set]
         report = call_chatgpt(sys_p, user_p, narrative_view)
-        output_path = os.path.join(data_dir, "processed_output", args.input + "_" + args.prompt_set + "_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + "_" + args.prompt_set + "_report.txt")
         with open(output_path, "w") as f:
             f.write(report)
         print(f"Report saved to {output_path}")
