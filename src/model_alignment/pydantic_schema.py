@@ -13,11 +13,11 @@ class EntityType(str, Enum):
     MESSAGE = "Message/Request/Response"
 
 class EventType(str, Enum):
-    OBTAIN = "obtain"
-    DROP = "drop"
-    TALK_TO = "talk_to"
-    GIVE = "give"
-    DISCUSS = "discuss"
+    OBTAIN = "obtained"
+    DROP = "dropped"
+    TALK_TO = "talked_to"
+    GIVE = "given"
+    DELIVER = "delivered"
 
 class RelationType(str, Enum):
     IN_INVENTORY_OF = "in_inventory_of"

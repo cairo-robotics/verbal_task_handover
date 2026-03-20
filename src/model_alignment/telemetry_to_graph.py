@@ -184,7 +184,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraphExtraction:
                 if discussion_match:
                     target, topic = discussion_match.groups()
                     topic = topic.replace(" ", "_")
-                    event_type = EventType.DISCUSS
+                    event_type = EventType.DELIVER
                     for ent in [actor, target, topic]:
                         if ent not in entities:
                             entities[ent] = Entity(
