@@ -75,22 +75,17 @@ The task uses package data files under:
 ### Running the game (main telemetry task)
 
 1. Install the package:
-
-   ```bash
+  ```bash
    pip install -e evaluation/treasure_hunt_py
-   ```
-
+  ```
 2. Set `SAVE_DIR` (where saves + telemetry logs will be written):
-
-   ```bash
+  ```bash
    export SAVE_DIR=/path/to/where/to/write/saves
-   ```
-
+  ```
 3. Run from the repo root:
-
-   ```bash
+  ```bash
    python -m treasure_hunt.scripts.main --save 302
-   ```
+  ```
 
 Useful options (as defined in `evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py`):
 
@@ -141,44 +136,39 @@ The scripts assume a `DATA_DIR` environment variable and a directory layout like
 Key scripts:
 
 1. `telemetry_to_graph.py`
-   - Deterministic conversion from telemetry text to `KnowledgeGraphExtraction`.
-   - Current parsing focuses on patterns like:
-     - `room entered: <direction> to <location>`
-     - `item obtained: <item>`
-     - `npc interact: <npc>` and `npc interact: <npc> about <topic>`
-     - `gave item to npc: <item> <npc>`
-   - Output: `<id>_telemetry_to_kg_output.json`
-
+  - Deterministic conversion from telemetry text to `KnowledgeGraphExtraction`.
+  - Current parsing focuses on patterns like:
+    - `room entered: <direction> to <location>`
+    - `item obtained: <item>`
+    - `npc interact: <npc>` and `npc interact: <npc> about <topic>`
+    - `gave item to npc: <item> <npc>`
+  - Output: `<id>_telemetry_to_kg_output.json`
 2. `text_to_graph.py`
-   - Uses the OpenAI API to convert a user report text file to the same `KnowledgeGraphExtraction` schema.
-   - Output: `<id>_text_to_kg_output.json`
-
+  - Uses the OpenAI API to convert a user report text file to the same `KnowledgeGraphExtraction` schema.
+  - Output: `<id>_text_to_kg_output.json`
 3. `compare_graphs.py`
-   - Aligns entity IDs across graphs (uses an LLM for ambiguous entity matching).
-   - Computes a diff/conflict summary:
-     - events: already-present vs novel vs conflicts vs uncertain
-     - state relations and spatial relations: already-present vs novel vs conflicts vs uncertain
-   - Output: `<id>_compare_graphs_output.json`
-
+  - Aligns entity IDs across graphs (uses an LLM for ambiguous entity matching).
+  - Computes a diff/conflict summary:
+    - events: already-present vs novel vs conflicts vs uncertain
+    - state relations and spatial relations: already-present vs novel vs conflicts vs uncertain
+  - Output: `<id>_compare_graphs_output.json`
 4. `merge_graphs.py`
-   - Applies the diff to the base graph:
-     - adds novel facts directly
-     - adds `ConflictRecord` entries for contradictions
-     - backfills missing entities referenced by events/relations
-   - Output: `<id>_merge_graphs_output.json`
-
+  - Applies the diff to the base graph:
+    - adds novel facts directly
+    - adds `ConflictRecord` entries for contradictions
+    - backfills missing entities referenced by events/relations
+  - Output: `<id>_merge_graphs_output.json`
 5. `craft_narrative_view.py`
-   - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
-   - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character’s `requirements`, or the player’s inventory.
-   - Output: `<id>_narrative_view_output.json`
-
+  - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
+  - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character’s `requirements`, or the player’s inventory.
+  - Output: `<id>_narrative_view_output.json`
 6. `generate_reports.py`
-   - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
-   - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
-   - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
-     - `full_realization` — structured, exhaustive coverage of the narrative state (default).
-     - `task_aware` — emphasizes patient needs, message delivery, and task-relevant inventory/location.
-   - **`--prompt-set`:** Choose `full_realization`, `task_aware`, or `both`. With `both`, the model is called twice (full realization first, then task-aware); the two replies are output to separate files.
+  - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
+  - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
+  - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
+    - `full_realization` — structured, exhaustive coverage of the narrative state (default).
+    - `task_aware` — emphasizes patient needs, message delivery, and task-relevant inventory/location.
+  - `**--prompt-set`:** Choose `full_realization`, `task_aware`, or `both`. With `both`, the model is called twice (full realization first, then task-aware); the two replies are output to separate files.
 
 ### Example end-to-end run (participant `302`)
 
@@ -196,6 +186,7 @@ python src/model_alignment/telemetry_to_graph.py 302
 python src/model_alignment/text_to_graph.py 302
 python src/model_alignment/compare_graphs.py 302
 python src/model_alignment/merge_graphs.py 302
+python src/model_alignment/reconcile_state.py 302
 python src/model_alignment/craft_narrative_view.py 302
 python src/model_alignment/generate_reports.py 302
 # Optional: task-focused report, or both prompt styles (two API calls)
@@ -206,6 +197,7 @@ python src/model_alignment/generate_reports.py 302 --prompt-set both
 ```
 
 Run the full pipeline using:
+
 ```
 python src/model_alignment/run_full_pipline_for_pids.py {PID1 PID2...}
 ```
