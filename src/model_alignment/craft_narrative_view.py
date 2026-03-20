@@ -209,7 +209,7 @@ def _build_interaction_history_by_character(
                 #     f"{event.participants.}"
                 # )
                 if event.participants.object:
-                    summary = f"{event.event_type.value} {event.participants.object} by {event.participants.actor}"
+                    summary = f"{event.event_type.value}: {event.participants.object} by {event.participants.actor}"
                 else:
                     summary = f"{event.event_type.value} {event.participants.actor}"
             else:
@@ -364,7 +364,7 @@ if __name__ == "__main__":
     import os
     data_dir = os.environ.get("DATA_DIR")
 
-    extraction_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_merge_graphs_output.json")
+    extraction_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_reconcile_state_output.json")
     with open(extraction_filename, "r") as f:
         extraction = KnowledgeGraphExtraction.model_validate_json(f.read())
     narrative_view = craft_narrative_view(extraction)
