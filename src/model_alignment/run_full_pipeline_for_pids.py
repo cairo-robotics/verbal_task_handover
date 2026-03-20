@@ -96,7 +96,7 @@ def main() -> None:
     parser.add_argument(
         "--prompt-set",
         choices=("full_realization", "task_aware", "both"),
-        default="full_realization",
+        default="both",
         help="Forwarded to generate_reports.py (default: full_realization).",
     )
     parser.add_argument(
@@ -130,6 +130,7 @@ def main() -> None:
                     "text_to_graph.py",
                     "compare_graphs.py",
                     "merge_graphs.py",
+                    "reconcile_state.py",
                     "craft_narrative_view.py",
                     "generate_reports.py",
                 ):

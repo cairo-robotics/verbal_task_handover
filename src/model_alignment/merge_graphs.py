@@ -9,8 +9,6 @@ from pydantic_schema import (
     SpatialRelation,
     ConflictRecord,
     UpdateRecord,
-    RelationType,
-    EventType,
     Entity,
     EntityType,
 )
@@ -84,45 +82,6 @@ def _find_conflicting_spatial_relations(
     return conflicts
 
 
-def _state_exists(
-    graph: KnowledgeGraphExtraction,
-    subject: str,
-    relation: RelationType,
-    obj: str,
-) -> bool:
-    for rel in graph.state_relations:
-        if (
-            rel.subject == subject
-            and rel.relation == relation
-            and rel.object == obj
-        ):
-            return True
-    return False
-
-
-def apply_event_effects(event: Event, graph: KnowledgeGraphExtraction) -> None:
-    """
-    Apply deterministic effects of an event to keep state consistent.
-    Currently:
-      - OBTAIN(actor, object) => (object, IN_INVENTORY_OF, actor)
-    """
-    if event.event_type == EventType.OBTAIN:
-        actor = event.participants.actor
-        obj = event.participants.object
-        if actor is None or obj is None:
-            return
-
-        if not _state_exists(graph, obj, RelationType.IN_INVENTORY_OF, actor):
-            graph.state_relations.append(
-                StateRelation(
-                    subject=obj,
-                    relation=RelationType.IN_INVENTORY_OF,
-                    object=actor,
-                    confidence=event.confidence,
-                )
-            )
-
-
 def _collect_referenced_entity_ids(graph: KnowledgeGraphExtraction) -> set:
     """
     Collect every entity id referenced in events, state_relations, and spatial_relations.
@@ -177,6 +136,9 @@ def merge_graphs(
     - For conflicts, the new fact is added and corresponding ConflictRecord
       objects are appended to `base.conflicts`.
 
+    Inventory effects from events (OBTAIN / DELIVER) are not applied here; run
+    `reconcile_state.py` on the merge output JSON when you need that step.
+
     Returns the updated graph and an UpdateRecord summarising changes.
     """
     added_events: List[str] = []
@@ -200,7 +162,6 @@ def merge_graphs(
         ev = Event.model_validate(item["value"])
         base.events.append(ev)
         added_events.append(ev.event_id)
-        apply_event_effects(ev, base)
 
     # ----------------------------------------
     # Add novel state relations
@@ -233,7 +194,6 @@ def merge_graphs(
             new_ev = Event.model_validate(value)
             base.events.append(new_ev)
             added_events.append(new_ev.event_id)
-            apply_event_effects(new_ev, base)
 
             existing_events = _find_conflicting_events(base, new_ev)
             for existing in existing_events:
