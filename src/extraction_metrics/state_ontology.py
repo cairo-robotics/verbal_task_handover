@@ -14,7 +14,6 @@ class PotionDelivered(BaseModel):
     type: Literal["PotionDelivered"]
     patient: str
     potion_color: str
-    delivery_stage: Literal["first", "second"]
 
 
 class MessageRequest(BaseModel):
@@ -31,14 +30,14 @@ class MessageDelivered(BaseModel):
 
 class MessageResponse(BaseModel):
     type: Literal["MessageResponse"]
-    target_npc: str
-    sender_patient: str
+    sender_npc: str
+    target_patient: str
 
 
 class ResponseDelivered(BaseModel):
     type: Literal["ResponseDelivered"]
-    target_npc: str
-    sender_patient: str
+    sender_npc: str
+    target_patient: str
 
 
 class NpcLocation(BaseModel):

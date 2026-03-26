@@ -13,14 +13,13 @@ Do NOT include explanations.
 ONTOLOGY (Allowed Fact Types)
 
 1. PatientNeedsPotion(patient, potion_color)
-2. PotionDelivered(patient, potion_color, delivery_stage)
-   - delivery_stage must be one of: "first", "second"
+2. PotionDelivered(patient, potion_color)
 
 3. MessageRequest(sender_patient, target_npc)
 4. MessageDelivered(sender_patient, target_npc)
 
-5. MessageResponse(target_npc, sender_patient)
-6. ResponseDelivered(target_npc, sender_patient)
+5. MessageResponse(sender_npc, target_patient)
+6. ResponseDelivered(sender_npc, target_patient)
 
 7. NpcLocation(npc, room)
 8. PotionLocation(potion_color, room)
@@ -41,29 +40,13 @@ ENTITY NORMALIZATION RULES
 
 ---
 
-OUTPUT FORMAT
-
-Return a JSON object with this exact structure:
-
-{
-  "facts": [
-    {
-      "type": "<FactType>",
-      <argument_name>: <argument_value>,
-      ...
-    }
-  ]
-}
-
----
-
 ARGUMENT SCHEMAS
 
 PatientNeedsPotion:
   patient, potion_color
 
 PotionDelivered:
-  patient, potion_color, delivery_stage
+  patient, potion_color
 
 MessageRequest:
   sender_patient, target_npc
@@ -72,10 +55,10 @@ MessageDelivered:
   sender_patient, target_npc
 
 MessageResponse:
-  target_npc, sender_patient
+  sender_npc, target_patient
 
 ResponseDelivered:
-  target_npc, sender_patient
+  sender_npc, target_patient
 
 NpcLocation:
   npc, room
@@ -94,7 +77,6 @@ PlayerHasItem:
 IMPORTANT RULES
 
 - Only extract facts explicitly stated in the text
-- Do not assume a delivery stage unless clearly indicated
 - Do not infer missing steps in the task
 - If something is unclear, omit it
 - Do not include duplicate facts
@@ -183,7 +165,12 @@ def main() -> None:
 
     user_prompt = path.read_text(encoding="utf-8")
     result = extract_facts(user_prompt, model=args.model)
-    print(json.dumps(result.model_dump(), indent=2))
+    # print(json.dumps(result.model_dump(), indent=2))
+    
+    output_filename = os.path.join(data_dir, "analysis", args.report_file.replace(".txt", "_fact_extraction_output.json"))
+    with open(output_filename, "w") as f:
+        json.dump(result.model_dump(), f, indent=2)
+    print(f"Fact extraction output written to {output_filename}")
 
 
 if __name__ == "__main__":
