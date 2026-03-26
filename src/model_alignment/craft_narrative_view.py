@@ -67,6 +67,7 @@ def _build_inventory(
         if (
             rel.relation == RelationType.IN_INVENTORY_OF
             and rel.object == player_id
+            and "potion" not in rel.subject.lower() # omit potions from inventory, since only one can be held at a time anyway
         ):
             inventory_items.append(rel.subject)
     return inventory_items
@@ -209,9 +210,9 @@ def _build_interaction_history_by_character(
                 #     f"{event.participants.}"
                 # )
                 if event.participants.object:
-                    summary = f"{event.event_type.value}: {event.participants.object} by {event.participants.actor}"
+                    summary = f"was {event.event_type.value}: {event.participants.object} by {event.participants.actor}"
                 else:
-                    summary = f"{event.event_type.value} {event.participants.actor}"
+                    summary = f"{event.participants.actor} {event.event_type.value}"
             else:
                 summary = event.event_type.value
 

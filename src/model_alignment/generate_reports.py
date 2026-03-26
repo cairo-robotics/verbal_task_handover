@@ -47,16 +47,16 @@ You are generating a handoff report for a teammate who will continue the task.
 
 The primary objective of the task is to fulfill the needs of NPC patients by:
 - Delivering required potions
-- Carrying request messages to specified NPCs
+- Carrying request messages from patients to specified NPCs
 - Returning response messages to the original requester
 
 Your report should prioritize information that is relevant to completing this objective.
 
 You may briefly mention other explored information if useful for context, but you should emphasize:
 - Which patients still need potions
-- Which messages are pending delivery
-- Which responses need to be returned
-- What items are currently held that are relevant to patient needs
+- Which messages are pending delivery (omit if none)
+- Which responses need to be returned (omit if none)
+- What items are currently held that are relevant to patient needs (omit if none)
 - The player’s current location relative to relevant NPCs
 
 Do not introduce new facts.
@@ -71,8 +71,8 @@ The goal is to fulfill NPC patient needs (potions and message delivery).
 
 Prioritize:
 - Outstanding patient needs
-- Pending requests and responses
-- Relevant inventory items
+- Pending requests and responses (omit if none)
+- Relevant inventory items (omit if none)
 - NPC locations relevant to completing tasks
 
 De-emphasize or briefly summarize information that is not directly relevant to patient care.
