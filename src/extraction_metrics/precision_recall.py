@@ -2,6 +2,7 @@ import json
 import argparse
 import os
 import re
+from pathlib import Path
 
 
 def _normalize_value(value: str) -> str:
@@ -72,6 +73,13 @@ def _canonicalize_value_for_match(v) -> str:
 def facts_to_set(facts: list[dict]) -> set:
     return {canonicalize_fact(f) for f in facts}
 
+def canonical_tuple_to_dict(canonical_fact: tuple) -> dict:
+    fact_type, attributes = canonical_fact
+    fact = {"type": fact_type}
+    for k, v in attributes:
+        fact[k] = v
+    return fact
+
 def compute_precision_recall(pred_facts: list[dict], gold_facts: list[dict]):
     pred_set = facts_to_set(pred_facts)
     gold_set = facts_to_set(gold_facts)
@@ -114,12 +122,30 @@ def inspect_errors(pred_facts, gold_facts):
     for f in gold_set - pred_set:
         print(f)
 
+def error_breakdown(pred_facts: list[dict], gold_facts: list[dict]) -> dict:
+    pred_set = facts_to_set(pred_facts)
+    gold_set = facts_to_set(gold_facts)
+    false_positives = sorted(pred_set - gold_set)
+    false_negatives = sorted(gold_set - pred_set)
+    return {
+        "false_positives": [canonical_tuple_to_dict(f) for f in false_positives],
+        "false_negatives": [canonical_tuple_to_dict(f) for f in false_negatives],
+    }
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compute precision, recall, and F1 score for fact extraction."
     )
     parser.add_argument("pred_path", help="Path to predicted facts JSON file.")
     parser.add_argument("gt_path", help="Path to ground-truth facts JSON file.")
+    parser.add_argument(
+        "--output-path",
+        default=None,
+        help=(
+            "Path to write JSON metrics output. Defaults to "
+            "$DATA_DIR/analysis/{pred_path filename}_pr.json"
+        ),
+    )
     args = parser.parse_args()
 
     def resolve_path(p: str) -> str:
@@ -150,6 +176,30 @@ def main() -> None:
     metrics = add_f1(metrics)
     print(json.dumps(metrics, indent=2))
     inspect_errors(pred_facts, gold_facts)
+
+    output_payload = {
+        "pred_path": pred_path,
+        "gt_path": gt_path,
+        "metrics": metrics,
+        "errors": error_breakdown(pred_facts, gold_facts),
+    }
+
+    if args.output_path:
+        output_path = args.output_path
+    else:
+        data_dir = os.environ.get("DATA_DIR")
+        if not data_dir:
+            raise ValueError(
+                "DATA_DIR must be set when --output-path is not provided."
+            )
+        pred_filename = Path(pred_path).name
+        output_path = os.path.join(data_dir, "analysis", f"{pred_filename.replace(".json", "")}_pr.json")
+        print(output_path)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(output_payload, f, indent=2)
+
+    print(f"\nDetailed metrics output written to: {output_path}")
 
 if __name__ == "__main__":
     main()
