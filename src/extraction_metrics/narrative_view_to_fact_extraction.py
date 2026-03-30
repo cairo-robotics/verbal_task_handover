@@ -310,7 +310,7 @@ def main() -> None:
     nv = _load_narrative_view(input_path)
     fx = narrative_view_to_fact_extraction(nv)
 
-    output_filename = os.path.join(data_dir, "analysis", args.input_file + "_fact_extraction_output.json")
+    output_filename = os.path.join(data_dir, "analysis", args.input_file + "_nv_fact_extraction_output.json")
     with open(output_filename, "w") as f:
         json.dump(fx.model_dump(), f, indent=2)
     print(f"Fact extraction output written to {output_filename}")
