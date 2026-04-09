@@ -1,82 +1,42 @@
 from pydantic import BaseModel
-from typing import List, Union, Literal
+from typing import List, Optional, Literal, Union, Dict
 
 
-# --- Base Fact Types ---
+Direction = Literal["north", "south", "east", "west"]
 
-class PatientNeedsPotion(BaseModel):
-    type: Literal["PatientNeedsPotion"]
-    patient: str
-    potion_color: str
-
-
-class PotionDelivered(BaseModel):
-    type: Literal["PotionDelivered"]
-    patient: str
-    potion_color: str
-
-
-class MessageRequest(BaseModel):
-    type: Literal["MessageRequest"]
-    sender_patient: str
-    target_npc: str
-
-
-class MessageDelivered(BaseModel):
-    type: Literal["MessageDelivered"]
-    sender_patient: str
-    target_npc: str
-
-
-class MessageResponse(BaseModel):
-    type: Literal["MessageResponse"]
-    sender_npc: str
-    target_patient: str
-
-
-class ResponseDelivered(BaseModel):
-    type: Literal["ResponseDelivered"]
-    sender_npc: str
-    target_patient: str
-
-
-class NpcLocation(BaseModel):
-    type: Literal["NpcLocation"]
-    npc: str
-    room: str
-
-
-class PotionLocation(BaseModel):
-    type: Literal["PotionLocation"]
-    potion_color: str
-    room: str
-
-
-class PlayerLocation(BaseModel):
-    type: Literal["PlayerLocation"]
-    room: str
-
-
-class PlayerHasItem(BaseModel):
-    type: Literal["PlayerHasItem"]
-    item: str
-
-
-# --- Union of all fact types ---
-
-Fact = Union[
-    PatientNeedsPotion,
-    PotionDelivered,
-    MessageRequest,
-    MessageDelivered,
-    MessageResponse,
-    ResponseDelivered,
-    NpcLocation,
-    PotionLocation,
-    PlayerLocation,
-    PlayerHasItem,
+Predicate = Literal[
+    "needs",
+    "delivered",
+    "request",
+    "message_delivered",
+    "response",
+    "response_delivered",
+    "located",
+    "exists",
+    "has"
 ]
 
+class Location(BaseModel):
+    type: Literal["room", "directional"]
+    room: Optional[str] = None
+    directions: Optional[List[Direction]] = None
+    mode: Optional[Literal["path", "set"]] = None  # then vs and
+
+
+class Argument(BaseModel):
+    type: Literal["entity", "location", "existential"]
+    value: Optional[str] = None   # e.g., "lily", "gold potion", "potion"
+    location: Optional[Location] = None  # for constraints
+
+class CanonicalFact(BaseModel):
+    predicate: Predicate
+
+    agent: Optional[Argument] = None
+    patient: Optional[Argument] = None
+    object: Optional[Argument] = None
+    source: Optional[Argument] = None
+    target: Optional[Argument] = None
+    location: Optional[Location] = None
 
 class FactExtraction(BaseModel):
-    facts: List[Fact]
+    facts: List[CanonicalFact]
