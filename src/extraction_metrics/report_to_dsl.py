@@ -18,9 +18,10 @@ DEFAULT_MODEL = "gpt-4o-mini"
 PROMPT = """
 You are an information extraction system.
 
-Your task is to extract structured facts from a narrative. Extract all facts that are explicitly stated in the text.
+Your task is to extract structured facts about a game task from a narrative. Extract all facts that are explicitly stated in the text.
 
 Return the facts using a controlled language with STRICT formatting rules. Each fact should be on a new line.
+Do not include information that can not fit in this format.
 
 ---
 
@@ -35,39 +36,146 @@ OUTPUT FORMAT RULES:
 - Do NOT include duplicate facts
 
 ---
+ENTITY TYPES include npcs, locations, and items (potions).
+- npcs: <npc name>
+- location: <location name>
+- item: <potion_color> potion
+
+If the entity agent is unspecified (e.g., "someone", "a patient", "a potion"), use <unknown>:
+- npcs: someone
+- items: a potion
+- locations: somewhere
 
 FACT TEMPLATES:
 
 # Potions
-<patient> needs <potion_color> potion
-<potion_color> potion delivered to <patient>
+<npc> needs a <potion_color or unknown> potion
+<potion_color or unknown> potion delivered to <npc>
 
 # Messaging
-<patient> requested message from <npc>
-message delivered from <patient> to <npc>
-<npc> responded to <patient>
-response delivered from <npc> to <patient>
+<npc> has a message/response for <npc>
+message/response delivered from <npc> to <npc>
 
-# Locations
-<npc> is in <room>
-<potion_color> potion is in <room>
+# Locations and spatial relationships
 player is in <room>
+<entity> is in <room>
+<entity> is to the <direction>
+<entity> is <direction> of <entity>
+<location> is connected to <location>
 
 # Inventory
 player has <item>
 
+
+If the agent is unspecified (e.g., "someone", "a patient"), use:
+
+someone needs <potion_color> potion
+someone has a message/response for someone
+
+If a location constraint is given, include it:
+
+someone to the <direction> needs <potion_color> potion
+
+Do not infer specific agents, locations, or objects.
+
 ---
 
-EXAMPLE:
+EXAMPLE 1:
 
-Input:
-"Lily asked the wizard for help. The wizard replied. Lily is waiting in room1."
+INPUT:
+"Northwest Room (Room 1) needs the gold potion
+Southwest Room (Room 2) needs the blue potion
+Northeast Room (Room 3) needs the red potion
+Southeast Room (Room 4) needs the green potion
 
-Output:
-lily requested message from wizard
-wizard responded to lily
-player is in room1
+There is a fifth room that I did not get around to (NPC named GUY), there is also someone there who wants a potion, I did not get around to it.
 
+The NPCs won't give you medals just for giving them a potion, you will also have to actually deliver messages for them. Make sure you explore all rooms, and names of people in the rooms. Usually helps to make exploration a side taks when fetching items or delivering messages."
+
+OUTPUT:
+room 1 is to the northwest
+room 1 needs a gold potion
+room 2 is to the southwest
+room 2 needs a blue potion
+room 3 is to the northeast
+room 3 needs a red potion
+room 4 is to the southeast
+room 4 needs a green potion
+guy is in room 5
+room 5 needs a potion
+
+---
+EXAMPLE 2:
+
+INPUT:
+"You have to assist with delivering potions and messages from certain people. I have done some of it. These are the things you need to finish for me and there are some more that I do not remember.
+1. Lily (in West and then North) requires another Gold potion.
+2. Some people require red and green potions in the East wing.
+3. I think a person wanted an orange potion in the South wing.
+4. Steve has a message for John.
+5. I also saw teal and pale blue potion, along with dark purple in the South wing. 
+6. There were some other potions in the north and then east wing. 
+7. There were people with messages on the West wing that I could not attend to."
+
+OUTPUT:
+lily is to the west-then-north
+someone to the east needs a red potion
+someone to the east needs a green potion
+someone to the south needs an orange potion
+steve has a message for john
+teal potion is to the south
+pale blue potion is to the south
+dark purple potion is to the south
+some potion is to the north-then-east
+someone to the west has a message for someone
+
+---
+EXAMPLE 3:
+
+INPUT:
+"**Handoff Report**
+
+**Outstanding Patient Needs:**
+1. **Room 1 (Lily)** - Requires **gold potion**.
+2. **Room 2 (Oliver)** - Requires **blue potion**.
+3. **Room 3 (Nick)** - Requires **red potion**.
+4. **Room 4 (Marie)** - Requires **green potion**.
+
+**Pending Requests and Responses:**
+- None.
+
+**Relevant Inventory Items:**
+- None.
+
+**NPC Locations:**
+- **Lily** is in **Room 1**.
+- **Oliver** is in **Room 2**.
+- **Nick** is in **Room 3**.
+- **Marie** is in **Room 4**.
+- **Storage 2** (where **blue potion** and **green potion** are located) is accessible from **Hallway 5**.
+- **Storage 1** (where **red potion** is located) is accessible from **Hallway 3**.
+
+**Current Location:**
+- The player is currently in **Hallway 1**. 
+
+**Next Steps:**
+- Retrieve the required potions from the respective storage areas and deliver them to the patients in their rooms."
+
+OUTPUT:
+room 1 needs a gold potion
+room 2 needs a blue potion
+room 3 needs a red potion
+room 4 needs a green potion
+lily is in room 1
+oliver is in room 2
+nick is in room 3
+marie is in room 4
+blue potion is in storage 2
+green potion is in storage 2
+storage 2 is connected to hallway 5
+red potion is in storage 1
+storage 1 is connected to hallway 3
+player is in hallway 1
 ---
 
 Now extract facts from the following text:
