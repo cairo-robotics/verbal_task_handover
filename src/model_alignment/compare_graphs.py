@@ -413,7 +413,8 @@ if __name__ == "__main__":
     import json
     data_dir = os.environ.get("DATA_DIR")
 
-    condition = "_user_report"
+    # condition = "_user_report"
+    condition = ""
     candidate_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + condition + "_text_to_kg_output.json")
     base_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_telemetry_to_kg_output.json")
 
