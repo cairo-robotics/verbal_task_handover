@@ -23,6 +23,7 @@ class RelationType(str, Enum):
     IN_INVENTORY_OF = "in_inventory_of"
     LOCATED_IN = "located_in"
     REQUIRES = "requires"
+    INTENDED_FOR = "intended_for"
 
 class SpatialRelationType(str, Enum):
     NORTH_OF = "north_of"

@@ -13,39 +13,36 @@ dotenv.load_dotenv()
 # Prompt & model interaction
 # ----------------------------
 
-KNOWLEDGE_GRAPH_PROMPT = """
+def _enum_class_prompt_block(enum_cls) -> str:
+    """Serialize enum members for the system prompt; keeps prompt aligned with pydantic_schema."""
+    lines = [f"class {enum_cls.__name__}(str, Enum):"]
+    for member in enum_cls:
+        lines.append(f'    {member.name} = "{member.value}"')
+    return "\n".join(lines)
+
+
+_KG_ENUM_CLASSES = (
+    EntityType,
+    EventType,
+    RelationType,
+    SpatialRelationType,
+    ConfidenceLevel,
+)
+
+KNOWLEDGE_GRAPH_PROMPT = (
+    """
 You are an AI assistant tasked with converting written descriptions of a game state into structured JSON representing the entities, events, and state relations in the game world.
 
 Use only the allowed enum values where specified in the given schema. If certain information is not present in the text, you can omit that field or set it to null:
 
-class EntityType(str, Enum):
-    AGENT = "Agent"
-    LOCATION = "Location"
-    ITEM = "Item"
-    MESSAGE = "Message/Request/Response"
-
-class EventType(str, Enum):
-    OBTAIN = "obtain"
-    DROP = "drop"
-    TALK_TO = "talk_to"
-    GIVE = "give"
-
-class RelationType(str, Enum):
-    IN_INVENTORY_OF = "in_inventory_of"
-    LOCATED_IN = "located_in"
-    REQUIRES = "requires"
-
-class SpatialRelationType(str, Enum):
-    NORTH_OF = "north_of"
-    SOUTH_OF = "south_of"
-    EAST_OF = "east_of"
-    WEST_OF = "west_of"
-
-class ConfidenceLevel(str, Enum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
 """
+    + "\n\n".join(_enum_class_prompt_block(cls) for cls in _KG_ENUM_CLASSES)
+    + """
+
+For RelationType intended_for: use a Message/Request/Response entity as the subject and the recipient agent's id as the object when the text states who the message is for.
+"""
+)
+
 
 def convert_text_to_knowledge_graph(text_filename, output_filename):
     try:

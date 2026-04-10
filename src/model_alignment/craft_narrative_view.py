@@ -92,6 +92,9 @@ def _build_requirements_by_character(
     for rel in state_relations:
         if rel.relation == RelationType.REQUIRES:
             requirements[rel.subject].append(rel.object)
+        elif rel.relation == RelationType.INTENDED_FOR:
+            # Message/request entity is subject; recipient agent is object — same slot as REQUIRES.
+            requirements[rel.object].append(rel.subject)
     return requirements
 
 
@@ -169,6 +172,8 @@ def _miscellaneous_state_relations_for_character(
         if rel.relation == RelationType.LOCATED_IN and rel.subject == character_id:
             continue
         if rel.relation == RelationType.REQUIRES and rel.subject == character_id:
+            continue
+        if rel.relation == RelationType.INTENDED_FOR and rel.object == character_id:
             continue
         if (
             rel.relation == RelationType.IN_INVENTORY_OF
