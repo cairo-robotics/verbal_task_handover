@@ -4,45 +4,78 @@ import sys
 import dotenv
 from openai import OpenAI
 
+from string import Template
 from pydantic_schema import *
 
 
 dotenv.load_dotenv()
 
-# ----------------------------
-# Prompt & model interaction
-# ----------------------------
+SYSTEM_PROMPT = """
+You are extracting structured knowledge from a handover report written by a human participant in a task handover study. Your output will be used to compare and combine the information content of the report with ground-truth telemetry data.
 
-def _enum_class_prompt_block(enum_cls) -> str:
-    """Serialize enum members for the system prompt; keeps prompt aligned with pydantic_schema."""
-    lines = [f"class {enum_cls.__name__}(str, Enum):"]
-    for member in enum_cls:
-        lines.append(f'    {member.name} = "{member.value}"')
-    return "\n".join(lines)
+Your job is to extract every fact the reporter states or implies about the current task state, and represent it faithfully — including uncertainty, vagueness, and partial knowledge. Do not infer facts that are not supported by the report. Do not fill in missing information with guesses.
 
+## Entities in this task domain
+The task involves the following entity types:
+- Agents: named NPCs (e.g. "lily", "steve", "john") located in rooms around the map
+- Items: colored potions (e.g. "gold_potion", "red_potion") and message objects (e.g. "request_from_steve", "response_from_john")
+- The player, referred to as "player"
+- Locations: rooms, referred to by ID (e.g. "room_3") or directional path from origin (e.g. ["west", "north"])
 
-_KG_ENUM_CLASSES = (
-    EntityType,
-    EventType,
-    RelationType,
-    SpatialRelationType,
-    ConfidenceLevel,
-)
+## Task structure
+Tasks follow a three-step chain:
+1. A patient NPC requires a specific colored potion to be delivered to them
+2. That NPC gives the player a request object to deliver to a secondary NPC
+3. The secondary NPC gives the player a response object to bring back to the original patient
 
-KNOWLEDGE_GRAPH_PROMPT = (
-    """
-You are an AI assistant tasked with converting written descriptions of a game state into structured JSON representing the entities, events, and state relations in the game world.
+Not all steps will be mentioned in every report. Represent what is stated; leave the rest absent.
 
-Use only the allowed enum values where specified in the given schema. If certain information is not present in the text, you can omit that field or set it to null:
+## Extraction rules
+
+**Named vs. existential arguments**
+- Use type="entity" with the canonical name when the reporter names an entity directly (normalize to lowercase with underscores, e.g. "gold_potion", "lily")
+- Use type="existential" when the reporter refers to an entity without naming it (e.g. "someone in the east wing", "a person"). Populate as many constraint fields as the report supports — entity_type, location, role, properties, plurality
+- Use type="location" for room arguments
+
+**Confidence**
+- Use "certain" when the reporter states a fact directly and without hedging
+- Use "inferred" when the reporter hedges (e.g. "I think", "I believe", "maybe"), or when you are inferring a fact that is implied but not stated (e.g. a task is "pending" because the reporter says they didn't finish it)
+- Use "contradicted" only during graph merging — do not assign it during report extraction
+
+**Task status**
+- Use "pending" when the reporter indicates a task has not been started or was left unfinished
+- Use "in_progress" when the reporter indicates they began a task but did not complete it
+- Use "complete" when the reporter states a task is done
+- Use "blocked" when the reporter indicates a task cannot proceed due to a missing dependency
+- When status must be inferred from context (e.g. "I could not attend to"), set status_confidence="inferred"
+
+**Task IDs**
+- Assign task_id values of the form "task_<initiator>_<brief_descriptor>", e.g. "task_lily_potion" or "task_steve_john"
+- For fully existential initiators, use "task_unknown_<location>_<index>", e.g. "task_unknown_west_1"
+
+**Plurality**
+- Set plurality=True on an existential when the reporter uses plural language ("people", "some patients") indicating an underspecified set rather than a single unknown entity
+
+**What not to do**
+- Do not invent entity names or room IDs not supported by the report
+- Do not split a vague plural claim into multiple individual tasks — represent it as one Task with a plural existential initiator
+- Do not assign confidence="certain" to status values you had to infer from context
+- Do not create a HeldBy relation unless the report gives clear evidence of current possession; implied past possession is not enough
+
+## Example 1: Named entity with inferred task status
+Input fragment: "Lily needs a gold potion."
+Output fragment: Task(task_id="task_lily_potion",
+                        initiator=Argument(type="entity", value="lily"),
+                        status="pending", status_confidence="inferred", requirements=[TaskRequirement(condition_type="item_delivery", condition_value=Argument(type="entity", value="gold_potion"), target=Argument(type="entity", value="lily"), confidence="inferred")])
 
 """
-    + "\n\n".join(_enum_class_prompt_block(cls) for cls in _KG_ENUM_CLASSES)
-    + """
 
-For RelationType intended_for: use a Message/Request/Response entity as the subject and the recipient agent's id as the object when the text states who the message is for.
-"""
-)
-
+USER_PROMPT = Template("""
+Extract structured knowledge from the following text:
+<report>
+{INPUT_TEXT}
+</report>
+""")
 
 def convert_text_to_knowledge_graph(text_filename, output_filename):
     try:
@@ -59,11 +92,11 @@ def convert_text_to_knowledge_graph(text_filename, output_filename):
     message = client.responses.parse(
         model=model,
         input = [
-            {"role": "system", "content": KNOWLEDGE_GRAPH_PROMPT},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": USER_PROMPT.substitute(INPUT_TEXT=prompt)}
         ],
         temperature=temperature,
-        text_format = KnowledgeGraphExtraction
+        text_format = KnowledgeGraph
     )
 
     print(message)
