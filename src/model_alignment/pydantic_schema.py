@@ -72,10 +72,10 @@ class Task(BaseModel):
     """A unit of work that has been assigned to the player."""
     task_id: str
     initiator: Argument
-    status: Literal["pending", "in_progress", "blocked", "complete"]
+    status: Literal["pending", "in_progress", "complete"]
     status_confidence: Confidence = "certain"
-    condition_type: Literal["item_delivery", "item_return", "prior_task"]
-    condition_value: Argument
+    condition_type: Literal["item_delivery", "message_delivery", "message_return"]
+    condition_value: Optional[Argument] = None
     target: Optional[Argument] = None
     target_confidence: Confidence = "certain"
     source: Source = "telemetry"

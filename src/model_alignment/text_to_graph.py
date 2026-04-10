@@ -46,7 +46,6 @@ Not all steps will be mentioned in every report. Represent what is stated; leave
 - Use "pending" when the reporter indicates a task has not been started or was left unfinished
 - Use "in_progress" when the reporter indicates they began a task but did not complete it
 - Use "complete" when the reporter states a task is done
-- Use "blocked" when the reporter indicates a task cannot proceed due to a missing dependency
 - When status must be inferred from context (e.g. "I could not attend to"), set status_confidence="inferred"
 
 **Task IDs**
