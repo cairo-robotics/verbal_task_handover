@@ -11,70 +11,43 @@ from pydantic_schema import *
 dotenv.load_dotenv()
 
 SYSTEM_PROMPT = """
-You are extracting structured knowledge from a handover report written by a human participant in a task handover study. Your output will be used to compare and combine the information content of the report with ground-truth telemetry data.
+You are extracting structured knowledge from a handover report written in a controlled language for a task handover study. Your output will be used to compare and combine the information content of the report with ground-truth telemetry data.
 
-Your job is to extract every fact the reporter states or implies about the current task state, and represent it faithfully — including uncertainty, vagueness, and partial knowledge. Do not infer facts that are not supported by the report. Do not fill in missing information with guesses.
+Your job is to convert each fact expressed in the report (each line) into a structured Fact, and do so faithfully — including uncertainty, vagueness, and partial knowledge. Do not infer facts that are not supported by the report. Do not fill in missing information with guesses.
+Output format is a KnowledgeGraph, containing a list of Facts.
 
-## Entities in this task domain
-The task involves the following entity types:
-- Agents: named NPCs (e.g. "lily", "steve", "john") located in rooms around the map
-- Items: colored potions (e.g. "gold_potion", "red_potion") and message objects (e.g. "request_from_steve", "response_from_john")
-- The player, referred to as "player"
-- Locations: rooms, referred to by ID (e.g. "room_3") or directional path from origin (e.g. ["west", "north"])
+# TODO update examples
+## Example Fact 1: "lily is to the west then north"
+LocationFact(
+    entity=Argument(type="named", value="lily"),
+    location=Location(type="directional", directions=[Direction.WEST, Direction.NORTH], mode="path"),
+    is_partial=False,
+    provenance="lily is to the west then north"
+)
 
-## Task structure
-Tasks follow a three-step chain:
-1. A patient NPC requires a specific colored potion to be delivered to them
-2. That NPC gives the player a request object to deliver to a secondary NPC
-3. The secondary NPC gives the player a response object to bring back to the original patient
+## Example Fact 2: "someone to the east needs a red potion"
+RelationFact(
+    predicate=RelationPredicate.NEEDS_POTION,
+    subject=Argument(type="existential", value=None, location=Location(type="directional", directions=[Direction.EAST], mode="path")),
+    object=Argument(type="named", value="red potion"),
+    is_partial=True,
+    provenance="someone to the east needs a red potion"
+)
 
-Not all steps will be mentioned in every report. Represent what is stated; leave the rest absent.
-
-## Extraction rules
-
-**Named vs. existential arguments**
-- Use type="entity" with the canonical name when the reporter names an entity directly (normalize to lowercase with underscores, e.g. "gold_potion", "lily")
-- Use type="existential" when the reporter refers to an entity without naming it (e.g. "someone in the east wing", "a person"). Populate as many constraint fields as the report supports — entity_type, location, role, properties, plurality
-- Use type="location" for room arguments
-
-**Confidence**
-- Use "certain" when the reporter states a fact directly and without hedging
-- Use "inferred" when the reporter hedges (e.g. "I think", "I believe", "maybe"), or when you are inferring a fact that is implied but not stated (e.g. a task is "pending" because the reporter says they didn't finish it)
-- Use "contradicted" only during graph merging — do not assign it during report extraction
-
-**Task status**
-- Use "pending" when the reporter indicates a task has not been started or was left unfinished
-- Use "in_progress" when the reporter indicates they began a task but did not complete it
-- Use "complete" when the reporter states a task is done
-- When status must be inferred from context (e.g. "I could not attend to"), set status_confidence="inferred"
-
-**Task IDs**
-- Assign task_id values of the form "task_<initiator>_<brief_descriptor>", e.g. "task_lily_potion" or "task_steve_john"
-- For fully existential initiators, use "task_unknown_<location>_<index>", e.g. "task_unknown_west_1"
-
-**Plurality**
-- Set plurality=True on an existential when the reporter uses plural language ("people", "some patients") indicating an underspecified set rather than a single unknown entity
-
-**What not to do**
-- Do not invent entity names or room IDs not supported by the report
-- Do not split a vague plural claim into multiple individual tasks — represent it as one Task with a plural existential initiator
-- Do not assign confidence="certain" to status values you had to infer from context
-- Do not create a HeldBy relation unless the report gives clear evidence of current possession; implied past possession is not enough
-
-## Example 1: Named entity with inferred task status
-Input fragment: "Lily needs a gold potion."
-Output fragment: Task(task_id="task_lily_potion",
-                        initiator=Argument(type="entity", value="lily"),
-                        status="pending", status_confidence="inferred", requirements=[TaskRequirement(condition_type="item_delivery", condition_value=Argument(type="entity", value="gold_potion"), target=Argument(type="entity", value="lily"), confidence="inferred")])
-
+## Example Fact 3: "someone to the west has a message for someone"
+RelationFact(
+    predicate=RelationPredicate.HAS_MESSAGE_FOR,
+    subject=Argument(type="existential", location=Location(type="directional", directions=[Direction.WEST], mode="path")),
+    target=Argument(type="existential"),
+    is_partial=True,
+    provenance="someone to the west has a message for someone"
+)
 """
 
-USER_PROMPT = Template("""
-Extract structured knowledge from the following text:
-<report>
-{INPUT_TEXT}
-</report>
-""")
+USER_PROMPT = """
+Convert the following text into a KnowledgeGraph:
+
+"""
 
 def convert_text_to_knowledge_graph(text_filename, output_filename):
     try:
@@ -88,12 +61,14 @@ def convert_text_to_knowledge_graph(text_filename, output_filename):
     model = "gpt-4o-mini"
     temperature = 0
 
+    input = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": USER_PROMPT + prompt}
+    ]
+
     message = client.responses.parse(
         model=model,
-        input = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": USER_PROMPT.substitute(INPUT_TEXT=prompt)}
-        ],
+        input = input,
         temperature=temperature,
         text_format = KnowledgeGraph
     )
@@ -112,6 +87,7 @@ def convert_text_to_knowledge_graph(text_filename, output_filename):
 if __name__ == "__main__":
     data_dir = os.environ.get("DATA_DIR")
 
-    text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
-    output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_text_to_kg_output.json")
+    # text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
+    text_filename = os.path.join(data_dir, "analysis", sys.argv[1] + "_user_report_dsl_output.txt")
+    output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_dsl_to_kg_output.json")
     convert_text_to_knowledge_graph(text_filename, output_filename)

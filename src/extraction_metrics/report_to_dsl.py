@@ -36,7 +36,7 @@ OUTPUT FORMAT RULES:
 - Do NOT include duplicate facts
 
 ---
-ENTITY TYPES include npcs, locations, and items (potions).
+ENTITY TYPES include npcs, locations, and items (potions, requests or messages, responses).
 - npcs: <npc name>
 - location: <location name>
 - item: <potion_color> potion
