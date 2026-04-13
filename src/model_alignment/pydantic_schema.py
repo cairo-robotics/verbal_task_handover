@@ -39,7 +39,7 @@ class Location(StrictBase):
 
     room: Optional[str] = Field(
         None,
-        description="Name of the room if type is 'room' (e.g., 'room 1', 'northwest room')."
+        description="Name of the room if type is 'room' (e.g., 'room 1')."
     )
 
     directions: Optional[List[Direction]] = Field(
@@ -55,10 +55,10 @@ class Location(StrictBase):
 
 # ---- Arguments ----
 
-class EntityType(str, Enum):
-    AGENT = "agent"
-    ITEM = "item"
-    LOCATION = "location"
+# class EntityType(str, Enum):
+#     NPC = "npc"
+#     ITEM = "item"
+#     LOCATION = "location"
 
 class Argument(StrictBase):
     type: Literal["named", "existential"] = Field(
@@ -70,10 +70,10 @@ class Argument(StrictBase):
         )
     )
 
-    entity_type: Optional[EntityType] = Field(
-        None,
-        description="Type of entity if known (e.g., 'agent', 'item', 'location')."
-    )
+    # entity_type: Optional[EntityType] = Field(
+    #     None,
+    #     description="Type of entity if known (e.g., 'npc' if 'someone', 'item' if 'something', 'location' if 'somewhere')."
+    # )
 
     value: Optional[str] = Field(
         None,

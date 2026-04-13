@@ -88,6 +88,6 @@ if __name__ == "__main__":
     data_dir = os.environ.get("DATA_DIR")
 
     # text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
-    text_filename = os.path.join(data_dir, "analysis", sys.argv[1] + "_user_report_dsl_output.txt")
+    text_filename = os.path.join(data_dir, "analysis", sys.argv[1] + "_report_dsl_output.txt")
     output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_dsl_to_kg_output.json")
     convert_text_to_knowledge_graph(text_filename, output_filename)
