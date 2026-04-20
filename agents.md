@@ -14,7 +14,7 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 
 ## Tech stack
 
-- Language/runtime: Python 3.11+ (use this repo's venv)
+- Language/runtime: Python 3.11+ (use this repo's venv: `./venv/bin/python3`)
 - Key libraries: OpenAI API, Pydantic
 
 ## Architecture Overview
