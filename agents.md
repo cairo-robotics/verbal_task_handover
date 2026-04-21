@@ -25,7 +25,7 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
         - `telemetry_to_graph.py`: Game telemetry -> KG.
         - `report_to_dsl.py`: Report text -> intermediate DSL via LLM.
         - `dsl_to_graph.py`: Parser for intermediate DSL -> KG.
-        - `reconcile_state.py`: Corrects KG state based on event logs.
+        
     - `utils/`
         - `extraction_paths.py`: Path helpers for evaluation.
 
@@ -35,6 +35,7 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 
 - `src/pipelines/` - Multi-stage workflows for report generation and evaluation.
     - `model_alignment/`
+        - `reconcile_state.py`: Corrects KG state based on event logs.
         - `compare_graphs.py`: Comparing KG from telemetry vs report to find differences.
         - `merge_graphs.py`: Merging diffs into a base graph.
         - `craft_narrative_view.py`: Preparing KG for report generation (NarrativeView).

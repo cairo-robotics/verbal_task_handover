@@ -163,7 +163,7 @@ Key scripts:
     - adds `ConflictRecord` entries for contradictions
     - backfills missing entities referenced by events/relations
   - Output: `<id>_merge_graphs_output.json`
-5. `src/core/transforms/reconcile_state.py`
+5. `src/pipelines/model_alignment/reconcile_state.py`
   - Replays event-driven state effects (e.g. OBTAIN/DELIVER/GIVE events) on `state_relations` of the merged graph, ensuring inventory state is consistent with the event log.
   - Output: `<id>_reconcile_state_output.json`
 6. `src/pipelines/model_alignment/craft_narrative_view.py`
