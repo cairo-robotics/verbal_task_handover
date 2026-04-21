@@ -21,8 +21,9 @@ To support this, we use:
 - `evaluation/` : code used to run the user study and the simulated task.
   - `evaluation/treasure_hunt_py/` : the pygame-based task + telemetry.
   - `evaluation/user_study/` : GUIs/scripts used during participant sessions (chat/report capture).
-- `src/model_alignment/` : the study-data-to-final-report pipeline (telemetry/report to graph, graph diff/merge, narrative view, report generation).
-- `src/extraction_metrics/` : evaluation pipeline for comparing report creation methods (fact extraction, precision/recall metrics — WIP).
+- `src/core/` : fundamental data models (Pydantic schemas) and transformation logic (telemetry/report to graph).
+- `src/experiments/` : high-level scripts for running the full task-handover pipeline and ablation studies.
+- `src/pipelines/` : multi-stage workflows for report generation (model alignment) and evaluation (metrics).
 - `scripts/` : helper scripts for working with participant telemetry/report files.
 
 ## Tech Stack (dev/run-time)
@@ -39,7 +40,7 @@ To support this, we use:
 
 Participants navigate a grid-based floor, interact with NPCs, collect items (e.g., "potions", "keys", "gems"), unlock/pass through doors, and may encounter small in-game "modules" (minigames / dialogue / input panels).
 
-The game logs participant actions as *telemetry events* to a text file, which is later consumed by `src/model_alignment/telemetry_to_graph.py`.
+The game logs participant actions as *telemetry events* to a text file, which is later consumed by `src/core/transforms/telemetry_to_graph.py`.
 
 ### Key components
 
@@ -111,16 +112,16 @@ This requires a working local Selenium environment (Firefox + `geckodriver` path
 
 `evaluation/treasure_hunt_py/treasure_hunt/scripts/tutorial.py` runs a simplified tutorial map (`maps/tutorial_v2/`) and can log telemetry when `--telemetry` is enabled.
 
-## Report generation pipeline: `src/model_alignment/`
+## Report generation pipeline: `src/pipelines/model_alignment/`
 
-The `src/model_alignment/` pipeline converts:
+The `src/pipelines/model_alignment/` pipeline (supported by `src/core/transforms/`) converts:
 
 - telemetry logs from the game (`evaluation/treasure_hunt_py`)
 - and user-written handover reports
 
 into a shared `KnowledgeGraphExtraction` representation, then computes diffs/conflicts and prepares a "narrative view" for report generation.
 
-### Shared schema: `pydantic_schema.py`
+### Shared schema: `src/core/representations/pydantic_schema.py`
 
 Defines the Pydantic models and enums used throughout the pipeline:
 
@@ -137,7 +138,7 @@ The scripts assume a `DATA_DIR` environment variable and a directory layout like
 
 Key scripts:
 
-1. `telemetry_to_graph.py`
+1. `src/core/transforms/telemetry_to_graph.py`
   - Deterministic conversion from telemetry text to `KnowledgeGraphExtraction`.
   - Current parsing focuses on patterns like:
     - `room entered: <direction> to <location>`
@@ -145,29 +146,31 @@ Key scripts:
     - `npc interact: <npc>` and `npc interact: <npc> about <topic>`
     - `gave item to npc: <item> <npc>`
   - Output: `<id>_telemetry_to_kg_output.json`
-2. `text_to_graph.py`
-  - Uses the OpenAI API to convert a user report text file to the same `KnowledgeGraphExtraction` schema.
-  - Output: `<id>_text_to_kg_output.json`
-3. `compare_graphs.py`
+2. `src/core/transforms/report_to_dsl.py` & `src/core/transforms/dsl_to_graph.py`
+  - Replaces old `text_to_graph.py`.
+  - `report_to_dsl.py` uses the OpenAI API to convert a user report text file to an intermediate DSL.
+  - `dsl_to_graph.py` parses the DSL into the `KnowledgeGraphExtraction` schema.
+  - Output: `<id>_dsl_to_kg_output.json`
+3. `src/pipelines/model_alignment/compare_graphs.py`
   - Aligns entity IDs across graphs (uses an LLM for ambiguous entity matching).
   - Computes a diff/conflict summary:
     - events: already-present vs novel vs conflicts vs uncertain
     - state relations and spatial relations: already-present vs novel vs conflicts vs uncertain
   - Output: `<id>_compare_graphs_output.json`
-4. `merge_graphs.py`
+4. `src/pipelines/model_alignment/merge_graphs.py`
   - Applies the diff to the base graph:
     - adds novel facts directly
     - adds `ConflictRecord` entries for contradictions
     - backfills missing entities referenced by events/relations
   - Output: `<id>_merge_graphs_output.json`
-5. `reconcile_state.py`
+5. `src/core/transforms/reconcile_state.py`
   - Replays event-driven state effects (e.g. OBTAIN/DELIVER/GIVE events) on `state_relations` of the merged graph, ensuring inventory state is consistent with the event log.
   - Output: `<id>_reconcile_state_output.json`
-6. `craft_narrative_view.py`
+6. `src/pipelines/model_alignment/craft_narrative_view.py`
   - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
   - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character's `requirements`, or the player's inventory.
   - Output: `<id>_narrative_view_output.json`
-7. `generate_reports.py`
+7. `src/pipelines/model_alignment/generate_reports.py`
   - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
   - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
   - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
@@ -175,7 +178,7 @@ Key scripts:
     - `task_aware` — emphasizes patient needs, message delivery, and task-relevant inventory/location.
   - **`--prompt-set`:** Choose `full_realization`, `task_aware`, or `both`. With `both`, the model is called twice (full realization first, then task-aware); the two replies are output to separate files.
 
-### Ablation: `generate_reports_raw_ablation.py`
+### Ablation: `src/experiments/generate_reports_raw_ablation.py`
 
 An ablation variant of `generate_reports.py` that bypasses the NarrativeView/graph pipeline entirely. It sends the raw telemetry log and the participant-written report directly to `gpt-4o-mini` and uses equivalent `full_realization` and `task_aware` prompt pairs. Useful for comparing LLM report quality with and without the structured pipeline.
 
@@ -195,24 +198,25 @@ Run:
 ```bash
 export DATA_DIR=/path/to/DATA_DIR
 
-python src/model_alignment/telemetry_to_graph.py 302
-python src/model_alignment/text_to_graph.py 302
-python src/model_alignment/compare_graphs.py 302
-python src/model_alignment/merge_graphs.py 302
-python src/model_alignment/reconcile_state.py 302
-python src/model_alignment/craft_narrative_view.py 302
-python src/model_alignment/generate_reports.py 302
+python src/core/transforms/telemetry_to_graph.py 302
+python src/core/transforms/report_to_dsl.py 302
+python src/core/transforms/dsl_to_graph.py 302
+python src/pipelines/model_alignment/compare_graphs.py 302
+python src/pipelines/model_alignment/merge_graphs.py 302
+python src/core/transforms/reconcile_state.py 302
+python src/pipelines/model_alignment/craft_narrative_view.py 302
+python src/pipelines/model_alignment/generate_reports.py 302
 # Optional: task-focused report, or both prompt styles (two API calls)
-python src/model_alignment/generate_reports.py 302 --prompt-set task_aware
-python src/model_alignment/generate_reports.py 302 --prompt-set both
+python src/pipelines/model_alignment/generate_reports.py 302 --prompt-set task_aware
+python src/pipelines/model_alignment/generate_reports.py 302 --prompt-set both
 # Without DATA_DIR, pass the narrative view path explicitly:
-# python src/model_alignment/generate_reports.py /path/to/302_narrative_view_output.json
+# python src/pipelines/model_alignment/generate_reports.py /path/to/302_narrative_view_output.json
 ```
 
 Run the full pipeline for one or more participant IDs using:
 
 ```bash
-python src/model_alignment/run_full_pipeline_for_pids.py {PID1 PID2...}
+python src/experiments/run_full_pipeline_for_pids.py {PID1 PID2...}
 ```
 
 Useful options:
@@ -227,14 +231,14 @@ Useful options:
 
 Environment variables used by the pipeline:
 
-- `OPENAI_API_KEY` : required for `text_to_graph.py`, `compare_graphs.py`, and `generate_reports.py`
+- `OPENAI_API_KEY` : required for `src/core/transforms/report_to_dsl.py`, `src/pipelines/model_alignment/compare_graphs.py`, and `src/pipelines/model_alignment/generate_reports.py`
 - `DATA_DIR` : base directory for inputs/outputs as described above
 
-## Extraction metrics pipeline: `src/extraction_metrics/`
+## Extraction metrics pipeline: `src/pipelines/evaluation/`
 
-The `src/extraction_metrics/` pipeline evaluates report quality by extracting structured facts from reports and comparing them against a ground truth derived from the `NarrativeView`. Uses a two-stage extraction approach (report → DSL → JSON) designed to support inter-rater reliability checks.
+The `src/pipelines/evaluation/` pipeline evaluates report quality by extracting structured facts from reports and comparing them against a ground truth derived from the `NarrativeView`. Uses a two-stage extraction approach (report → DSL → JSON) designed to support inter-rater reliability checks.
 
-### Shared schema: `state_ontology.py`
+### Shared schema: `src/core/representations/state_ontology.py`
 
 Defines the Pydantic fact types used throughout the extraction pipeline:
 
@@ -256,27 +260,21 @@ Scripts read and write under `DATA_DIR`:
 
 ### Extraction scripts
 
-1. `report_to_dsl.py` (stage 1)
+1. `src/core/transforms/report_to_dsl.py` (stage 1)
   - Extracts line-based DSL facts from a report text file via OpenAI (e.g., `emily needs red potion`, `lily is in room1`).
   - Intended to be run by both an LLM and a human annotator (~20% of reports) to verify inter-rater reliability via Cohen's Kappa.
   - Output: `$DATA_DIR/analysis/<stem>_dsl_output.txt`
-2. `dsl_to_fact_extraction.py` (stage 2)
+2. `src/core/transforms/dsl_to_graph.py` (stage 2)
   - Converts the line-based DSL output from stage 1 into structured `FactExtraction` JSON via OpenAI.
   - Can accept a DSL filename, a `reports/` path (resolves the corresponding stage-1 artifact), or an `analysis/` path.
   - Output: `$DATA_DIR/analysis/<stem>_fact_extraction_output.json`
-3. `fact_extraction.py` (single-stage alternative)
-  - Extracts structured facts directly from a report (bypassing DSL), producing `FactExtraction` JSON in one LLM call.
-  - Output: `$DATA_DIR/analysis/<report_stem>_fact_extraction_output.json`
-4. `narrative_view_to_fact_extraction.py` (ground truth)
-  - Deterministically converts a `NarrativeView` JSON (output of `craft_narrative_view.py`) to `FactExtraction` JSON. Used to produce the ground truth fact set for precision/recall evaluation.
-  - Output: `$DATA_DIR/analysis/<id>_nv_fact_extraction_output.json`
-5. `precision_recall.py`
+3. `src/pipelines/evaluation/precision_recall.py`
   - Computes precision, recall, F1, and an error breakdown (false positives / false negatives) by comparing two `FactExtraction` JSON files.
-  - Usage: `python precision_recall.py <pred.json> <gt.json>`
+  - Usage: `python src/pipelines/evaluation/precision_recall.py <pred.json> <gt.json>`
   - Paths can be absolute, relative, or bare filenames resolved under `$DATA_DIR/analysis/`.
   - Output: `$DATA_DIR/analysis/<pred_stem>_pr.json`
 
-`extraction_paths.py` provides shared path-resolution helpers used by the extraction scripts.
+`src/core/utils/extraction_paths.py` provides shared path-resolution helpers used by the extraction scripts.
 
 ## Current focus
 
@@ -284,6 +282,6 @@ Scripts read and write under `DATA_DIR`:
 
 ## Notes / Current Limitations
 
-- Telemetry parsing in `telemetry_to_graph.py` only covers a subset of possible in-game events (movement, some interactions, and item/npc give patterns). If you add new telemetry event types, you may need to extend the regex handling.
-- LLM report quality in `generate_reports.py` depends on the chosen `--prompt-set` and on edits to the in-script prompts if you need different behavior.
+- Telemetry parsing in `src/core/transforms/telemetry_to_graph.py` only covers a subset of possible in-game events (movement, some interactions, and item/npc give patterns). If you add new telemetry event types, you may need to extend the regex handling.
+- LLM report quality in `src/pipelines/model_alignment/generate_reports.py` depends on the chosen `--prompt-set` and on edits to the in-script prompts if you need different behavior.
 - `distractor.py` requires local Selenium/Firefox setup when enabled.
