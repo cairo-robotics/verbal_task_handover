@@ -15,13 +15,22 @@ import sys
 
 import dotenv
 
-from pydantic_schema import (
-    Event,
-    EventType,
-    KnowledgeGraphExtraction,
-    RelationType,
-    StateRelation,
-)
+try:
+    from src.core.representations.pydantic_schema import (
+        Event,
+        EventType,
+        KnowledgeGraphExtraction,
+        RelationType,
+        StateRelation,
+    )
+except ImportError:
+    from pydantic_schema import (
+        Event,
+        EventType,
+        KnowledgeGraphExtraction,
+        RelationType,
+        StateRelation,
+    )
 
 dotenv.load_dotenv()
 

@@ -4,7 +4,10 @@ import sys
 
 from openai import OpenAI
 
-from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+try:
+    from src.core.utils.extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+except ImportError:
+    from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
 
 try:
     import dotenv

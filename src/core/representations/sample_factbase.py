@@ -1,4 +1,7 @@
-from state_ontology import *
+try:
+    from .state_ontology import *
+except ImportError:
+    from state_ontology import *
 
 factbase = FactExtraction(
     facts=[

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 try:
-    from pydantic_schema import (
+    from src.core.representations.pydantic_schema import (
         Argument,
         ConnectionFact,
         Fact,
@@ -16,8 +16,8 @@ try:
         RelationFact,
         RelationPredicate,
     )
-except ModuleNotFoundError:
-    from .pydantic_schema import (
+except ImportError:
+    from pydantic_schema import (
         Argument,
         ConnectionFact,
         Fact,

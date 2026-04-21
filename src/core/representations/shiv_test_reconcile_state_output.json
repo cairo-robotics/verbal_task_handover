@@ -1,0 +1,793 @@
+{
+  "entities": [
+    {
+      "id": "player",
+      "type": "Agent"
+    },
+    {
+      "id": "hallway_1",
+      "type": "Location"
+    },
+    {
+      "id": "room1",
+      "type": "Location"
+    },
+    {
+      "id": "lily",
+      "type": "Agent"
+    },
+    {
+      "id": "room0",
+      "type": "Location"
+    },
+    {
+      "id": "hallway_2",
+      "type": "Location"
+    },
+    {
+      "id": "lounge_1",
+      "type": "Location"
+    },
+    {
+      "id": "steve",
+      "type": "Agent"
+    },
+    {
+      "id": "eliza",
+      "type": "Agent"
+    },
+    {
+      "id": "hallway_3",
+      "type": "Location"
+    },
+    {
+      "id": "storage_1",
+      "type": "Location"
+    },
+    {
+      "id": "gold_potion",
+      "type": "Item"
+    },
+    {
+      "id": "request_from_room_1",
+      "type": "Message/Request/Response"
+    },
+    {
+      "id": "response_from_eliza",
+      "type": "Message/Request/Response"
+    },
+    {
+      "id": "room5",
+      "type": "Location"
+    },
+    {
+      "id": "guy",
+      "type": "Agent"
+    },
+    {
+      "id": "red_potion",
+      "type": "Item"
+    },
+    {
+      "id": "pale_blue_potion",
+      "type": "Item"
+    },
+    {
+      "id": "teal_blue_potion",
+      "type": "Item"
+    },
+    {
+      "id": "dark_purple_potion",
+      "type": "Item"
+    },
+    {
+      "id": "hallway_5",
+      "type": "Location"
+    },
+    {
+      "id": "lounge_3",
+      "type": "Location"
+    },
+    {
+      "id": "donna",
+      "type": "Agent"
+    },
+    {
+      "id": "brittany",
+      "type": "Agent"
+    },
+    {
+      "id": "lounge_2",
+      "type": "Location"
+    },
+    {
+      "id": "lola",
+      "type": "Agent"
+    },
+    {
+      "id": "response_from_lola",
+      "type": "Message/Request/Response"
+    },
+    {
+      "id": "room2",
+      "type": "Location"
+    },
+    {
+      "id": "oliver",
+      "type": "Agent"
+    },
+    {
+      "id": "storage_2",
+      "type": "Location"
+    },
+    {
+      "id": "blue_potion",
+      "type": "Item"
+    },
+    {
+      "id": "request_from_room_2",
+      "type": "Message/Request/Response"
+    }
+  ],
+  "events": [
+    {
+      "event_id": "event_2",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "lily"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:02:04",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_7",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "steve"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:02:47",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_8",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "eliza"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:02:54",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_13",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "gold_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:03:15",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_14",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "gold_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:03:15",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_19",
+      "event_type": "given",
+      "participants": {
+        "actor": "player",
+        "object": "gold_potion",
+        "target": "lily"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:03:35",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_20",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "request_from_room_1",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:03:55",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_25",
+      "event_type": "delivered",
+      "participants": {
+        "actor": "player",
+        "object": "request_from_room_1",
+        "target": "eliza"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:04:29",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_26",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "response_from_eliza",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:04:33",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_31",
+      "event_type": "delivered",
+      "participants": {
+        "actor": "player",
+        "object": "response_from_eliza",
+        "target": "lily"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:07:57",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_36",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "steve"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:08:27",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_43",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "guy"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:08:50",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_44",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "guy"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:08:52",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_47",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "red_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:04",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_48",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "red_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:04",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_49",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "pale_blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:13",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_50",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "pale_blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:13",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_51",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "teal_blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:19",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_52",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "teal_blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:19",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_53",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "dark_purple_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:26",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_54",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "dark_purple_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:26",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_59",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "donna"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:47",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_60",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "brittany"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:09:50",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_63",
+      "event_type": "delivered",
+      "participants": {
+        "actor": "player",
+        "object": "request_from_room_1",
+        "target": "lola"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:10:08",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_64",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "response_from_lola",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:10:13",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_69",
+      "event_type": "delivered",
+      "participants": {
+        "actor": "player",
+        "object": "response_from_lola",
+        "target": "lily"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:10:42",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_75",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "oliver"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:11:15",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_82",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:11:45",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_83",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "blue_potion",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:11:45",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_88",
+      "event_type": "given",
+      "participants": {
+        "actor": "player",
+        "object": "blue_potion",
+        "target": "oliver"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:12:05",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_89",
+      "event_type": "obtained",
+      "participants": {
+        "actor": "player",
+        "object": "request_from_room_2",
+        "target": null
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:12:11",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_90",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "oliver"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:12:21",
+      "confidence": "high"
+    },
+    {
+      "event_id": "event_91",
+      "event_type": "talked_to",
+      "participants": {
+        "actor": "player",
+        "object": null,
+        "target": "oliver"
+      },
+      "location": null,
+      "timestamp": "2025-09-23 16:12:22",
+      "confidence": "high"
+    }
+  ],
+  "state_relations": [
+    {
+      "subject": "lily",
+      "relation": "located_in",
+      "object": "room1",
+      "confidence": "high"
+    },
+    {
+      "subject": "steve",
+      "relation": "located_in",
+      "object": "lounge_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "eliza",
+      "relation": "located_in",
+      "object": "lounge_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "gold_potion",
+      "relation": "located_in",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "guy",
+      "relation": "located_in",
+      "object": "room5",
+      "confidence": "high"
+    },
+    {
+      "subject": "red_potion",
+      "relation": "located_in",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "pale_blue_potion",
+      "relation": "located_in",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "teal_blue_potion",
+      "relation": "located_in",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "dark_purple_potion",
+      "relation": "located_in",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "donna",
+      "relation": "located_in",
+      "object": "lounge_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "brittany",
+      "relation": "located_in",
+      "object": "lounge_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "lola",
+      "relation": "located_in",
+      "object": "lounge_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "oliver",
+      "relation": "located_in",
+      "object": "room2",
+      "confidence": "high"
+    },
+    {
+      "subject": "blue_potion",
+      "relation": "located_in",
+      "object": "storage_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "request_from_room_2",
+      "relation": "in_inventory_of",
+      "object": "player",
+      "confidence": "high"
+    },
+    {
+      "subject": "red_potion",
+      "relation": "in_inventory_of",
+      "object": "player",
+      "confidence": "high"
+    },
+    {
+      "subject": "pale_blue_potion",
+      "relation": "in_inventory_of",
+      "object": "player",
+      "confidence": "high"
+    },
+    {
+      "subject": "teal_blue_potion",
+      "relation": "in_inventory_of",
+      "object": "player",
+      "confidence": "high"
+    },
+    {
+      "subject": "dark_purple_potion",
+      "relation": "in_inventory_of",
+      "object": "player",
+      "confidence": "high"
+    }
+  ],
+  "spatial_relations": [
+    {
+      "subject": "room0",
+      "relation": "west_of",
+      "object": "hallway_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_1",
+      "relation": "east_of",
+      "object": "room0",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_1",
+      "relation": "north_of",
+      "object": "room1",
+      "confidence": "high"
+    },
+    {
+      "subject": "room1",
+      "relation": "south_of",
+      "object": "hallway_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "room0",
+      "relation": "south_of",
+      "object": "hallway_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_2",
+      "relation": "north_of",
+      "object": "room0",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_2",
+      "relation": "south_of",
+      "object": "lounge_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "lounge_1",
+      "relation": "north_of",
+      "object": "hallway_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "room0",
+      "relation": "south_of",
+      "object": "hallway_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_3",
+      "relation": "north_of",
+      "object": "room0",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_3",
+      "relation": "south_of",
+      "object": "storage_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "storage_1",
+      "relation": "north_of",
+      "object": "hallway_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_3",
+      "relation": "east_of",
+      "object": "room5",
+      "confidence": "high"
+    },
+    {
+      "subject": "room5",
+      "relation": "west_of",
+      "object": "hallway_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "room0",
+      "relation": "north_of",
+      "object": "hallway_5",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_5",
+      "relation": "south_of",
+      "object": "room0",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_5",
+      "relation": "west_of",
+      "object": "lounge_3",
+      "confidence": "high"
+    },
+    {
+      "subject": "lounge_3",
+      "relation": "east_of",
+      "object": "hallway_5",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_5",
+      "relation": "north_of",
+      "object": "lounge_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "lounge_2",
+      "relation": "south_of",
+      "object": "hallway_5",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_1",
+      "relation": "south_of",
+      "object": "room2",
+      "confidence": "high"
+    },
+    {
+      "subject": "room2",
+      "relation": "north_of",
+      "object": "hallway_1",
+      "confidence": "high"
+    },
+    {
+      "subject": "hallway_5",
+      "relation": "east_of",
+      "object": "storage_2",
+      "confidence": "high"
+    },
+    {
+      "subject": "storage_2",
+      "relation": "west_of",
+      "object": "hallway_5",
+      "confidence": "high"
+    }
+  ],
+  "conflicts": []
+}

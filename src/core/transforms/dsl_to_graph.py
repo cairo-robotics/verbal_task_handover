@@ -4,10 +4,16 @@ import sys
 import json
 from typing import Optional, List, Tuple
 
-from pydantic_schema import (
-    KnowledgeGraph, RelationFact, LocationFact, SpatialFact, ConnectionFact,
-    Argument, Location, Direction, RelationPredicate, SpatialRelationType,
-)
+try:
+    from src.core.representations.pydantic_schema import (
+        KnowledgeGraph, RelationFact, LocationFact, SpatialFact, ConnectionFact,
+        Argument, Location, Direction, RelationPredicate, SpatialRelationType,
+    )
+except ImportError:
+    from pydantic_schema import (
+        KnowledgeGraph, RelationFact, LocationFact, SpatialFact, ConnectionFact,
+        Argument, Location, Direction, RelationPredicate, SpatialRelationType,
+    )
 
 
 # for reference when implementing the parser

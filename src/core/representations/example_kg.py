@@ -1,4 +1,7 @@
-from pydantic_schema import *
+try:
+    from .pydantic_schema import *
+except ImportError:
+    from pydantic_schema import *
 
 example_kg = KnowledgeGraph(
     facts=[

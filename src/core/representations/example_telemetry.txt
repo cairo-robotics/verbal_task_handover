@@ -1,0 +1,161 @@
+2025-09-23 15:04:06 - Room entered: WEST to hallway_1
+2025-09-23 15:04:11 - Room entered: NORTH to room1
+2025-09-23 15:04:13 - NPC interact: lily
+2025-09-23 15:04:20 - Room entered: SOUTH to hallway_1
+2025-09-23 15:04:23 - Room entered: SOUTH to room2
+2025-09-23 15:04:24 - NPC interact: oliver
+2025-09-23 15:04:29 - Room entered: NORTH to hallway_1
+2025-09-23 15:04:34 - Room entered: EAST to room0
+2025-09-23 15:04:38 - Room entered: NORTH to hallway_5
+2025-09-23 15:04:42 - Room entered: NORTH to lounge_2
+2025-09-23 15:04:43 - NPC interact: john
+2025-09-23 15:04:47 - NPC interact: lola
+2025-09-23 15:04:50 - Room entered: SOUTH to hallway_5
+2025-09-23 15:04:53 - Room entered: WEST to lounge_3
+2025-09-23 15:04:55 - NPC interact: brittany
+2025-09-23 15:04:58 - NPC interact: donna
+2025-09-23 15:05:03 - Room entered: EAST to hallway_5
+2025-09-23 15:05:07 - Room entered: EAST to storage_2
+2025-09-23 15:05:10 - Item obtained: blue_potion
+2025-09-23 15:05:10 - Item obtained: blue_potion
+2025-09-23 15:05:14 - Room entered: WEST to hallway_5
+2025-09-23 15:05:19 - Room entered: SOUTH to room0
+2025-09-23 15:05:22 - Room entered: WEST to hallway_1
+2025-09-23 15:05:27 - Room entered: SOUTH to room2
+2025-09-23 15:05:28 - Gave item to NPC: blue_potion oliver
+2025-09-23 15:05:30 - Item obtained: request from room 2
+2025-09-23 15:05:33 - Room entered: NORTH to hallway_1
+2025-09-23 15:05:39 - Room entered: EAST to room0
+2025-09-23 15:05:41 - Room entered: SOUTH to hallway_2
+2025-09-23 15:05:45 - Room entered: SOUTH to lounge_1
+2025-09-23 15:05:48 - NPC interact: steve
+2025-09-23 15:05:51 - NPC interact: eliza
+2025-09-23 15:05:54 - Room entered: NORTH to hallway_2
+2025-09-23 15:05:58 - Room entered: NORTH to room0
+2025-09-23 15:06:00 - Room entered: SOUTH to hallway_3
+2025-09-23 15:06:04 - Room entered: SOUTH to storage_1
+2025-09-23 15:06:05 - Item obtained: gold_potion
+2025-09-23 15:06:05 - Item obtained: gold_potion
+2025-09-23 15:06:08 - Room entered: NORTH to hallway_3
+2025-09-23 15:06:11 - Room entered: NORTH to room0
+2025-09-23 15:06:14 - Room entered: WEST to hallway_1
+2025-09-23 15:06:20 - Room entered: NORTH to room1
+2025-09-23 15:06:21 - Gave item to NPC: gold_potion lily
+2025-09-23 15:06:25 - Item obtained: request from room 1
+2025-09-23 15:06:28 - Room entered: SOUTH to hallway_1
+2025-09-23 15:06:33 - Room entered: EAST to room0
+2025-09-23 15:06:35 - Room entered: SOUTH to hallway_2
+2025-09-23 15:06:39 - Room entered: SOUTH to lounge_1
+2025-09-23 15:06:53 - NPC interact: eliza about request from room 1
+2025-09-23 15:06:55 - Item obtained: response from Eliza
+2025-09-23 15:06:57 - Room entered: NORTH to hallway_2
+2025-09-23 15:07:01 - Room entered: NORTH to room0
+2025-09-23 15:07:04 - Room entered: NORTH to hallway_5
+2025-09-23 15:07:08 - Room entered: NORTH to lounge_2
+2025-09-23 15:07:15 - NPC interact: john about request from room 2
+2025-09-23 15:07:16 - Item obtained: response from John
+2025-09-23 15:07:19 - Room entered: SOUTH to hallway_5
+2025-09-23 15:07:23 - Room entered: SOUTH to room0
+2025-09-23 15:07:25 - Room entered: WEST to hallway_1
+2025-09-23 15:07:30 - Room entered: NORTH to room1
+2025-09-23 15:07:34 - NPC interact: lily about response from Eliza
+2025-09-23 15:07:38 - Room entered: SOUTH to hallway_1
+2025-09-23 15:07:41 - Room entered: SOUTH to room2
+2025-09-23 15:07:44 - NPC interact: oliver about response from John
+2025-09-23 15:07:45 - Treasure collected: treasure2
+2025-09-23 15:07:56 - Room entered: NORTH to hallway_1
+2025-09-23 15:08:01 - Room entered: EAST to room0
+2025-09-23 15:08:06 - Room entered: NORTH to hallway_5
+2025-09-23 15:08:10 - Room entered: NORTH to lounge_2
+2025-09-23 15:08:22 - NPC interact: lola about request from room 1
+2025-09-23 15:08:23 - Item obtained: response from Lola
+2025-09-23 15:08:25 - Room entered: SOUTH to hallway_5
+2025-09-23 15:10:45 - Room entered: SOUTH to room0
+2025-09-23 15:10:48 - Room entered: WEST to hallway_1
+2025-09-23 15:10:53 - Room entered: NORTH to room1
+2025-09-23 15:10:59 - NPC interact: lily about response from Lola
+2025-09-23 15:11:03 - Treasure collected: treasure1
+2025-09-23 15:11:06 - Room entered: SOUTH to hallway_1
+2025-09-23 15:11:11 - Room entered: EAST to room0
+2025-09-23 15:11:14 - Room entered: EAST to hallway_4
+2025-09-23 15:11:20 - Room entered: NORTH to room3
+2025-09-23 15:11:21 - NPC interact: nick
+2025-09-23 15:11:26 - Room entered: SOUTH to hallway_4
+2025-09-23 15:11:29 - Room entered: SOUTH to room4
+2025-09-23 15:11:31 - NPC interact: marie
+2025-09-23 15:11:33 - Room entered: NORTH to hallway_4
+2025-09-23 15:11:39 - Room entered: WEST to room0
+2025-09-23 15:11:43 - Room entered: SOUTH to hallway_3
+2025-09-23 15:11:46 - Room entered: SOUTH to storage_1
+2025-09-23 15:11:48 - Item obtained: gold_potion
+2025-09-23 15:11:48 - Item obtained: gold_potion
+2025-09-23 15:11:50 - Room entered: NORTH to hallway_3
+2025-09-23 15:11:55 - Room entered: NORTH to room0
+2025-09-23 15:11:57 - Room entered: EAST to hallway_4
+2025-09-23 15:12:03 - Room entered: NORTH to room3
+2025-09-23 15:12:03 - Gave wrong item to NPC: gold_potion nick
+2025-09-23 15:12:06 - Room entered: SOUTH to hallway_4
+2025-09-23 15:12:09 - Room entered: SOUTH to room4
+2025-09-23 15:12:10 - Gave wrong item to NPC: gold_potion marie
+2025-09-23 15:12:15 - Room entered: NORTH to hallway_4
+2025-09-23 15:12:20 - Room entered: WEST to room0
+2025-09-23 15:12:24 - Room entered: SOUTH to hallway_2
+2025-09-23 15:12:28 - Room entered: SOUTH to lounge_1
+2025-09-23 15:12:29 - Room entered: NORTH to hallway_2
+2025-09-23 15:12:33 - Room entered: NORTH to room0
+2025-09-23 15:12:36 - Room entered: SOUTH to hallway_3
+2025-09-23 15:12:39 - Room entered: SOUTH to storage_1
+2025-09-23 15:12:44 - Item obtained: red_potion
+2025-09-23 15:12:44 - Item obtained: red_potion
+2025-09-23 15:12:48 - Room entered: NORTH to hallway_3
+2025-09-23 15:12:51 - Room entered: NORTH to room0
+2025-09-23 15:12:53 - Room entered: EAST to hallway_4
+2025-09-23 15:12:59 - Room entered: NORTH to room3
+2025-09-23 15:13:00 - Gave item to NPC: red_potion nick
+2025-09-23 15:13:01 - Item obtained: request from room 3
+2025-09-23 15:13:03 - Room entered: SOUTH to hallway_4
+2025-09-23 15:13:09 - Room entered: WEST to room0
+2025-09-23 15:13:11 - Room entered: SOUTH to hallway_3
+2025-09-23 15:13:17 - Room entered: EAST to room5
+2025-09-23 15:13:19 - NPC interact: guy
+2025-09-23 15:13:22 - Room entered: WEST to hallway_3
+2025-09-23 15:13:28 - Room entered: SOUTH to storage_1
+2025-09-23 15:13:30 - Room entered: NORTH to hallway_3
+2025-09-23 15:13:33 - Room entered: NORTH to room0
+2025-09-23 15:13:36 - Room entered: SOUTH to hallway_2
+2025-09-23 15:13:40 - Room entered: SOUTH to lounge_1
+2025-09-23 15:13:46 - NPC interact: steve
+2025-09-23 15:13:47 - Room entered: NORTH to hallway_2
+2025-09-23 15:13:51 - Room entered: NORTH to room0
+2025-09-23 15:13:54 - Room entered: NORTH to hallway_5
+2025-09-23 15:13:59 - Room entered: EAST to storage_2
+2025-09-23 15:14:04 - Item obtained: green_potion
+2025-09-23 15:14:04 - Item obtained: green_potion
+2025-09-23 15:14:07 - Room entered: WEST to hallway_5
+2025-09-23 15:14:10 - Room entered: NORTH to lounge_2
+2025-09-23 15:14:14 - Room entered: SOUTH to hallway_5
+2025-09-23 15:14:18 - Room entered: WEST to lounge_3
+2025-09-23 15:14:29 - NPC interact: donna about request from room 3
+2025-09-23 15:14:31 - Item obtained: response from Donna
+2025-09-23 15:14:34 - Room entered: EAST to hallway_5
+2025-09-23 15:14:37 - Room entered: SOUTH to room0
+2025-09-23 15:14:40 - Room entered: EAST to hallway_4
+2025-09-23 15:14:45 - Room entered: SOUTH to room4
+2025-09-23 15:14:46 - Gave item to NPC: green_potion marie
+2025-09-23 15:14:48 - Item obtained: request from room 4
+2025-09-23 15:14:49 - Room entered: NORTH to hallway_4
+2025-09-23 15:14:53 - Room entered: NORTH to room3
+2025-09-23 15:14:57 - NPC interact: nick about response from Donna
+2025-09-23 15:14:58 - Treasure collected: treasure3
+2025-09-23 15:15:02 - Room entered: SOUTH to hallway_4
+2025-09-23 15:15:09 - Room entered: WEST to room0
+2025-09-23 15:15:13 - Room entered: SOUTH to hallway_2
+2025-09-23 15:15:17 - Room entered: SOUTH to lounge_1
+2025-09-23 15:15:21 - NPC interact: steve about request from room 4
+2025-09-23 15:15:22 - Item obtained: response from Steve
+2025-09-23 15:15:25 - Room entered: NORTH to hallway_2
+2025-09-23 15:15:29 - Room entered: NORTH to room0
+2025-09-23 15:15:32 - Room entered: EAST to hallway_4
+2025-09-23 15:15:38 - Room entered: SOUTH to room4
+2025-09-23 15:15:40 - NPC interact: marie about response from Steve
+2025-09-23 15:15:41 - Treasure collected: treasure4
