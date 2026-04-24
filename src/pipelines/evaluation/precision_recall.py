@@ -3,6 +3,9 @@ import argparse
 import os
 import re
 from pathlib import Path
+from typing import Any, Union
+
+from src.core.representations.pydantic_schema import KnowledgeGraph, Fact, RelationFact, LocationFact, SpatialFact, ConnectionFact
 
 
 def _normalize_value(value: str) -> str:
@@ -21,56 +24,63 @@ def _normalize_value(value: str) -> str:
     s = re.sub(r"_+", "_", s).strip("_")
     return s
 
-def load_facts(path: str) -> list[dict]:
+def load_facts(path: str) -> list[Fact]:
     """
-    Load facts from either:
-      - FactExtraction JSON: {"facts": [ {type: ...}, ... ]}
-      - A raw list of fact dicts: [ {type: ...}, ... ]
+    Load facts from a JSON file and validate against the KnowledgeGraph schema.
     """
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Primary schema from state_ontology.FactExtraction
+    # If it's a dict with "facts", validate as KnowledgeGraph
     if isinstance(data, dict) and "facts" in data:
-        facts = data["facts"]
-        if not isinstance(facts, list):
-            raise ValueError(f'Invalid "facts" value in {path}: expected list, got {type(facts)}')
-        return facts
+        return KnowledgeGraph.model_validate(data).facts
 
-    # Back-compat for older format
+    # If it's a raw list of facts, wrap it and validate
     if isinstance(data, list):
-        return data
+        return KnowledgeGraph.model_validate({"facts": data}).facts
 
     raise ValueError(
         f"Unrecognized facts JSON shape in {path}: "
         f"expected {{'facts': [...]}} or a list, got {type(data)}"
     )
 
-def canonicalize_fact(fact: dict) -> tuple:
+def canonicalize_fact(fact: Fact) -> tuple:
     """
-    Convert a fact dict into a hashable canonical representation.
+    Convert a Fact Pydantic model into a hashable canonical representation.
+    Exclude metadata like id and provenance.
     """
-    if not isinstance(fact, dict):
-        raise TypeError(f"Each fact must be a dict; got {type(fact)}")
-
-    fact_type = str(fact["type"]).strip()
+    # Use class name as an extra differentiator for fact types
+    fact_type = fact.__class__.__name__
     
-    # Sort attributes to ensure consistency
-    attributes = tuple(sorted(
-        (k.lower(), _canonicalize_value_for_match(v))
-        for k, v in fact.items()
-        if k != "type"
-    ))
+    # Convert to dict and exclude metadata
+    data = fact.model_dump(exclude={"id", "provenance"})
+    
+    # Recursively canonicalize the dictionary
+    attributes = _canonicalize_item(data)
     
     return (fact_type, attributes)
 
-def _canonicalize_value_for_match(v) -> str:
-    # For our ontology v is almost always str, but keep it defensive.
-    if isinstance(v, str):
-        return _normalize_value(v)
-    return json.dumps(v, sort_keys=True).lower()
+def _canonicalize_item(item: Any) -> Any:
+    """
+    Recursively canonicalize nested structures.
+    """
+    if isinstance(item, dict):
+        # Sort and filter nulls to ensure consistency
+        return tuple(sorted(
+            (k.lower(), _canonicalize_item(v))
+            for k, v in item.items()
+            if v is not None
+        ))
+    elif isinstance(item, list):
+        return tuple(_canonicalize_item(x) for x in item)
+    elif isinstance(item, str):
+        return _normalize_value(item)
+    elif item is None:
+        return None
+    else:
+        return item
 
-def facts_to_set(facts: list[dict]) -> set:
+def facts_to_set(facts: list[Fact]) -> set:
     return {canonicalize_fact(f) for f in facts}
 
 def canonical_tuple_to_dict(canonical_fact: tuple) -> dict:
@@ -122,14 +132,28 @@ def inspect_errors(pred_facts, gold_facts):
     for f in gold_set - pred_set:
         print(f)
 
-def error_breakdown(pred_facts: list[dict], gold_facts: list[dict]) -> dict:
+def error_breakdown(pred_facts: list[Fact], gold_facts: list[Fact]) -> dict:
     pred_set = facts_to_set(pred_facts)
     gold_set = facts_to_set(gold_facts)
+    
+    # Map back from canonical tuple to a serializable format
+    # Since we can't easily reverse the normalization and Pydantic dump,
+    # we just return the tuples or a simplified dict for inspection.
+    def tuple_to_reportable(t):
+        if not isinstance(t, tuple):
+            return t
+        if len(t) == 2 and isinstance(t[1], tuple):
+            # This looks like (fact_type, attributes_tuple)
+            fact_type, attrs = t
+            return {"fact_type": fact_type, "attributes": {k: tuple_to_reportable(v) for k, v in attrs}}
+        return [tuple_to_reportable(x) for x in t]
+
     false_positives = sorted(pred_set - gold_set)
     false_negatives = sorted(gold_set - pred_set)
+    
     return {
-        "false_positives": [canonical_tuple_to_dict(f) for f in false_positives],
-        "false_negatives": [canonical_tuple_to_dict(f) for f in false_negatives],
+        "false_positives": [tuple_to_reportable(f) for f in false_positives],
+        "false_negatives": [tuple_to_reportable(f) for f in false_negatives],
     }
 
 def main() -> None:
