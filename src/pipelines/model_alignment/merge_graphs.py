@@ -2,18 +2,33 @@ from __future__ import annotations
 
 from typing import Dict, Any, List, Tuple
 
-from pydantic_schema import (
-    KnowledgeGraphExtraction,
-    Event,
-    StateRelation,
-    SpatialRelation,
-    ConflictRecord,
-    UpdateRecord,
-    Entity,
-    EntityType,
-)
+try:
+    from src.core.representations.pydantic_schema import (
+        KnowledgeGraphExtraction,
+        Event,
+        StateRelation,
+        SpatialRelation,
+        ConflictRecord,
+        UpdateRecord,
+        Entity,
+        EntityType,
+    )
+except ImportError:
+    from pydantic_schema import (
+        KnowledgeGraphExtraction,
+        Event,
+        StateRelation,
+        SpatialRelation,
+        ConflictRecord,
+        UpdateRecord,
+        Entity,
+        EntityType,
+    )
 
-from telemetry_to_graph import infer_entity_type
+try:
+    from src.core.transforms.telemetry_to_graph import infer_entity_type
+except ImportError:
+    from telemetry_to_graph import infer_entity_type
 
 import dotenv
 

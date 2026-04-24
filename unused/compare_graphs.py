@@ -6,15 +6,26 @@ from typing import Dict, Any, Tuple, FrozenSet, List
 import dotenv
 from openai import OpenAI
 
-from pydantic_schema import (
-    KnowledgeGraphExtraction,
-    Event,
-    StateRelation,
-    SpatialRelation,
-    ConfidenceLevel,
-    Entity,
-    Participants,
-)
+try:
+    from src.core.representations.pydantic_schema import (
+        KnowledgeGraphExtraction,
+        Event,
+        StateRelation,
+        SpatialRelation,
+        ConfidenceLevel,
+        Entity,
+        Participants,
+    )
+except ImportError:
+    from pydantic_schema import (
+        KnowledgeGraphExtraction,
+        Event,
+        StateRelation,
+        SpatialRelation,
+        ConfidenceLevel,
+        Entity,
+        Participants,
+    )
 
 
 dotenv.load_dotenv()

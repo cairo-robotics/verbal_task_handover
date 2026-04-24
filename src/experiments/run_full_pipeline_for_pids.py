@@ -58,19 +58,39 @@ def run_pipeline_for_pid(
     python_exe: str,
 ) -> None:
     env = {**os.environ, "DATA_DIR": data_dir}
-    root = _alignment_dir()
+    
+    # Define absolute paths for all modules relative to repo root
+    # assuming this script is in src/experiments/
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    
     scripts = [
-        (root / "telemetry_to_graph.py", []),
-        (root / "text_to_graph.py", []),
-        (root / "compare_graphs.py", []),
-        (root / "merge_graphs.py", []),
-        (root / "craft_narrative_view.py", []),
-        (root / "generate_reports.py", ["--prompt-set", prompt_set]),
+        (repo_root / "src/core/transforms/telemetry_to_graph.py", []),
+        (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
+        (repo_root / "src/core/transforms/dsl_to_graph.py", [pid]),
+        (repo_root / "src/pipelines/model_alignment/compare_graphs.py", [pid]),
+        (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+        (repo_root / "src/core/transforms/reconcile_state.py", [pid]),
+        (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+        (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", prompt_set]),
     ]
+    
     for path, extra in scripts:
         if not path.is_file():
+            # Fallback check for text_to_graph if it's still needed (currently in unused/)
+            if "text_to_graph.py" in str(path):
+                 print(f"Warning: {path} not found. Skipping single-stage extraction.")
+                 continue
             raise FileNotFoundError(f"Missing pipeline script: {path}")
-        _run_step(python_exe, path, pid, extra, env)
+        
+        # Some scripts take pid as first arg, some as a specific named arg or positional
+        # Most scripts in the pipeline take {pid} as the first argument.
+        # report_to_dsl takes the report filename.
+        
+        if "report_to_dsl.py" in str(path):
+            # report_to_dsl.py <report_file>
+             _run_step(python_exe, path, extra[0], extra[1:], env)
+        else:
+             _run_step(python_exe, path, pid, extra, env)
 
 
 def main() -> None:

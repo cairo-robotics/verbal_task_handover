@@ -12,7 +12,10 @@ from string import Template
 from openai import OpenAI
 
 # Import NarrativeView from the same package layout as craft_narrative_view
-from craft_narrative_view import NarrativeView
+try:
+    from src.pipelines.model_alignment.craft_narrative_view import NarrativeView
+except ImportError:
+    from craft_narrative_view import NarrativeView
 
 FULL_REALIZATION_SYSTEM_PROMPT = """
 You are generating a clear and well-organized handoff report for a teammate who will continue the game.

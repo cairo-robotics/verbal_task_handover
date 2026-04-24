@@ -45,24 +45,7 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 
 
 ## Current focus / Active work
-Updating graph comparison and merging as part of report generation pipeline
-report_graph, telemetry_graph
-        │
-        ▼
-[1] Entity normalization       ← deterministic, lookup table
-        │
-        ▼
-[2] Existential resolution     ← LLM call per unresolved existential
-        │                         input: constraints + candidate entities
-        ▼
-[3] Fact matching & diff       ← deterministic
-        │
-        ▼
-[4] Conflict classification    ← LLM call only for ambiguous conflicts
-        │                         (e.g. same fact, different confidence levels)
-        ▼
-[5] Merged graph + ConflictRecords
-
+1. Moving to metrics -- creating an evaluation pipeline to compare report creation methods
 
 ## Known constraints / don'ts
 - Don't worry about anything in `unused/` -- that's just in case we need to recover anything from older versions of the project

@@ -3,18 +3,32 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
-from pydantic_schema import (
-    ConflictRecord,
-    Entity,
-    EntityType,
-    Event,
-    EventType,
-    KnowledgeGraphExtraction,
-    RelationType,
-    SpatialRelation,
-    SpatialRelationType,
-    StateRelation,
-)
+try:
+    from src.core.representations.pydantic_schema import (
+        ConflictRecord,
+        Entity,
+        EntityType,
+        Event,
+        EventType,
+        KnowledgeGraphExtraction,
+        RelationType,
+        SpatialRelation,
+        SpatialRelationType,
+        StateRelation,
+    )
+except ImportError:
+    from pydantic_schema import (
+        ConflictRecord,
+        Entity,
+        EntityType,
+        Event,
+        EventType,
+        KnowledgeGraphExtraction,
+        RelationType,
+        SpatialRelation,
+        SpatialRelationType,
+        StateRelation,
+    )
 
 class PlayerState(BaseModel):
     inventory: List[str]

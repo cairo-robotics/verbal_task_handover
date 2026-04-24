@@ -4,7 +4,10 @@ import sys
 
 from openai import OpenAI
 
-from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+try:
+    from src.core.utils.extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+except ImportError:
+    from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
 
 try:
     import dotenv
@@ -36,7 +39,7 @@ OUTPUT FORMAT RULES:
 - Do NOT include duplicate facts
 
 ---
-ENTITY TYPES include npcs, locations, and items (potions).
+ENTITY TYPES include npcs, locations, and items (potions, requests or messages, responses).
 - npcs: <npc name>
 - location: <location name>
 - item: <potion_color> potion
