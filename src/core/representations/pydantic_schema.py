@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal, Union
+from typing import List, Optional, Literal, Union, Any
 from enum import Enum
 from uuid import uuid4
 
@@ -16,6 +16,25 @@ from uuid import uuid4
 class StrictBase(BaseModel):
     class Config:
         extra = "forbid"
+
+
+class BaseFact(StrictBase):
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for this fact."
+    )
+    is_partial: bool = Field(
+        False,
+        description="Set to True if any part of the fact is underspecified or unknown."
+    )
+    provenance: Optional[str] = Field(
+        None,
+        description="Original text span this fact was extracted from."
+    )
+    source: Optional[str] = Field(
+        None,
+        description="The source graph this fact came from (e.g., 'base', 'new')."
+    )
 
 
 class Direction(str, Enum):
@@ -55,11 +74,6 @@ class Location(StrictBase):
 
 # ---- Arguments ----
 
-# class EntityType(str, Enum):
-#     NPC = "npc"
-#     ITEM = "item"
-#     LOCATION = "location"
-
 class Argument(StrictBase):
     type: Literal["named", "existential"] = Field(
         ...,
@@ -69,11 +83,6 @@ class Argument(StrictBase):
             "'existential' = an unknown or unspecified entity (e.g., 'someone', 'a potion'). "
         )
     )
-
-    # entity_type: Optional[EntityType] = Field(
-    #     None,
-    #     description="Type of entity if known (e.g., 'npc' if 'someone', 'item' if 'something', 'location' if 'somewhere')."
-    # )
 
     value: Optional[str] = Field(
         None,
@@ -104,12 +113,7 @@ class RelationPredicate(str, Enum):
     HAS_ITEM = "has_item"
 
 
-class RelationFact(StrictBase):
-    id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique identifier for this fact."
-    )
-
+class RelationFact(BaseFact):
     predicate: RelationPredicate = Field(
         ...,
         description="Type of relation (e.g., needs_potion, has_message_for)."
@@ -136,28 +140,10 @@ class RelationFact(StrictBase):
         )
     )
 
-    is_partial: bool = Field(
-        False,
-        description=(
-            "Set to True if any part of the fact is underspecified or unknown "
-            "(e.g., 'someone', 'a potion')."
-        )
-    )
-
-    provenance: Optional[str] = Field(
-        None,
-        description="Original text span this fact was extracted from."
-    )
-
 
 # ---- Location Facts ----
 
-class LocationFact(StrictBase):
-    id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique identifier for this fact."
-    )
-
+class LocationFact(BaseFact):
     entity: Argument = Field(
         ...,
         description="Entity being located."
@@ -168,16 +154,6 @@ class LocationFact(StrictBase):
         description="Location where the entity is found."
     )
 
-    is_partial: bool = Field(
-        False,
-        description="True if entity or location is not fully specified."
-    )
-
-    provenance: Optional[str] = Field(
-        None,
-        description="Original text span this fact was extracted from."
-    )
-
 
 # ---- Spatial Facts ----
 
@@ -186,12 +162,7 @@ class SpatialRelationType(str, Enum):
     ABSOLUTE = "absolute"
 
 
-class SpatialFact(StrictBase):
-    id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique identifier for this fact."
-    )
-
+class SpatialFact(BaseFact):
     type: SpatialRelationType = Field(
         ...,
         description=(
@@ -218,25 +189,10 @@ class SpatialFact(StrictBase):
         )
     )
 
-    is_partial: bool = Field(
-        False,
-        description="True if any entity is unknown or underspecified."
-    )
-
-    provenance: Optional[str] = Field(
-        None,
-        description="Original text span this fact was extracted from."
-    )
-
 
 # ---- Connectivity ----
 
-class ConnectionFact(StrictBase):
-    id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique identifier for this fact."
-    )
-
+class ConnectionFact(BaseFact):
     location_a: Location = Field(
         ...,
         description="First location in the connection."
@@ -247,16 +203,19 @@ class ConnectionFact(StrictBase):
         description="Second location in the connection."
     )
 
-    is_partial: bool = Field(
-        False,
-        description="True if either location is underspecified."
-    )
 
-    provenance: Optional[str] = Field(
-        None,
-        description="Original text span this fact was extracted from."
+# ---- Conflicts (to be used at diff stage) ----
+class Conflict(StrictBase):
+    """Details about a mismatch between a report fact and a telemetry fact."""
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for this conflict."
     )
-
+    base_fact_id: str = Field(..., description="ID of the fact in the base graph.")
+    new_fact: 'Fact' = Field(..., description="The full fact from the new graph that conflicts.")
+    field_name: str = Field(..., description="The specific field that mismatched.")
+    base_value: Optional[Any] = Field(None, description="The value in the base fact.")
+    new_value: Optional[Any] = Field(None, description="The value in the new fact.")
 
 # ---- Graph ----
 
@@ -272,6 +231,10 @@ class KnowledgeGraph(StrictBase):
     facts: List[Fact] = Field(
         ...,
         description="List of all extracted facts from the input text."
+    )
+    conflicts: List[Conflict] = Field(
+        default_factory=list,
+        description="List of all conflicts found in the knowledge graph."
     )
 
 if __name__ == "__main__":
