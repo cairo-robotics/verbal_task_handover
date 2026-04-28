@@ -36,8 +36,9 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 - `src/pipelines/` - Multi-stage workflows for report generation and evaluation.
     - `model_alignment/`
         - `reconcile_state.py`: Corrects KG state based on event logs.
-        - `compare_graphs.py`: Comparing KG from telemetry vs report to find differences.
-        - `merge_graphs.py`: Merging diffs into a base graph.
+        - `merge_graphs.py`: Consolidates alignment and merging (uses `entity_alignment.py` and `fact_alignment.py`).
+        - `entity_alignment.py`: Normalizes entities and resolves existentials via LLM.
+        - `fact_alignment.py`: Matches facts and identifies conflicts.
         - `craft_narrative_view.py`: Preparing KG for report generation (NarrativeView).
         - `generate_reports.py`: Final report generation using OpenAI API.
     - `evaluation/`

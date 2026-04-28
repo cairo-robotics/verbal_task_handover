@@ -69,34 +69,52 @@ def merge_graphs(base_graph: KnowledgeGraph, new_graph: KnowledgeGraph) -> Knowl
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Merge two KnowledgeGraph JSON files.")
-    parser.add_argument("base_graph", help="Path to the base (telemetry) graph JSON file.")
-    parser.add_argument("new_graph", help="Path to the new (report) graph JSON file.")
-    parser.add_argument("--output", "-o", help="Path to save the merged graph JSON file.", default="merged_graph.json")
+    parser = argparse.ArgumentParser(description="Merge two KnowledgeGraph JSON files (report vs telemetry).")
+    parser.add_argument("pid_or_base", help="Participant ID or path to the base (telemetry) graph JSON file.")
+    parser.add_argument("new_graph", nargs="?", help="Optional path to the new (report) graph JSON file. If omitted, uses PID logic with DATA_DIR.")
+    parser.add_argument("--output", "-o", help="Path to save the merged graph JSON file.")
     
     args = parser.parse_args()
     
-    if not os.path.exists(args.base_graph):
-        print(f"Error: Base graph file not found: {args.base_graph}")
+    data_dir = os.environ.get("DATA_DIR")
+    
+    if args.new_graph is None:
+        # PID mode
+        if not data_dir:
+            print("Error: DATA_DIR environment variable must be set for PID-based merging.")
+            sys.exit(1)
+        pid = args.pid_or_base
+        base_path = os.path.join(data_dir, "processed_output", f"{pid}_telemetry_to_kg_output.json")
+        new_path = os.path.join(data_dir, "processed_output", f"{pid}_dsl_to_kg_output.json")
+        output_path = args.output or os.path.join(data_dir, "processed_output", f"{pid}_merge_graphs_output.json")
+    else:
+        # Explicit path mode
+        base_path = args.pid_or_base
+        new_path = args.new_graph
+        output_path = args.output or "merged_graph.json"
+
+    if not os.path.exists(base_path):
+        print(f"Error: Base graph file not found: {base_path}")
         sys.exit(1)
-    if not os.path.exists(args.new_graph):
-        print(f"Error: New graph file not found: {args.new_graph}")
+    if not os.path.exists(new_path):
+        print(f"Error: New graph file not found: {new_path}")
         sys.exit(1)
         
-    with open(args.base_graph, "r") as f:
+    with open(base_path, "r") as f:
         base_data = json.load(f)
         base_graph = KnowledgeGraph.model_validate(base_data)
         
-    with open(args.new_graph, "r") as f:
+    with open(new_path, "r") as f:
         new_data = json.load(f)
         new_graph = KnowledgeGraph.model_validate(new_data)
         
     merged_graph = merge_graphs(base_graph, new_graph)
     
-    with open(args.output, "w") as f:
+    os.makedirs(os.path.dirname(output_path), exist_ok=True) if os.path.dirname(output_path) else None
+    with open(output_path, "w") as f:
         json.dump(merged_graph.model_dump(), f, indent=2)
         
-    print(f"Successfully merged graphs. Output saved to {args.output}")
+    print(f"Successfully merged graphs. Output saved to {output_path}")
 
 
 if __name__ == "__main__":
