@@ -47,9 +47,7 @@ def _args_match(a: Argument | None, b: Argument | None) -> bool:
 # ---------------------------------------------------------------------------
 
 _NEED_TO_DELIVERY: dict[RelationPredicate, RelationPredicate] = {
-    RelationPredicate.NEEDS_POTION: RelationPredicate.POTION_DELIVERED,
     RelationPredicate.HAS_MESSAGE_FOR: RelationPredicate.MESSAGE_DELIVERED,
-    RelationPredicate.HAS_RESPONSE_FOR: RelationPredicate.RESPONSE_DELIVERED,
 }
 
 
@@ -62,7 +60,9 @@ def _find_matching_delivery(
     for fact in relation_facts:
         if fact.predicate != delivery_predicate:
             continue
-        if _args_match(fact.subject, need.subject) and _args_match(fact.target, need.target):
+        if _args_match(fact.subject, need.subject):
+            # For need/delivery pairs, we consider the need satisfied if the subjects match,
+            # allowing for cases where the target or object is unknown in the need fact.
             return fact
     return None
 
@@ -71,7 +71,7 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
     """
     Reconcile declarative relation facts in *graph*.
 
-    For each 'need' predicate (NEEDS_POTION, HAS_MESSAGE_FOR, HAS_RESPONSE_FOR),
+    For each 'need' predicate (NEEDS_POTION, HAS_MESSAGE_FOR),
     check whether a corresponding delivery fact exists for the same subject/target
     pair.  If so, remove the need fact so the graph only retains outstanding needs.
 
