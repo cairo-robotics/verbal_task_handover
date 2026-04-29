@@ -15,6 +15,7 @@ try:
         LocationFact,
         RelationFact,
         RelationPredicate,
+        Direction,
     )
 except ImportError:
     from pydantic_schema import (
@@ -26,6 +27,7 @@ except ImportError:
         LocationFact,
         RelationFact,
         RelationPredicate,
+        Direction,
     )
 
 try:
@@ -66,6 +68,22 @@ def _normalize_location_name(room: str) -> str:
     if m:
         return f"{m.group(1)} {m.group(2)}"
     return s
+
+
+_DIRECTION_INVERSES = {
+    Direction.NORTH: Direction.SOUTH,
+    Direction.SOUTH: Direction.NORTH,
+    Direction.EAST: Direction.WEST,
+    Direction.WEST: Direction.EAST,
+    Direction.NORTHEAST: Direction.SOUTHWEST,
+    Direction.SOUTHWEST: Direction.NORTHEAST,
+    Direction.NORTHWEST: Direction.SOUTHEAST,
+    Direction.SOUTHEAST: Direction.NORTHWEST,
+}
+
+
+def _invert_direction(direction: Direction) -> Direction:
+    return _DIRECTION_INVERSES[direction]
 
 
 def _named(value: str) -> Argument:
@@ -170,11 +188,28 @@ class _TelemetryGraphBuilder:
             )
         )
 
-    def add_connection(self, room_a: str, room_b: str, provenance: Optional[str] = None) -> None:
+    def add_connection(
+        self,
+        room_a: str,
+        room_b: str,
+        direction: Optional[str] = None,
+        provenance: Optional[str] = None,
+    ) -> None:
         loc_a = _room_location(room_a)
         loc_b = _room_location(room_b)
-        pair = sorted([_location_key(loc_a), _location_key(loc_b)])
-        key = (pair[0], pair[1])
+
+        # Decide if we need to swap to normalize the connection
+        key_a = _location_key(loc_a)
+        key_b = _location_key(loc_b)
+
+        dir_enum = Direction(direction.lower()) if direction else None
+
+        if key_a > key_b:
+            loc_a, loc_b = loc_b, loc_a
+            if dir_enum:
+                dir_enum = _invert_direction(dir_enum)
+
+        key = (key_a, key_b) if key_a < key_b else (key_b, key_a)
         if key in self._seen_connection:
             return
         self._seen_connection.add(key)
@@ -182,6 +217,7 @@ class _TelemetryGraphBuilder:
             ConnectionFact(
                 location_a=loc_a,
                 location_b=loc_b,
+                direction=dir_enum,
                 provenance=provenance,
             )
         )
@@ -209,8 +245,6 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
     state = TelemetryInferenceState(player_room=_normalize_location_name("room0"))
     builder = _TelemetryGraphBuilder()
 
-    builder.add_location(player_arg, state.player_room, provenance=None)
-
     with open(file_path, "r", encoding="utf-8") as f:
         for raw_line in f:
             parsed = _parse_line(raw_line)
@@ -221,10 +255,11 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
 
             move_match = re.match(r"room entered:\s*([a-z]+)\s+to\s+([a-z0-9_]+)\s*$", text_lower)
             if move_match:
-                _, destination = move_match.groups()
+                direction_str, destination = move_match.groups()
                 dest_norm = _normalize_location_name(destination)
-                builder.add_location(player_arg, dest_norm, provenance=text)
-                builder.add_connection(state.player_room, dest_norm, provenance=text)
+                builder.add_connection(
+                    state.player_room, dest_norm, direction=direction_str, provenance=text
+                )
                 state.record_room(dest_norm)
                 continue
 
@@ -246,7 +281,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                     builder.add_relation(
                         RelationPredicate.HAS_MESSAGE_FOR,
                         subject=Argument(type="existential", location=_room_location(room_id)),
-                        target=player_arg,
+                        target=Argument(type="existential"),
                         provenance=text,
                         force_partial=True,
                     )
@@ -266,7 +301,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                     builder.add_relation(
                         RelationPredicate.HAS_RESPONSE_FOR,
                         subject=sender,
-                        target=player_arg,
+                        target=Argument(type="existential"),
                         provenance=text,
                     )
                     continue
@@ -359,6 +394,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
             if text_lower.startswith("treasure collected:"):
                 continue
 
+    builder.add_location(player_arg, state.player_room, provenance=None)
     return KnowledgeGraph(facts=builder.facts)
 
 

@@ -64,7 +64,6 @@ player is in <room>
 <entity> is in <room>
 <entity> is to the <direction>
 <entity> is <direction> of <entity>
-<location> is connected to <location>
 
 # Inventory
 player has <item>

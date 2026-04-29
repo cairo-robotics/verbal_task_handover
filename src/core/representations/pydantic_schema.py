@@ -203,6 +203,11 @@ class ConnectionFact(BaseFact):
         description="Second location in the connection."
     )
 
+    direction: Optional[Direction] = Field(
+        None,
+        description="Direction from location_a to location_b."
+    )
+
 
 # ---- Conflicts (to be used at diff stage) ----
 class Conflict(StrictBase):
