@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Union, Literal
+from typing import List, Optional, Union, Literal, Any
 from enum import Enum
 from uuid import uuid4
 
@@ -101,8 +101,6 @@ class RelationPredicate(str, Enum):
     POTION_DELIVERED = "potion_delivered"
     HAS_MESSAGE_FOR = "has_message_for"
     MESSAGE_DELIVERED = "message_delivered"
-    HAS_RESPONSE_FOR = "has_response_for"
-    RESPONSE_DELIVERED = "response_delivered"
     HAS_ITEM = "has_item"
 
 

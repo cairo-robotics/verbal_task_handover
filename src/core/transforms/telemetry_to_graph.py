@@ -39,6 +39,9 @@ if dotenv is not None:
     dotenv.load_dotenv()
 
 
+PATIENTS_BY_ROOM = ["lily", "oliver", "nick", "marie", "guy"]
+
+
 def _parse_line(line: str) -> Optional[Tuple[str, str]]:
     if not line.strip():
         return None
@@ -280,7 +283,8 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                     )
                     builder.add_relation(
                         RelationPredicate.HAS_MESSAGE_FOR,
-                        subject=Argument(type="existential", location=_room_location(room_id)),
+                        # subject=Argument(type="existential", location=_room_location(room_id)),
+                        subject = _named(PATIENTS_BY_ROOM[int(request_room_match.group(1))]),
                         target=Argument(type="existential"),
                         provenance=text,
                         force_partial=True,
@@ -299,20 +303,22 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                         provenance=text,
                     )
                     builder.add_relation(
-                        RelationPredicate.HAS_RESPONSE_FOR,
+                        RelationPredicate.HAS_MESSAGE_FOR,
                         subject=sender,
                         target=Argument(type="existential"),
                         provenance=text,
                     )
                     continue
 
-                item_arg = _named(_normalize_item(raw_item))
-                builder.add_relation(
-                    RelationPredicate.HAS_ITEM,
-                    subject=player_arg,
-                    obj=item_arg,
-                    provenance=text,
-                )
+                item_name = _normalize_item(raw_item)
+                if "potion" not in item_name:
+                    item_arg = _named(item_name)
+                    builder.add_relation(
+                        RelationPredicate.HAS_ITEM,
+                        subject=player_arg,
+                        obj=item_arg,
+                        provenance=text,
+                    )
                 continue
 
             npc_about_match = re.match(
@@ -338,20 +344,20 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                         provenance=text,
                         force_partial=True,
                     )
-                    builder.add_relation(
-                        RelationPredicate.HAS_RESPONSE_FOR,
-                        subject=npc,
-                        target=source_arg,
-                        provenance=text,
-                        force_partial=True,
-                    )
+                    # builder.add_relation(
+                    #     RelationPredicate.HAS_MESSAGE_FOR,
+                    #     subject=npc,
+                    #     target=source_arg,
+                    #     provenance=text,
+                    #     force_partial=True,
+                    # )
                     continue
 
                 response_match = re.match(r"response from\s+(.+)$", topic, re.IGNORECASE)
                 if response_match:
                     sender = _named(response_match.group(1))
                     builder.add_relation(
-                        RelationPredicate.RESPONSE_DELIVERED,
+                        RelationPredicate.MESSAGE_DELIVERED,
                         subject=sender,
                         target=npc,
                         provenance=text,

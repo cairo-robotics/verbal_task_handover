@@ -265,7 +265,6 @@ def _build_interaction_history_by_character(
     event_predicates = {
         RelationPredicate.POTION_DELIVERED,
         RelationPredicate.MESSAGE_DELIVERED,
-        RelationPredicate.RESPONSE_DELIVERED,
     }
 
     for fact in facts:

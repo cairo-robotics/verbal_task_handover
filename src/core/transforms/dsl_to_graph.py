@@ -48,9 +48,9 @@ dotenv.load_dotenv()
 # <npc> needs a <potion_color or unknown> potion
 # <potion_color or unknown> potion delivered to <npc>
 
-# # Messaging
-# <npc> has a message/response for <npc>
-# message/response delivered from <npc> to <npc>
+# # Messaging (includes requests, messages, and responses)
+# <npc> has a message for <npc>
+# message delivered from <npc> to <npc>
 
 # # Locations and spatial relationships
 # player is in <room>
@@ -341,8 +341,8 @@ def _parse_line(line: str):
             provenance=line,
         )
 
-    # "<subject> has a message for <target>"
-    m = re.match(r'^(.+?) has a message for (.+)$', line, re.IGNORECASE)
+    # "<subject> has a [message|response] for <target>"
+    m = re.match(r'^(.+?) has a (?:message|response) for (.+)$', line, re.IGNORECASE)
     if m:
         subject = _parse_subject(m.group(1))
         target = _parse_subject(m.group(2))
@@ -354,39 +354,13 @@ def _parse_line(line: str):
             provenance=line,
         )
 
-    # "<subject> has a response for <target>"
-    m = re.match(r'^(.+?) has a response for (.+)$', line, re.IGNORECASE)
-    if m:
-        subject = _parse_subject(m.group(1))
-        target = _parse_subject(m.group(2))
-        return RelationFact(
-            predicate=RelationPredicate.HAS_RESPONSE_FOR,
-            subject=subject,
-            target=target,
-            is_partial=subject.type == "existential" or target.type == "existential",
-            provenance=line,
-        )
-
-    # "message delivered from <sender> to <recipient>"
-    m = re.match(r'^message delivered from (.+?) to (.+)$', line, re.IGNORECASE)
+    # "[message|response] delivered from <sender> to <recipient>"
+    m = re.match(r'^(?:message|response) delivered from (.+?) to (.+)$', line, re.IGNORECASE)
     if m:
         sender = _parse_entity(m.group(1))
         recipient = _parse_entity(m.group(2))
         return RelationFact(
             predicate=RelationPredicate.MESSAGE_DELIVERED,
-            subject=sender,
-            target=recipient,
-            is_partial=sender.type == "existential" or recipient.type == "existential",
-            provenance=line,
-        )
-
-    # "response delivered from <sender> to <recipient>"
-    m = re.match(r'^response delivered from (.+?) to (.+)$', line, re.IGNORECASE)
-    if m:
-        sender = _parse_entity(m.group(1))
-        recipient = _parse_entity(m.group(2))
-        return RelationFact(
-            predicate=RelationPredicate.RESPONSE_DELIVERED,
             subject=sender,
             target=recipient,
             is_partial=sender.type == "existential" or recipient.type == "existential",

@@ -232,16 +232,6 @@ Environment variables used by the pipeline:
 
 The `src/pipelines/evaluation/` pipeline evaluates report quality by extracting structured facts from reports and comparing them against a ground truth derived from the `NarrativeView`. Uses a two-stage extraction approach (report → DSL → JSON) designed to support inter-rater reliability checks.
 
-### Shared schema: `src/core/representations/state_ontology.py`
-
-Defines the Pydantic fact types used throughout the extraction pipeline:
-
-- `PatientNeedsPotion`, `PotionDelivered`
-- `MessageRequest`, `MessageDelivered`, `MessageResponse`, `ResponseDelivered`
-- `NpcLocation`, `PotionLocation`
-- `PlayerLocation`, `PlayerHasItem`
-- `FactExtraction` : `{ facts: List[Fact] }`
-
 ### Data layout
 
 Scripts read and write under `DATA_DIR`:
