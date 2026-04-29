@@ -195,7 +195,7 @@ export DATA_DIR=/path/to/DATA_DIR
 
 python src/core/transforms/telemetry_to_graph.py 302
 python src/core/transforms/report_to_dsl.py 302
-python src/core/transforms/dsl_to_graph.py 302
+python src/core/transforms/dsl_to_graph.py 302_user
 python src/pipelines/model_alignment/merge_graphs.py 302
 python src/pipelines/model_alignment/reconcile_state.py 302
 python src/pipelines/model_alignment/craft_narrative_view.py 302
