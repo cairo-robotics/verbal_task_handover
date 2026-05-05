@@ -124,6 +124,24 @@ def _compare_arguments(
             # (Heuristic: NPCs match 'someone')
             return True
 
+    # 3. Existential match: Report is general, Telemetry is specific
+    if report_arg.type == "existential" and telem_arg.type == "named":
+        if report_arg.location and telemetry_graph:
+            # Check if the named entity in telemetry satisfies the location constraint in the report
+            ent_loc = get_entity_location(telemetry_graph, telem_arg.value or "")
+            if ent_loc and is_location_satisfying_constraint(ent_loc, report_arg.location, telemetry_graph):
+                return True
+        elif not report_arg.location:
+            return True
+
+    # 4. Both are existential
+    if report_arg.type == "existential" and telem_arg.type == "existential":
+        if not report_arg.location and not telem_arg.location:
+            return True
+        # If both have locations, we could compare them, but for now let's be conservative
+        if report_arg.location and telem_arg.location:
+            return report_arg.location.model_dump() == telem_arg.location.model_dump()
+
     return False
 
 

@@ -30,10 +30,7 @@ def is_location_satisfying_constraint(
         return target_room == constraint.room
     
     if constraint.type == "directional" and constraint.directions:
-        # Check if target_room is in one of the directions from reference_room
-        for direction in constraint.directions:
-            if is_room_in_direction(graph, target_room, reference_room, direction):
-                return True
+        return is_room_in_direction(graph, target_room, reference_room, constraint.directions)
     
     return False
 
@@ -41,26 +38,40 @@ def is_room_in_direction(
     graph: KnowledgeGraph, 
     target_room: str, 
     source_room: str, 
-    direction: Direction
+    expected_directions: List[Direction]
 ) -> bool:
     """
-    Check if target_room is in the given direction from source_room.
-    Uses ConnectionFacts and SpatialFacts.
+    Check if target_room is in the given direction path from source_room.
+    Uses ConnectionFacts and SpatialFacts to find the shortest path.
+    Returns True if expected_directions is a prefix of the shortest path.
     """
     if target_room == source_room:
-        return False
+        return not expected_directions # Empty path matches same room? Or False? Usually False if constraint exists.
         
-    # Build a simple adjacency map for directions
-    # (source, direction) -> set of targets
-    adj: Dict[Tuple[str, Direction], Set[str]] = {}
+    # Build adjacency map: source -> list of (target, direction)
+    adj: Dict[str, List[Tuple[str, Direction]]] = {}
     
+    opposite = {
+        Direction.NORTH: Direction.SOUTH,
+        Direction.SOUTH: Direction.NORTH,
+        Direction.EAST: Direction.WEST,
+        Direction.WEST: Direction.EAST,
+        Direction.NORTHEAST: Direction.SOUTHWEST,
+        Direction.SOUTHWEST: Direction.NORTHEAST,
+        Direction.NORTHWEST: Direction.SOUTHEAST,
+        Direction.SOUTHEAST: Direction.NORTHWEST,
+    }
+
     for fact in graph.facts:
         if isinstance(fact, ConnectionFact):
             u = fact.location_a.room
             v = fact.location_b.room
             d = fact.direction
             if u and v and d:
-                adj.setdefault((u, d), set()).add(v)
+                adj.setdefault(u, []).append((v, d))
+                # Add reverse edge
+                if d in opposite:
+                    adj.setdefault(v, []).append((u, opposite[d]))
         elif isinstance(fact, SpatialFact):
             if fact.type == SpatialRelationType.RELATIVE:
                 if (fact.subject.type == "named" and fact.subject.value and 
@@ -68,32 +79,28 @@ def is_room_in_direction(
                     u = fact.reference.value
                     v = fact.subject.value
                     d = fact.direction
-                    adj.setdefault((u, d), set()).add(v)
+                    adj.setdefault(u, []).append((v, d))
+                    # Add reverse edge
+                    if d in opposite:
+                        adj.setdefault(v, []).append((u, opposite[d]))
 
-    # Simplified reachability: what rooms can be reached by going in 'allowed' directions
-    # e.g. for WEST, allowed are WEST, NORTHWEST, SOUTHWEST.
-    allowed_dirs = {direction}
-    if direction == Direction.WEST:
-        allowed_dirs.update({Direction.NORTHWEST, Direction.SOUTHWEST})
-    elif direction == Direction.EAST:
-        allowed_dirs.update({Direction.NORTHEAST, Direction.SOUTHEAST})
-    elif direction == Direction.NORTH:
-        allowed_dirs.update({Direction.NORTHWEST, Direction.NORTHEAST})
-    elif direction == Direction.SOUTH:
-        allowed_dirs.update({Direction.SOUTHWEST, Direction.SOUTHEAST})
-
+    # BFS to find shortest path of directions
+    # queue stores (current_room, direction_path_so_far)
     visited = {source_room}
-    queue = [source_room]
+    queue = [(source_room, [])]
     
     while queue:
-        curr = queue.pop(0)
+        curr, path = queue.pop(0)
+        
         if curr == target_room:
-            return True
+            # Check if expected_directions is a prefix of path
+            if len(expected_directions) > len(path):
+                return False
+            return path[:len(expected_directions)] == expected_directions
             
-        for d in allowed_dirs:
-            for neighbor in adj.get((curr, d), []):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    queue.append(neighbor)
+        for neighbor, d in adj.get(curr, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [d]))
                     
     return False

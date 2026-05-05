@@ -284,7 +284,7 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                     builder.add_relation(
                         RelationPredicate.HAS_MESSAGE_FOR,
                         # subject=Argument(type="existential", location=_room_location(room_id)),
-                        subject = _named(PATIENTS_BY_ROOM[int(request_room_match.group(1))]),
+                        subject = _named(PATIENTS_BY_ROOM[int(request_room_match.group(1))-1]),
                         target=Argument(type="existential"),
                         provenance=text,
                         force_partial=True,

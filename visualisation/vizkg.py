@@ -36,9 +36,10 @@ SRC_STYLE = {
 }
 
 MERGE_STYLE = {
-    "shared":   ("steel_blue",  "●", ""),
-    "novel":    ("green",       "●", ""),
-    "conflict": ("red",         "✖", " [dim](conflict)[/dim]"),
+    "shared":    ("steel_blue",  "●", ""),
+    "novel":     ("green",       "●", ""),
+    "base_only": ("blue",        "●", ""),
+    "conflict":  ("red",         "✖", " [dim](conflict)[/dim]"),
 }
 
 PRED_STYLE = {
@@ -157,8 +158,11 @@ def classify_merged(fact: dict, conflict_base_ids: set, conflict_new_ids: set) -
     fid = fact.get("id", "")
     if fid in conflict_base_ids or fid in conflict_new_ids:
         return "conflict"
-    if fact.get("source") == "new":
+    source = fact.get("source")
+    if source == "new":
         return "novel"
+    if source == "base_only":
+        return "base_only"
     return "shared"
 
 
@@ -211,24 +215,27 @@ def render_merged_graph(data: dict, filename: str) -> None:
 
     # group by classification, then fact type
     buckets: dict[str, dict[str, list]] = {
-        "shared":   {k: [] for k in FACT_TYPE_LABEL},
-        "novel":    {k: [] for k in FACT_TYPE_LABEL},
-        "conflict": {k: [] for k in FACT_TYPE_LABEL},
+        "shared":    {k: [] for k in FACT_TYPE_LABEL},
+        "novel":     {k: [] for k in FACT_TYPE_LABEL},
+        "base_only": {k: [] for k in FACT_TYPE_LABEL},
+        "conflict":  {k: [] for k in FACT_TYPE_LABEL},
     }
     for f in facts:
         cls   = classify_merged(f, conflict_base_ids, conflict_new_ids)
         ftype = detect_fact_type(f)
         buckets[cls][ftype].append(f)
 
-    n_shared   = sum(len(v) for v in buckets["shared"].values())
-    n_novel    = sum(len(v) for v in buckets["novel"].values())
-    n_conflict = len(conflicts)
+    n_shared    = sum(len(v) for v in buckets["shared"].values())
+    n_novel     = sum(len(v) for v in buckets["novel"].values())
+    n_base_only = sum(len(v) for v in buckets["base_only"].values())
+    n_conflict  = len(conflicts)
 
     console.print()
     console.print(Rule(
         f"[bold]{filename}[/bold]  "
         f"[steel_blue]{n_shared} shared[/steel_blue]  "
         f"[green]{n_novel} novel[/green]  "
+        f"[blue]{n_base_only} base-only[/blue]  "
         f"[red]{n_conflict} conflict{'s' if n_conflict != 1 else ''}[/red]"
     ))
 
@@ -347,6 +354,7 @@ def print_legend(is_merged: bool) -> None:
         console.print(
             "  [steel_blue]● shared[/steel_blue]"
             "  [green]● novel (user-only)[/green]"
+            "  [blue]● base-only (telemetry-only)[/blue]"
             "  [red]✖ conflict[/red]"
             "  [dim]  |  italic = partial fact[/dim]"
         )
