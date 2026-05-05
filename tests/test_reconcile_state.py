@@ -185,6 +185,33 @@ def test_has_item_retained_when_not_delivered():
     assert RelationPredicate.HAS_ITEM in preds
 
 
+def test_request_response_item_removed_on_message_delivery():
+    """HAS_ITEM for 'response from [sender]' or 'request from [sender]' is removed when message is delivered."""
+    response_item = _has_item("player", "response from lola")
+    request_item = _has_item("player", "request from lola")
+    delivery = _message_delivered("lola", "lily")
+    graph = KnowledgeGraph(facts=[response_item, request_item, delivery])
+
+    result = reconcile_state(graph)
+
+    preds = _predicates(result)
+    assert RelationPredicate.HAS_ITEM not in preds
+    assert RelationPredicate.MESSAGE_DELIVERED in preds
+
+
+def test_request_response_item_retained_if_different_sender():
+    """HAS_ITEM for 'response/request from [sender]' is NOT removed if a different message is delivered."""
+    response_item = _has_item("player", "response from lola")
+    request_item = _has_item("player", "request from lola")
+    delivery = _message_delivered("rose", "lily")
+    graph = KnowledgeGraph(facts=[response_item, request_item, delivery])
+
+    result = reconcile_state(graph)
+
+    preds = _predicates(result)
+    assert preds.count(RelationPredicate.HAS_ITEM) == 2
+
+
 # ---------------------------------------------------------------------------
 # Tests — non-RelationFact pass-through
 # ---------------------------------------------------------------------------
@@ -232,3 +259,60 @@ def test_empty_graph_returns_empty_graph():
     graph = KnowledgeGraph(facts=[])
     result = reconcile_state(graph)
     assert result.facts == []
+
+
+def test_existential_resolution_in_reconciliation():
+    """HAS_MESSAGE_FOR is removed when subjects match via location resolution."""
+    # Need: lily has_message_for <unknown>
+    need = RelationFact(
+        predicate=RelationPredicate.HAS_MESSAGE_FOR,
+        subject=_named("lily"),
+        target=Argument(type="existential"),
+    )
+    # Delivery: <unknown> @ room 1 message_delivered to eliza
+    delivery = RelationFact(
+        predicate=RelationPredicate.MESSAGE_DELIVERED,
+        subject=Argument(type="existential", location=Location(type="room", room="room 1")),
+        target=_named("eliza"),
+    )
+    # Location: lily @ room 1
+    loc_fact = LocationFact(
+        entity=_named("lily"),
+        location=Location(type="room", room="room 1"),
+    )
+
+    graph = KnowledgeGraph(facts=[need, delivery, loc_fact])
+
+    result = reconcile_state(graph)
+
+    preds = _predicates(result)
+    assert RelationPredicate.HAS_MESSAGE_FOR not in preds
+    assert RelationPredicate.MESSAGE_DELIVERED in preds
+
+
+def test_existential_resolution_fails_if_location_mismatch():
+    """HAS_MESSAGE_FOR is NOT removed if location resolution fails."""
+    # Need: lily has_message_for <unknown>
+    need = RelationFact(
+        predicate=RelationPredicate.HAS_MESSAGE_FOR,
+        subject=_named("lily"),
+        target=Argument(type="existential"),
+    )
+    # Delivery: <unknown> @ room 2 message_delivered to eliza
+    delivery = RelationFact(
+        predicate=RelationPredicate.MESSAGE_DELIVERED,
+        subject=Argument(type="existential", location=Location(type="room", room="room 2")),
+        target=_named("eliza"),
+    )
+    # Location: lily @ room 1
+    loc_fact = LocationFact(
+        entity=_named("lily"),
+        location=Location(type="room", room="room 1"),
+    )
+
+    graph = KnowledgeGraph(facts=[need, delivery, loc_fact])
+
+    result = reconcile_state(graph)
+
+    preds = _predicates(result)
+    assert RelationPredicate.HAS_MESSAGE_FOR in preds

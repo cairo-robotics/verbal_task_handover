@@ -22,6 +22,7 @@ from src.core.representations.pydantic_schema import (
     RelationFact,
     RelationPredicate,
 )
+from src.core.utils.spatial_reasoning import get_entity_location, is_location_satisfying_constraint
 
 dotenv.load_dotenv()
 
@@ -42,6 +43,38 @@ def _args_match(a: Argument | None, b: Argument | None) -> bool:
     return a.type == b.type and a.value == b.value
 
 
+def _args_align(a: Argument | None, b: Argument | None, graph: KnowledgeGraph) -> bool:
+    """Return True if two Arguments refer to the same entity, possibly via existential resolution."""
+    if a is None or b is None:
+        return False
+
+    # 1. Direct value match
+    if a.type == "named" and b.type == "named":
+        return a.value == b.value
+
+    # 2. Both existential
+    if a.type == "existential" and b.type == "existential":
+        if not a.location and not b.location:
+            return True
+        if a.location and b.location:
+            return a.location.model_dump() == b.location.model_dump()
+        return False  # One has location, other doesn't? Let's be conservative.
+
+    # 3. One named, one existential
+    named_arg = a if a.type == "named" else b
+    existential_arg = b if a.type == "named" else a
+
+    if not existential_arg.location:
+        return True  # Existential with no constraint matches any named entity
+
+    # Must satisfy location constraint
+    ent_loc = get_entity_location(graph, named_arg.value or "")
+    if ent_loc and is_location_satisfying_constraint(ent_loc, existential_arg.location, graph):
+        return True
+
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Reconciliation rules
 # ---------------------------------------------------------------------------
@@ -55,14 +88,18 @@ def _find_matching_delivery(
     need: RelationFact,
     delivery_predicate: RelationPredicate,
     relation_facts: list[RelationFact],
+    graph: KnowledgeGraph,
 ) -> RelationFact | None:
     """Return the first delivery fact that satisfies *need*, or None."""
     for fact in relation_facts:
         if fact.predicate != delivery_predicate:
             continue
-        if _args_match(fact.subject, need.subject):
-            # For need/delivery pairs, we consider the need satisfied if the subjects match,
-            # allowing for cases where the target or object is unknown in the need fact.
+        if _args_align(fact.subject, need.subject, graph):
+            # For need/delivery pairs, we consider the need satisfied if the subjects align.
+            # We also check target compatibility if both have a target.
+            if need.target and fact.target:
+                if not _args_align(need.target, fact.target, graph):
+                    continue
             return fact
     return None
 
@@ -89,7 +126,7 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
         delivery_predicate = _NEED_TO_DELIVERY.get(need.predicate)
         if delivery_predicate is None:
             continue
-        if _find_matching_delivery(need, delivery_predicate, rel_facts) is not None:
+        if _find_matching_delivery(need, delivery_predicate, rel_facts, graph) is not None:
             facts_to_remove.add(need.id)
 
     # --- Resolve HAS_ITEM against POTION_DELIVERED ---
@@ -105,6 +142,29 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
             and fact.object.value in delivered_objects
         ):
             facts_to_remove.add(fact.id)
+
+    # --- Resolve HAS_ITEM against MESSAGE_DELIVERED (responses) ---
+    delivered_senders = {
+        f.subject.value
+        for f in rel_facts
+        if (
+            f.predicate == RelationPredicate.MESSAGE_DELIVERED
+            and f.subject is not None
+            and f.subject.value
+        )
+    }
+    for fact in rel_facts:
+        if (
+            fact.predicate == RelationPredicate.HAS_ITEM
+            and fact.object is not None
+            and fact.object.value
+        ):
+            obj_val_lower = fact.object.value.lower()
+            for sender in delivered_senders:
+                sender_lower = sender.lower()
+                if obj_val_lower in [f"response from {sender_lower}", f"request from {sender_lower}"]:
+                    facts_to_remove.add(fact.id)
+                    break
 
     reconciled_facts = [f for f in graph.facts if getattr(f, "id", None) not in facts_to_remove]
 
