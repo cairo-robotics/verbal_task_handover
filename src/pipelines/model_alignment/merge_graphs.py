@@ -30,11 +30,14 @@ def merge_graphs(base_graph: KnowledgeGraph, new_graph: KnowledgeGraph) -> Knowl
     fact_alignment_result = align_facts(new_graph, base_graph, alignment_result)
     
     # 3. Construct merged graph
-    # Start with all facts from base graph, setting source="base"
+    # Process base graph facts
     merged_facts: List[Fact] = []
     for f in base_graph.facts:
         f_copy = f.model_copy()
-        f_copy.source = "base"
+        if f.id in fact_alignment_result.matched_target_fact_ids:
+            f_copy.source = "shared"
+        else:
+            f_copy.source = "base_only"
         merged_facts.append(f_copy)
     
     merged_conflicts: List[Conflict] = []

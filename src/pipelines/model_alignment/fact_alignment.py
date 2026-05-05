@@ -38,6 +38,7 @@ class FactAlignmentResult(BaseModel):
     resolution_confirmed_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts that match telemetry via existential resolution.")
     novel_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts with no telemetry match.")
     conflicts: List[ConflictRecord] = Field(default_factory=list, description="Records of value mismatches.")
+    matched_target_fact_ids: Set[str] = Field(default_factory=set, description="IDs of facts in the telemetry graph that were matched (either as confirmed or conflict).")
 
 
 def _get_normalized_argument_value(arg: Argument, fact_id: str, role: str, alignment: AlignmentResult) -> Optional[str]:
@@ -245,7 +246,9 @@ def align_facts(
 
         if conflicts:
             result.conflicts.extend(conflicts)
+            result.matched_target_fact_ids.add(tf.id)
         else:
+            result.matched_target_fact_ids.add(tf.id)
             if is_resolution_match:
                 result.resolution_confirmed_fact_ids.append(rf.id)
             else:
