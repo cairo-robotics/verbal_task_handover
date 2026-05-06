@@ -143,16 +143,29 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
         ):
             facts_to_remove.add(fact.id)
 
-    # --- Resolve HAS_ITEM against MESSAGE_DELIVERED (responses) ---
-    delivered_senders = {
-        f.subject.value
+    # --- Resolve HAS_ITEM against MESSAGE_DELIVERED (responses/requests) ---
+    delivered_sources = {
+        f.subject.value.lower()
         for f in rel_facts
         if (
             f.predicate == RelationPredicate.MESSAGE_DELIVERED
             and f.subject is not None
+            and f.subject.type == "named"
             and f.subject.value
         )
     }
+    delivered_sources.update({
+        f.subject.location.room.lower()
+        for f in rel_facts
+        if (
+            f.predicate == RelationPredicate.MESSAGE_DELIVERED
+            and f.subject is not None
+            and f.subject.type == "existential"
+            and f.subject.location is not None
+            and f.subject.location.type == "room"
+            and f.subject.location.room
+        )
+    })
     for fact in rel_facts:
         if (
             fact.predicate == RelationPredicate.HAS_ITEM
@@ -160,9 +173,8 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
             and fact.object.value
         ):
             obj_val_lower = fact.object.value.lower()
-            for sender in delivered_senders:
-                sender_lower = sender.lower()
-                if obj_val_lower in [f"response from {sender_lower}", f"request from {sender_lower}"]:
+            for source in delivered_sources:
+                if obj_val_lower in [f"response from {source}", f"request from {source}"]:
                     facts_to_remove.add(fact.id)
                     break
 
