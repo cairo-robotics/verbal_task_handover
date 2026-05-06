@@ -229,6 +229,7 @@ def _miscellaneous_state_relations_for_character(
     character_id: str,
     player_id: str,
     facts: List[Fact],
+    interaction_history: Optional[List[str]] = None,
 ) -> List[str]:
     lines: List[str] = []
     for fact in facts:
@@ -252,7 +253,11 @@ def _miscellaneous_state_relations_for_character(
         if fact.predicate == RelationPredicate.HAS_MESSAGE_FOR and fact.target and fact.target.value == character_id:
             continue
             
-        lines.append(_format_relation_fact(fact))
+        formatted = _format_relation_fact(fact)
+        if interaction_history and formatted in interaction_history:
+            continue
+            
+        lines.append(formatted)
     return sorted(lines)
 
 def _build_interaction_history_by_character(
@@ -384,7 +389,10 @@ def craft_narrative_view(
                 ),
                 requirements=requirements_by_character.get(char_id, []),
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_character(
-                    char_id, player_id, graph.facts
+                    char_id, 
+                    player_id, 
+                    graph.facts,
+                    interaction_history=interaction_history_by_character.get(char_id, [])
                 ),
             )
             for char_id in character_ids
@@ -418,9 +426,12 @@ if __name__ == "__main__":
     import sys
     import json
     import os
+    import dotenv
+    dotenv.load_dotenv()
+
     data_dir = os.environ.get("DATA_DIR")
 
-    graph_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_merged_graph.json")
+    graph_filename = os.path.join(data_dir, "processed_output", sys.argv[1])
     with open(graph_filename, "r") as f:
         graph = KnowledgeGraph.model_validate_json(f.read())
     narrative_view = craft_narrative_view(graph)
