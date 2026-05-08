@@ -20,7 +20,6 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 - `src/core/` - Fundamental data models and low-level logic.
     - `representations/`
         - `pydantic_schema.py`: Core Knowledge Graph models.
-        - `state_ontology.py`: Facts used in evaluation.
     - `transforms/`
         - `telemetry_to_graph.py`: Game telemetry -> KG.
         - `report_to_dsl.py`: Report text -> intermediate DSL via LLM.
@@ -36,8 +35,9 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 - `src/pipelines/` - Multi-stage workflows for report generation and evaluation.
     - `model_alignment/`
         - `reconcile_state.py`: Corrects KG state based on event logs.
-        - `compare_graphs.py`: Comparing KG from telemetry vs report to find differences.
-        - `merge_graphs.py`: Merging diffs into a base graph.
+        - `entity_alignment.py`: Normalizes entities and resolves existentials via LLM.
+        - `fact_alignment.py`: Matches facts and identifies conflicts.
+        - `merge_graphs.py`: Consolidates alignment and merging (uses `entity_alignment.py` and `fact_alignment.py`).
         - `craft_narrative_view.py`: Preparing KG for report generation (NarrativeView).
         - `generate_reports.py`: Final report generation using OpenAI API.
     - `evaluation/`
@@ -45,7 +45,7 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
 
 
 ## Current focus / Active work
-Updating graph comparison and merging as part of report generation pipeline
+Updating graph comparison and merging within `merge_graphs.py` (alignment flow):
 report_graph, telemetry_graph
         │
         ▼
@@ -58,10 +58,7 @@ report_graph, telemetry_graph
 [3] Fact matching & diff       ← deterministic
         │
         ▼
-[4] Conflict classification    ← LLM call only for ambiguous conflicts
-        │                         (e.g. same fact, different confidence levels)
-        ▼
-[5] Merged graph + ConflictRecords
+[4] Merged graph + ConflictRecords
 
 
 ## Known constraints / don'ts

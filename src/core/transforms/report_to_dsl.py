@@ -42,7 +42,8 @@ OUTPUT FORMAT RULES:
 ENTITY TYPES include npcs, locations, and items (potions, requests or messages, responses).
 - npcs: <npc name>
 - location: <location name>
-- item: <potion_color> potion
+- item: <potion_color> potion, message/request/response
+- (note: messages, requests and responses are the same thing, and should all be referred to as "message")
 
 If the entity agent is unspecified (e.g., "someone", "a patient", "a potion"), use <unknown>:
 - npcs: someone
@@ -55,16 +56,15 @@ FACT TEMPLATES:
 <npc> needs a <potion_color or unknown> potion
 <potion_color or unknown> potion delivered to <npc>
 
-# Messaging
-<npc> has a message/response for <npc>
-message/response delivered from <npc> to <npc>
+# Messaging (includes requests, messages, and responses)
+<npc> has a message for <npc>
+message delivered from <npc> to <npc>
 
 # Locations and spatial relationships
 player is in <room>
 <entity> is in <room>
 <entity> is to the <direction>
 <entity> is <direction> of <entity>
-<location> is connected to <location>
 
 # Inventory
 player has <item>
@@ -73,7 +73,7 @@ player has <item>
 If the agent is unspecified (e.g., "someone", "a patient"), use:
 
 someone needs <potion_color> potion
-someone has a message/response for someone
+someone has a message for someone
 
 If a location constraint is given, include it:
 

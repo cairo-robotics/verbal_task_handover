@@ -28,12 +28,20 @@ from src.pipelines.model_alignment.fact_alignment import align_facts, ConflictRe
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _named(value: str) -> Argument:
-    return Argument(type="named", value=value)
+def _named(value: str, location: Location = None) -> Argument:
+    return Argument(type="named", value=value, location=location)
+
+
+def _existential(location: Location = None) -> Argument:
+    return Argument(type="existential", location=location)
 
 
 def _room(name: str) -> Location:
     return Location(type="room", room=name)
+
+
+def _directional(dirs: list[Direction]) -> Location:
+    return Location(type="directional", directions=dirs)
 
 
 def _kg(*facts) -> KnowledgeGraph:
@@ -168,3 +176,117 @@ class TestFactAlignment:
         
         assert len(result.conflicts) == 1
         assert result.conflicts[0].field_name == "location_b"
+
+    def test_named_report_matches_existential_telemetry_room(self):
+        """Report has specific 'lily', Telemetry has 'someone in room 1'."""
+        rf = RelationFact(
+            id="r1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_named("lily"),
+            object=_named("gold_potion")
+        )
+        report = _kg(rf)
+
+        tf = RelationFact(
+            id="t1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(location=_room("room 1")),
+            object=_named("gold_potion")
+        )
+        tl_loc = LocationFact(
+            id="t2",
+            entity=_named("lily"),
+            location=_room("room 1")
+        )
+        telemetry = _kg(tf, tl_loc)
+
+        result = align_facts(report, telemetry, AlignmentResult())
+
+        assert "r1" in result.resolution_confirmed_fact_ids
+        assert not result.conflicts
+
+    def test_named_report_matches_existential_telemetry_directional(self):
+        """Report has 'lily', Telemetry has 'someone in the west'."""
+        rf = RelationFact(
+            id="r1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_named("lily"),
+            object=_named("gold_potion")
+        )
+        report = _kg(rf)
+
+        tf = RelationFact(
+            id="t1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(location=_directional([Direction.WEST])),
+            object=_named("gold_potion")
+        )
+        
+        tl_loc = LocationFact(id="t2", entity=_named("lily"), location=_room("room 1"))
+        tl_conn = ConnectionFact(
+            id="t3",
+            location_a=_room("room 0"),
+            location_b=_room("room 1"),
+            direction=Direction.WEST
+        )
+        telemetry = _kg(tf, tl_loc, tl_conn)
+
+        result = align_facts(report, telemetry, AlignmentResult())
+
+        assert "r1" in result.resolution_confirmed_fact_ids
+        assert not result.conflicts
+
+    def test_mismatch_location_constraint(self):
+        """Report 'lily' is in room 2, Telemetry 'someone in room 1' needs potion."""
+        rf = RelationFact(
+            id="r1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_named("lily"),
+            object=_named("gold_potion")
+        )
+        report = _kg(rf)
+
+        tf = RelationFact(
+            id="t1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(location=_room("room 1")),
+            object=_named("gold_potion")
+        )
+        tl_loc = LocationFact(
+            id="t2",
+            entity=_named("lily"),
+            location=_room("room 2") 
+        )
+        telemetry = _kg(tf, tl_loc)
+
+        result = align_facts(report, telemetry, AlignmentResult())
+
+        assert "r1" in result.novel_fact_ids
+        assert not result.resolution_confirmed_fact_ids
+
+    def test_directional_reachability_complex(self):
+        """Test west -> west path."""
+        rf = RelationFact(
+            id="r1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_named("lily"),
+            object=_named("gold_potion")
+        )
+        report = _kg(rf)
+
+        tf = RelationFact(
+            id="t1",
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(location=_directional([Direction.WEST])),
+            object=_named("gold_potion")
+        )
+        
+        tl_loc = LocationFact(id="t2", entity=_named("lily"), location=_room("room 2"))
+        tl_conn1 = ConnectionFact(id="c1", location_a=_room("room 0"), location_b=_room("room 1"), direction=Direction.WEST)
+        tl_conn2 = ConnectionFact(id="c2", location_a=_room("room 1"), location_b=_room("room 2"), direction=Direction.WEST)
+        
+        telemetry = _kg(tf, tl_loc, tl_conn1, tl_conn2)
+
+        result = align_facts(report, telemetry, AlignmentResult())
+
+        assert "r1" in result.resolution_confirmed_fact_ids

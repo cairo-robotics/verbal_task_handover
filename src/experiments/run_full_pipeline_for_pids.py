@@ -1,8 +1,8 @@
 """
 Run the full model-alignment pipeline for one or more participant IDs.
 
-Steps (per pid): telemetry_to_graph → text_to_graph → compare_graphs →
-merge_graphs → craft_narrative_view → generate_reports.
+Steps (per pid): telemetry_to_graph → report_to_dsl → dsl_to_graph →
+merge_graphs → reconcile_state → craft_narrative_view → generate_reports.
 
 Requires DATA_DIR (or --data-dir) with:
   $DATA_DIR/telemetry/<pid>.txt
@@ -67,7 +67,6 @@ def run_pipeline_for_pid(
         (repo_root / "src/core/transforms/telemetry_to_graph.py", []),
         (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
         (repo_root / "src/core/transforms/dsl_to_graph.py", [pid]),
-        (repo_root / "src/pipelines/model_alignment/compare_graphs.py", [pid]),
         (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
         (repo_root / "src/core/transforms/reconcile_state.py", [pid]),
         (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
@@ -148,7 +147,6 @@ def main() -> None:
                 for name in (
                     "telemetry_to_graph.py",
                     "text_to_graph.py",
-                    "compare_graphs.py",
                     "merge_graphs.py",
                     "reconcile_state.py",
                     "craft_narrative_view.py",

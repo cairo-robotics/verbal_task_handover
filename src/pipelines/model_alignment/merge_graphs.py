@@ -1,300 +1,124 @@
 from __future__ import annotations
 
-from typing import Dict, Any, List, Tuple
+import json
+import sys
+import os
+import argparse
+from typing import List, Dict, Any, Optional
 
-try:
-    from src.core.representations.pydantic_schema import (
-        KnowledgeGraphExtraction,
-        Event,
-        StateRelation,
-        SpatialRelation,
-        ConflictRecord,
-        UpdateRecord,
-        Entity,
-        EntityType,
-    )
-except ImportError:
-    from pydantic_schema import (
-        KnowledgeGraphExtraction,
-        Event,
-        StateRelation,
-        SpatialRelation,
-        ConflictRecord,
-        UpdateRecord,
-        Entity,
-        EntityType,
-    )
-
-try:
-    from src.core.transforms.telemetry_to_graph import infer_entity_type
-except ImportError:
-    from telemetry_to_graph import infer_entity_type
-
-import dotenv
-
-dotenv.load_dotenv()
+from src.core.representations.pydantic_schema import KnowledgeGraph, Fact, Conflict
+from src.pipelines.model_alignment.entity_alignment import align_entities
+from src.pipelines.model_alignment.fact_alignment import align_facts
 
 
-def _state_relation_id(rel: StateRelation) -> str:
+def merge_graphs(base_graph: KnowledgeGraph, new_graph: KnowledgeGraph) -> KnowledgeGraph:
     """
-    Create a stable string identifier for a state relation.
+    Merge two knowledge graphs.
+    
+    Logic:
+    1. Perform entity alignment between new_graph (report) and base_graph (telemetry).
+    2. Perform fact alignment between new_graph and base_graph.
+    3. Include all facts from base_graph in the merged result.
+    4. Include novel facts from new_graph in the merged result.
+    5. For conflicting facts, preserve the base fact in the facts list and record 
+       the conflict details (including the full new fact).
     """
-    return f"state:{rel.subject}|{rel.relation.value}|{rel.object}"
-
-
-def _spatial_relation_id(rel: SpatialRelation) -> str:
-    """
-    Create a stable string identifier for a spatial relation.
-    """
-    return f"spatial:{rel.subject}|{rel.relation.value}|{rel.object}"
-
-
-def _find_conflicting_events(
-    base: KnowledgeGraphExtraction,
-    new_event: Event,
-) -> List[Event]:
-    """
-    Find events in the base graph that conflict with `new_event`.
-    Conflict definition: same participants, different event_type.
-    """
-    new_parts = new_event.participants.model_dump(exclude_none=True)
-    conflicts: List[Event] = []
-    for ev in base.events:
-        if ev.event_id == new_event.event_id:
-            continue
-        if ev.participants.model_dump(exclude_none=True) == new_parts and ev.event_type != new_event.event_type:
-            conflicts.append(ev)
-    return conflicts
-
-
-def _find_conflicting_state_relations(
-    base: KnowledgeGraphExtraction,
-    new_rel: StateRelation,
-) -> List[StateRelation]:
-    """
-    Find state relations in the base graph that conflict with `new_rel`.
-    Conflict definition: same subject and relation, different object.
-    """
-    conflicts: List[StateRelation] = []
-    for rel in base.state_relations:
-        if rel.subject == new_rel.subject and rel.relation == new_rel.relation and rel.object != new_rel.object:
-            conflicts.append(rel)
-    return conflicts
-
-
-def _find_conflicting_spatial_relations(
-    base: KnowledgeGraphExtraction,
-    new_rel: SpatialRelation,
-) -> List[SpatialRelation]:
-    """
-    Find spatial relations in the base graph that conflict with `new_rel`.
-    Conflict definition: same subject and relation, different object.
-    """
-    conflicts: List[SpatialRelation] = []
-    for rel in base.spatial_relations:
-        if rel.subject == new_rel.subject and rel.relation == new_rel.relation and rel.object != new_rel.object:
-            conflicts.append(rel)
-    return conflicts
-
-
-def _collect_referenced_entity_ids(graph: KnowledgeGraphExtraction) -> set:
-    """
-    Collect every entity id referenced in events, state_relations, and spatial_relations.
-    """
-    ids: set = set()
-    for ev in graph.events:
-        p = ev.participants
-        if p.actor is not None:
-            ids.add(p.actor)
-        if p.object is not None:
-            ids.add(p.object)
-        if p.target is not None:
-            ids.add(p.target)
-        if ev.location is not None:
-            ids.add(ev.location)
-    for rel in graph.state_relations:
-        ids.add(rel.subject)
-        ids.add(rel.object)
-    for rel in graph.spatial_relations:
-        ids.add(rel.subject)
-        ids.add(rel.object)
-    return ids
-
-
-def _backfill_entities(graph: KnowledgeGraphExtraction) -> List[str]:
-    """
-    Ensure every entity id referenced in the graph exists in graph.entities.
-    Appends missing entities with inferred type. Returns list of added entity ids.
-    """
-    existing_ids = {e.id for e in graph.entities}
-    referenced = _collect_referenced_entity_ids(graph)
-    added: List[str] = []
-    for eid in referenced:
-        if eid in existing_ids:
-            continue
-        graph.entities.append(
-            Entity(id=eid, type=infer_entity_type(eid))
+    # 1. Align entities (new_graph is the 'report', base_graph is 'telemetry')
+    alignment_result = align_entities(new_graph, base_graph)
+    
+    # 2. Align facts
+    fact_alignment_result = align_facts(new_graph, base_graph, alignment_result)
+    
+    # 3. Construct merged graph
+    # Process base graph facts
+    merged_facts: List[Fact] = []
+    for f in base_graph.facts:
+        f_copy = f.model_copy()
+        if f.id in fact_alignment_result.matched_target_fact_ids:
+            f_copy.source = "shared"
+        else:
+            f_copy.source = "base_only"
+        merged_facts.append(f_copy)
+    
+    merged_conflicts: List[Conflict] = []
+    
+    # Map for easy lookup of new facts by ID
+    new_facts_map = {f.id: f for f in new_graph.facts}
+    
+    # Add novel facts from new graph
+    for fact_id in fact_alignment_result.novel_fact_ids:
+        f = new_facts_map[fact_id].model_copy()
+        f.source = "new"
+        merged_facts.append(f)
+        
+    # Process conflicts
+    for cr in fact_alignment_result.conflicts:
+        new_fact = new_facts_map[cr.source_fact_id].model_copy()
+        new_fact.source = "new"
+        
+        # In case of conflict, we keep only the base fact in the facts list 
+        # (which is already added above).
+        # We record the conflict information.
+        conflict = Conflict(
+            base_fact_id=cr.target_fact_id,
+            new_fact=new_fact,
+            field_name=cr.field_name,
+            base_value=cr.expected_value,
+            new_value=cr.actual_value
         )
-        existing_ids.add(eid)
-        added.append(eid)
-    return added
+        merged_conflicts.append(conflict)
+        
+    return KnowledgeGraph(facts=merged_facts, conflicts=merged_conflicts)
 
 
-def merge_graphs(
-    base: KnowledgeGraphExtraction,
-    diff: Dict[str, Any],
-) -> Tuple[KnowledgeGraphExtraction, UpdateRecord]:
-    """
-    Update the base graph using the JSON diff produced by `compare_graphs`.
+def main():
+    parser = argparse.ArgumentParser(description="Merge two KnowledgeGraph JSON files (report vs telemetry).")
+    parser.add_argument("pid_or_base", help="Participant ID or path to the base (telemetry) graph JSON file.")
+    parser.add_argument("new_graph", nargs="?", help="Optional path to the new (report) graph JSON file. If omitted, uses PID logic with DATA_DIR.")
+    parser.add_argument("--output", "-o", help="Path to save the merged graph JSON file.")
+    
+    args = parser.parse_args()
+    
+    data_dir = os.environ.get("DATA_DIR")
+    
+    if args.new_graph is None:
+        # PID mode
+        if not data_dir:
+            print("Error: DATA_DIR environment variable must be set for PID-based merging.")
+            sys.exit(1)
+        pid = args.pid_or_base
+        base_path = os.path.join(data_dir, "processed_output", f"{pid}_telemetry_to_kg_output.json")
+        new_path = os.path.join(data_dir, "processed_output", f"{pid}_user_dsl_to_kg_output.json")
+        output_path = args.output or os.path.join(data_dir, "processed_output", f"{pid}_merge_graphs_output.json")
+    else:
+        # Explicit path mode
+        base_path = args.pid_or_base
+        new_path = args.new_graph
+        output_path = args.output or "merged_graph.json"
 
-    - Novel events and state relations are directly added to the base graph.
-    - For conflicts, the new fact is added and corresponding ConflictRecord
-      objects are appended to `base.conflicts`.
+    if not os.path.exists(base_path):
+        print(f"Error: Base graph file not found: {base_path}")
+        sys.exit(1)
+    if not os.path.exists(new_path):
+        print(f"Error: New graph file not found: {new_path}")
+        sys.exit(1)
+        
+    with open(base_path, "r") as f:
+        base_data = json.load(f)
+        base_graph = KnowledgeGraph.model_validate(base_data)
+        
+    with open(new_path, "r") as f:
+        new_data = json.load(f)
+        new_graph = KnowledgeGraph.model_validate(new_data)
+        
+    merged_graph = merge_graphs(base_graph, new_graph)
+    
+    os.makedirs(os.path.dirname(output_path), exist_ok=True) if os.path.dirname(output_path) else None
+    with open(output_path, "w") as f:
+        json.dump(merged_graph.model_dump(), f, indent=2)
+        
+    print(f"Successfully merged graphs. Output saved to {output_path}")
 
-    Inventory effects from events (OBTAIN / DELIVER) are not applied here; run
-    `reconcile_state.py` on the merge output JSON when you need that step.
-
-    Returns the updated graph and an UpdateRecord summarising changes.
-    """
-    added_events: List[str] = []
-    added_state_relations: List[str] = []
-    added_spatial_relations: List[str] = []
-    added_entities: List[str] = []
-    conflicts_created: List[str] = []
-
-    # Ensure conflicts list exists
-    if base.conflicts is None:
-        base.conflicts = []
-
-    conflict_index = len(base.conflicts)
-
-    # ----------------------------------------
-    # Add novel events
-    # ----------------------------------------
-    for item in diff.get("novel_events", []):
-        if item.get("kind") != "event":
-            continue
-        ev = Event.model_validate(item["value"])
-        base.events.append(ev)
-        added_events.append(ev.event_id)
-
-    # ----------------------------------------
-    # Add novel state relations
-    # ----------------------------------------
-    for item in diff.get("novel_state_relations", []):
-        if item.get("kind") != "state_relation":
-            continue
-        rel = StateRelation.model_validate(item["value"])
-        base.state_relations.append(rel)
-        added_state_relations.append(_state_relation_id(rel))
-
-    # ----------------------------------------
-    # Add novel spatial relations
-    # ----------------------------------------
-    for item in diff.get("novel_spatial_relations", []):
-        if item.get("kind") != "spatial_relation":
-            continue
-        rel = SpatialRelation.model_validate(item["value"])
-        base.spatial_relations.append(rel)
-        added_spatial_relations.append(_spatial_relation_id(rel))
-
-    # ----------------------------------------
-    # Handle conflicts
-    # ----------------------------------------
-    for item in diff.get("conflicts", []):
-        kind = item.get("kind")
-        value = item.get("value", {})
-
-        if kind == "event":
-            new_ev = Event.model_validate(value)
-            base.events.append(new_ev)
-            added_events.append(new_ev.event_id)
-
-            existing_events = _find_conflicting_events(base, new_ev)
-            for existing in existing_events:
-                conflict_id = f"conflict_{conflict_index}"
-                conflict_index += 1
-                record = ConflictRecord(
-                    conflict_id=conflict_id,
-                    new_fact_id=new_ev.event_id,
-                    existing_fact_id=existing.event_id,
-                    conflict_type="event",
-                )
-                base.conflicts.append(record)
-                conflicts_created.append(conflict_id)
-
-        elif kind == "state_relation":
-            new_rel = StateRelation.model_validate(value)
-            base.state_relations.append(new_rel)
-            new_rel_id = _state_relation_id(new_rel)
-            added_state_relations.append(new_rel_id)
-
-            existing_rels = _find_conflicting_state_relations(base, new_rel)
-            for existing in existing_rels:
-                conflict_id = f"conflict_{conflict_index}"
-                conflict_index += 1
-                record = ConflictRecord(
-                    conflict_id=conflict_id,
-                    new_fact_id=new_rel_id,
-                    existing_fact_id=_state_relation_id(existing),
-                    conflict_type="state_relation",
-                )
-                base.conflicts.append(record)
-                conflicts_created.append(conflict_id)
-
-        elif kind == "spatial_relation":
-            new_rel = SpatialRelation.model_validate(value)
-            base.spatial_relations.append(new_rel)
-            new_rel_id = _spatial_relation_id(new_rel)
-            added_spatial_relations.append(new_rel_id)
-
-            existing_rels = _find_conflicting_spatial_relations(base, new_rel)
-            for existing in existing_rels:
-                conflict_id = f"conflict_{conflict_index}"
-                conflict_index += 1
-                record = ConflictRecord(
-                    conflict_id=conflict_id,
-                    new_fact_id=new_rel_id,
-                    existing_fact_id=_spatial_relation_id(existing),
-                    conflict_type="spatial_relation",
-                )
-                base.conflicts.append(record)
-                conflicts_created.append(conflict_id)
-
-    # ----------------------------------------
-    # Backfill entities: ensure every referenced id is in base.entities
-    # ----------------------------------------
-    added_entities = _backfill_entities(base)
-
-    update_log = UpdateRecord(
-        added_events=added_events,
-        added_state_relations=added_state_relations,
-        added_spatial_relations=added_spatial_relations,
-        added_entities=added_entities,
-        conflicts_created=conflicts_created,
-    )
-
-    return base, update_log
-
-
-__all__ = ["merge_graphs"]
 
 if __name__ == "__main__":
-    import sys
-    import json
-    import os
-    data_dir = os.environ.get("DATA_DIR")
-
-    base_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_telemetry_to_kg_output.json")
-    diff_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_compare_graphs_output.json")
-
-    with open(base_filename, "r") as f:
-        base = KnowledgeGraphExtraction.model_validate_json(f.read())
-    with open(diff_filename, "r") as f:
-        diff = json.load(f)
-
-    result, update_log = merge_graphs(base, diff)
-    with open(os.path.join(data_dir, "processed_output", sys.argv[1] + "_merge_graphs_output.json"), "w") as f:
-        json.dump(result.model_dump(), f, indent=2)
-    with open(os.path.join(data_dir, "processed_output", sys.argv[1] + "_merge_graphs_update_log.json"), "w") as f:
-        json.dump(update_log.model_dump(), f, indent=2)
+    main()

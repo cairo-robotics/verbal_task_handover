@@ -20,6 +20,7 @@ from src.core.representations.pydantic_schema import (
     Location,
 )
 from src.pipelines.model_alignment.entity_alignment import AlignmentResult, ExistentialResolution
+from src.core.utils.spatial_reasoning import get_entity_location, is_location_satisfying_constraint
 
 
 class ConflictRecord(BaseModel):
@@ -33,9 +34,11 @@ class ConflictRecord(BaseModel):
 
 class FactAlignmentResult(BaseModel):
     """The result of aligning report facts against telemetry facts."""
-    confirmed_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts that match telemetry.")
+    confirmed_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts that match telemetry exactly.")
+    resolution_confirmed_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts that match telemetry via existential resolution.")
     novel_fact_ids: List[str] = Field(default_factory=list, description="IDs of report facts with no telemetry match.")
     conflicts: List[ConflictRecord] = Field(default_factory=list, description="Records of value mismatches.")
+    matched_target_fact_ids: Set[str] = Field(default_factory=set, description="IDs of facts in the telemetry graph that were matched (either as confirmed or conflict).")
 
 
 def _get_normalized_argument_value(arg: Argument, fact_id: str, role: str, alignment: AlignmentResult) -> Optional[str]:
@@ -88,19 +91,58 @@ def _compare_values(report_val: Any, telem_val: Any) -> bool:
     return report_val == telem_val
 
 
-def _compare_arguments(report_arg: Optional[Argument], telem_arg: Optional[Argument], fact_id: str, role: str, alignment: AlignmentResult) -> bool:
+def _compare_arguments(
+    report_arg: Optional[Argument], 
+    telem_arg: Optional[Argument], 
+    fact_id: str, 
+    role: str, 
+    alignment: AlignmentResult,
+    telemetry_graph: Optional[KnowledgeGraph] = None
+) -> bool:
     """Compare two arguments after resolving report-side entities."""
     if (report_arg is None) != (telem_arg is None):
         return False
-    if report_arg is None:
+    if report_arg is None or telem_arg is None:
         return True
     
-    # Normalize report value
+    # 1. Direct value match after normalization
     norm_report_val = _get_normalized_argument_value(report_arg, fact_id, role, alignment)
-    # Telemetry value is already canonical
-    telem_val = telem_arg.value if telem_arg else None
-    
-    return norm_report_val == telem_val
+    telem_val = telem_arg.value
+    if norm_report_val == telem_val and telem_val is not None:
+        return True
+        
+    # 2. Existential match: Telemetry is general, Report is specific
+    if telem_arg.type == "existential" and report_arg.type == "named":
+        if telem_arg.location and telemetry_graph:
+            # Check if the named entity in report satisfies the location constraint in telemetry
+            # We need the entity's location in telemetry to be ground truth
+            ent_loc = get_entity_location(telemetry_graph, norm_report_val or "")
+            if ent_loc and is_location_satisfying_constraint(ent_loc, telem_arg.location, telemetry_graph):
+                return True
+        elif not telem_arg.location:
+            # Existential with no constraint matches anything of the same type? 
+            # (Heuristic: NPCs match 'someone')
+            return True
+
+    # 3. Existential match: Report is general, Telemetry is specific
+    if report_arg.type == "existential" and telem_arg.type == "named":
+        if report_arg.location and telemetry_graph:
+            # Check if the named entity in telemetry satisfies the location constraint in the report
+            ent_loc = get_entity_location(telemetry_graph, telem_arg.value or "")
+            if ent_loc and is_location_satisfying_constraint(ent_loc, report_arg.location, telemetry_graph):
+                return True
+        elif not report_arg.location:
+            return True
+
+    # 4. Both are existential
+    if report_arg.type == "existential" and telem_arg.type == "existential":
+        if not report_arg.location and not telem_arg.location:
+            return True
+        # If both have locations, we could compare them, but for now let's be conservative
+        if report_arg.location and telem_arg.location:
+            return report_arg.location.model_dump() == telem_arg.location.model_dump()
+
+    return False
 
 
 def align_facts(
@@ -130,11 +172,38 @@ def align_facts(
     for rf in report_graph.facts:
         key = _get_fact_match_key(rf, alignment_result)
         
-        if not key or key not in telem_index:
+        tf = telem_index.get(key) if key else None
+        
+        # If no direct key match, try searching for a compatible telemetry fact
+        is_resolution_match = False
+        if tf is None:
+            for potential_tf in telemetry_graph.facts:
+                if type(potential_tf) != type(rf):
+                    continue
+                
+                # Check predicate/type compatibility
+                if isinstance(rf, RelationFact) and isinstance(potential_tf, RelationFact):
+                    if rf.predicate != potential_tf.predicate: continue
+                    if not _compare_arguments(rf.subject, potential_tf.subject, rf.id, "subject", alignment_result, telemetry_graph):
+                        continue
+                elif isinstance(rf, LocationFact) and isinstance(potential_tf, LocationFact):
+                    if not _compare_arguments(rf.entity, potential_tf.entity, rf.id, "entity", alignment_result, telemetry_graph):
+                        continue
+                elif isinstance(rf, SpatialFact) and isinstance(potential_tf, SpatialFact):
+                    if rf.type != potential_tf.type: continue
+                    if not _compare_arguments(rf.subject, potential_tf.subject, rf.id, "subject", alignment_result, telemetry_graph):
+                        continue
+                else:
+                    continue
+
+                tf = potential_tf
+                is_resolution_match = True
+                break
+        
+        if tf is None:
             result.novel_fact_ids.append(rf.id)
             continue
         
-        tf = telem_index[key]
         conflicts: List[ConflictRecord] = []
         
         if isinstance(rf, LocationFact) and isinstance(tf, LocationFact):
@@ -148,7 +217,7 @@ def align_facts(
                 ))
                 
         elif isinstance(rf, RelationFact) and isinstance(tf, RelationFact):
-            if not _compare_arguments(rf.object, tf.object, rf.id, "object", alignment_result):
+            if not _compare_arguments(rf.object, tf.object, rf.id, "object", alignment_result, telemetry_graph):
                 conflicts.append(ConflictRecord(
                     source_fact_id=rf.id,
                     target_fact_id=tf.id,
@@ -156,7 +225,7 @@ def align_facts(
                     expected_value=tf.object.value if tf.object else None,
                     actual_value=_get_normalized_argument_value(rf.object, rf.id, "object", alignment_result) if rf.object else None
                 ))
-            if not _compare_arguments(rf.target, tf.target, rf.id, "target", alignment_result):
+            if not _compare_arguments(rf.target, tf.target, rf.id, "target", alignment_result, telemetry_graph):
                 conflicts.append(ConflictRecord(
                     source_fact_id=rf.id,
                     target_fact_id=tf.id,
@@ -174,7 +243,7 @@ def align_facts(
                     expected_value=tf.direction,
                     actual_value=rf.direction
                  ))
-             if not _compare_arguments(rf.reference, tf.reference, rf.id, "reference", alignment_result):
+             if not _compare_arguments(rf.reference, tf.reference, rf.id, "reference", alignment_result, telemetry_graph):
                  conflicts.append(ConflictRecord(
                     source_fact_id=rf.id,
                     target_fact_id=tf.id,
@@ -195,7 +264,12 @@ def align_facts(
 
         if conflicts:
             result.conflicts.extend(conflicts)
+            result.matched_target_fact_ids.add(tf.id)
         else:
-            result.confirmed_fact_ids.append(rf.id)
+            result.matched_target_fact_ids.add(tf.id)
+            if is_resolution_match:
+                result.resolution_confirmed_fact_ids.append(rf.id)
+            else:
+                result.confirmed_fact_ids.append(rf.id)
 
     return result

@@ -9,8 +9,6 @@ Predicate = Literal[
     "delivered",
     "request",
     "message_delivered",
-    "response",
-    "response_delivered",
     "located",
     "exists",
     "has"

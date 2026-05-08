@@ -15,6 +15,9 @@ except ImportError:
         Argument, Location, Direction, RelationPredicate, SpatialRelationType,
     )
 
+import dotenv
+
+dotenv.load_dotenv()
 
 # for reference when implementing the parser
 # DSL_CONVERSION_PROMPT = """
@@ -45,9 +48,9 @@ except ImportError:
 # <npc> needs a <potion_color or unknown> potion
 # <potion_color or unknown> potion delivered to <npc>
 
-# # Messaging
-# <npc> has a message/response for <npc>
-# message/response delivered from <npc> to <npc>
+# # Messaging (includes requests, messages, and responses)
+# <npc> has a message for <npc>
+# message delivered from <npc> to <npc>
 
 # # Locations and spatial relationships
 # player is in <room>
@@ -198,6 +201,30 @@ def _parse_direction(text: str) -> Optional[Direction]:
     return DIRECTION_MAP.get(text.strip().lower())
 
 
+def _is_location(text: str) -> bool:
+    text = text.lower().strip()
+    return any(
+        text.startswith(prefix)
+        for prefix in ["room", "hallway", "storage", "lounge"]
+    )
+
+
+_DIRECTION_INVERSES = {
+    Direction.NORTH: Direction.SOUTH,
+    Direction.SOUTH: Direction.NORTH,
+    Direction.EAST: Direction.WEST,
+    Direction.WEST: Direction.EAST,
+    Direction.NORTHEAST: Direction.SOUTHWEST,
+    Direction.SOUTHWEST: Direction.NORTHEAST,
+    Direction.NORTHWEST: Direction.SOUTHEAST,
+    Direction.SOUTHEAST: Direction.NORTHWEST,
+}
+
+
+def _invert_direction(direction: Direction) -> Direction:
+    return _DIRECTION_INVERSES[direction]
+
+
 def _parse_directional_location(dir_text: str) -> Optional[Location]:
     """Parse direction text into a Location.
 
@@ -269,7 +296,7 @@ def _parse_room_location(text: str) -> Location:
 
 # ---- Line parser ----
 
-def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
+def _parse_line(line: str):
     """Parse a single DSL line into a Fact.
 
     Returns None for blank lines and comment lines (starting with '#').
@@ -314,8 +341,8 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "<subject> has a message for <target>"
-    m = re.match(r'^(.+?) has a message for (.+)$', line, re.IGNORECASE)
+    # "<subject> has a [message|response] for <target>"
+    m = re.match(r'^(.+?) has a (?:message|response) for (.+)$', line, re.IGNORECASE)
     if m:
         subject = _parse_subject(m.group(1))
         target = _parse_subject(m.group(2))
@@ -327,39 +354,13 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "<subject> has a response for <target>"
-    m = re.match(r'^(.+?) has a response for (.+)$', line, re.IGNORECASE)
-    if m:
-        subject = _parse_subject(m.group(1))
-        target = _parse_subject(m.group(2))
-        return RelationFact(
-            predicate=RelationPredicate.HAS_RESPONSE_FOR,
-            subject=subject,
-            target=target,
-            is_partial=subject.type == "existential" or target.type == "existential",
-            provenance=line,
-        )
-
-    # "message delivered from <sender> to <recipient>"
-    m = re.match(r'^message delivered from (.+?) to (.+)$', line, re.IGNORECASE)
+    # "[message|response] delivered from <sender> to <recipient>"
+    m = re.match(r'^(?:message|response) delivered from (.+?) to (.+)$', line, re.IGNORECASE)
     if m:
         sender = _parse_entity(m.group(1))
         recipient = _parse_entity(m.group(2))
         return RelationFact(
             predicate=RelationPredicate.MESSAGE_DELIVERED,
-            subject=sender,
-            target=recipient,
-            is_partial=sender.type == "existential" or recipient.type == "existential",
-            provenance=line,
-        )
-
-    # "response delivered from <sender> to <recipient>"
-    m = re.match(r'^response delivered from (.+?) to (.+)$', line, re.IGNORECASE)
-    if m:
-        sender = _parse_entity(m.group(1))
-        recipient = _parse_entity(m.group(2))
-        return RelationFact(
-            predicate=RelationPredicate.RESPONSE_DELIVERED,
             subject=sender,
             target=recipient,
             is_partial=sender.type == "existential" or recipient.type == "existential",
@@ -424,11 +425,35 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
         )
 
     # "<entity> is <direction> of <reference>"
-    m = re.match(r'^(.+?) is (' + _DIR_RE + r') of (.+)$', line, re.IGNORECASE)
+    m = re.match(r"^(.+?) is (" + _DIR_RE + r") of (.+)$", line, re.IGNORECASE)
     if m:
-        entity = _parse_entity(m.group(1))
-        direction = _parse_direction(m.group(2))
-        reference = _parse_entity(m.group(3))
+        entity_text = m.group(1).strip()
+        direction_text = m.group(2).strip()
+        reference_text = m.group(3).strip()
+
+        entity = _parse_entity(entity_text)
+        direction = _parse_direction(direction_text)
+        reference = _parse_entity(reference_text)
+
+        if _is_location(entity_text) and _is_location(reference_text):
+            loc_a = _parse_room_location(reference_text)
+            loc_b = _parse_room_location(entity_text)
+            dir_enum = direction
+
+            # Normalize: sort by room name
+            if loc_a.room > loc_b.room:
+                loc_a, loc_b = loc_b, loc_a
+                if dir_enum:
+                    dir_enum = _invert_direction(dir_enum)
+
+            return ConnectionFact(
+                location_a=loc_a,
+                location_b=loc_b,
+                direction=dir_enum,
+                is_partial=False,
+                provenance=line,
+            )
+
         return SpatialFact(
             type=SpatialRelationType.RELATIVE,
             subject=entity,
@@ -439,11 +464,18 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
         )
 
     # "<location> is connected to <location>"
-    m = re.match(r'^(.+?) is connected to (.+)$', line, re.IGNORECASE)
+    m = re.match(r"^(.+?) is connected to (.+)$", line, re.IGNORECASE)
     if m:
+        loc_a = _parse_room_location(m.group(1))
+        loc_b = _parse_room_location(m.group(2))
+
+        # Normalize: sort by room name
+        if loc_a.room > loc_b.room:
+            loc_a, loc_b = loc_b, loc_a
+
         return ConnectionFact(
-            location_a=_parse_room_location(m.group(1)),
-            location_b=_parse_room_location(m.group(2)),
+            location_a=loc_a,
+            location_b=loc_b,
             is_partial=False,
             provenance=line,
         )
