@@ -20,6 +20,7 @@ def _load_map_data(map_directory: str) -> Dict:
     return transitions
 
 def _score_location(entity, fact_set, ground_truth: GameState, map_graph: Dict, cost_config: CostConfig) -> ComponentScore:
+    expected_search_cost = 7.0 # placeholder value for now
     # TODO implement
     return 0
 

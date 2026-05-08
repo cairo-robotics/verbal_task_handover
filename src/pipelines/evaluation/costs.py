@@ -26,7 +26,7 @@ PATIENT_DATA = {
         "name" : "oliver",
         "potion" : "blue",
         "npc_target" : "john",
-        "target_location" : "longue_2",
+        "target_location" : "lounge_2",
         "treasure" : "treasure2",
         "location" : "room2"
     },

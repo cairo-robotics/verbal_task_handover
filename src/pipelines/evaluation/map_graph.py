@@ -2,6 +2,8 @@ from collections import deque
 import os
 import json
 
+from src.core.representations.pydantic_schema import KnowledgeGraph
+
 GAME_DIR = "/home/kaleb/code/verbal_task_handover/evaluation/treasure_hunt_py/treasure_hunt"
 MAP_DIR = os.path.join(GAME_DIR, "maps", "map2")
 
@@ -97,6 +99,11 @@ def load_transitions(transition_filename):
     with open(transition_filename, 'r') as f:
         transitions = json.load(f)
     return transitions
+
+def load_telemetry_graph(telemetry_file: str) -> KnowledgeGraph:
+    with open(telemetry_file, 'r') as f:
+        telemetry_data = json.load(f)
+    return KnowledgeGraph.model_validate(telemetry_data)
 
 if __name__ == "__main__":
     # Example usage
