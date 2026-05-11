@@ -2,17 +2,17 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import Dict
 
-class CreditType(Enum):
-    FULL = 1
-    PARTIAL = 2
-    NONE = 3
-    CONTRADICTED = 4
+class CreditType(str, Enum):
+    FULL = "FULL"
+    PARTIAL = "PARTIAL"
+    NONE = "NONE"
+    CONTRADICTED = "CONTRADICTED"
 
 @dataclass
 class ComponentScore:
     credit_type: CreditType # full / partial / none / contradicted
     max_cost: float
-    partial_credit: float # inherited from CostConfig
+    partial_credit: float
 
     cost_saved: float = field(init=False)
     omission_cost: float = field(init=False)
@@ -43,15 +43,15 @@ class EntityScore:
     resource_score: ComponentScore
 
     def __post_init__(self):
-        self.omission_cost = sum([score.omission_cost for score in self.entity_scores.values()])
-        self.misinformation_cost = sum([score.misinformation_cost for score in self.entity_scores.values()])
-        self.total_cost_saved = sum([score.cost_saved for score in self.entity_scores.values()])
+        components = [self.location_score, self.need_score, self.resource_score]
+        self.omission_cost = sum([score.omission_cost for score in components])
+        self.misinformation_cost = sum([score.misinformation_cost for score in components])
+        self.total_cost_saved = sum([score.cost_saved for score in components])
 
 @dataclass
 class IACResult:
     entity_scores: Dict[str, EntityScore]
     alpha: float # misinformation penalty weight, passed from CostConfig
-    tokens: int
     
     # Derived aggregates
     total_cost_saved: float = field(init=False)
@@ -63,5 +63,5 @@ class IACResult:
     def __post_init__(self):
         self.omission_cost = sum([score.omission_cost for score in self.entity_scores.values()])
         self.misinformation_cost = sum([score.misinformation_cost for score in self.entity_scores.values()])
-        self.total_cost_saved = sum([score.cost_saved for score in self.entity_scores.values()])
+        self.total_cost_saved = sum([score.total_cost_saved for score in self.entity_scores.values()])
         self.combined_cost = self.omission_cost + self.alpha * self.misinformation_cost
