@@ -67,14 +67,14 @@ def test_compute_iac_wiring():
     map_graph = KnowledgeGraph(facts=[]) # Empty map graph for now, _get_all_rooms will fallback
     
     # 4. Run compute_iac
-    cost_config = CostConfig(alpha=2.0)
+    cost_config = CostConfig(misinformation_multiplier=2.0)
     result = compute_iac(pred_facts, true_state, map_graph, cost_config)
     
     # 5. Assertions
     assert len(result.entity_scores) == 5
     assert "lily" in result.entity_scores
     assert "oliver" in result.entity_scores
-    assert result.alpha == 2.0
+    assert result.misinformation_multiplier == 2.0
     
     # Check lily's scores
     lily_score = result.entity_scores["lily"]

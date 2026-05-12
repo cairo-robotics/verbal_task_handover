@@ -1,13 +1,10 @@
 from dataclasses import dataclass
 
-# TODO: calibrate costs based on session data
-
 @dataclass
 class CostConfig:
     traversal_cost_per_room: float = 1.0
-    interaction_cost: float = 1.0
-    misinformation_cost: float = 1.0
-    alpha: float = 1.0
+    interaction_cost: float = 7.5 # python3 src/pipelines/evaluation/npc_to_room_time.py $DATA_DIR/telemetry/
+    misinformation_multiplier: float = 2.0 # alpha
 
     # partial credit weights
     partial_location_credit: float = 0.5

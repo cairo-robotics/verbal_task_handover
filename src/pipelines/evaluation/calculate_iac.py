@@ -440,7 +440,7 @@ def compute_iac(
 
     return IACResult(
         entity_scores=entity_scores,
-        alpha=cost_config.alpha
+        misinformation_multiplier=cost_config.misinformation_multiplier
     )
 
 def main():
