@@ -67,8 +67,9 @@ def test_score_location_partial_credit():
     score = _score_location(entity, fact_set, gs, map_kg, CostConfig())
     
     assert score.credit_type == CreditType.PARTIAL
-    # reduction_factor = 1 - (2/4) = 0.5
-    assert score.partial_credit == 0.5
+    # reduction_factor = 1 - (2/5) = 0.6 (relative to patient baseline)
+    assert score.partial_credit == 0.6
+    assert score.max_cost == 83.20
 
 def test_score_location_contradicted():
     entity = "lily"

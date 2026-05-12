@@ -1,5 +1,17 @@
 from dataclasses import dataclass
 
+EXPECTED_SEARCH_COSTS_PER_ROOM_TYPE = {
+    "patients": 83.20,
+    "npcs": 45.67,
+    "potions": 41.50
+}
+
+SEARCH_ROOMS_PER_ENTITY_TYPE = {
+    "patients": ["room1", "room2", "room3", "room4", "room5"],
+    "npcs": ["lounge_1", "lounge_2", "lounge_3"],
+    "potions": ["storage_1", "storage_2"]
+}
+
 @dataclass
 class CostConfig:
     traversal_cost_per_room: float = 1.0

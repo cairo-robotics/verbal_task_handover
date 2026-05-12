@@ -16,7 +16,12 @@ from src.core.representations.pydantic_schema import (
     RelationPredicate,
     Argument
 )
-from src.pipelines.evaluation.costs import CostConfig, PATIENT_DATA
+from src.pipelines.evaluation.costs import (
+    CostConfig, 
+    PATIENT_DATA, 
+    EXPECTED_SEARCH_COSTS_PER_ROOM_TYPE,
+    SEARCH_ROOMS_PER_ENTITY_TYPE
+)
 from src.pipelines.evaluation.map_graph import load_transitions
 from src.pipelines.evaluation.report_iac import IACResult, EntityScore, ComponentScore, CreditType
 from src.core.utils.spatial_reasoning import is_location_satisfying_constraint, ConnectionFact
@@ -47,10 +52,31 @@ def _get_all_rooms(map_graph: KnowledgeGraph) -> set[str]:
                 rooms.add(fact.location_b.room)
     return rooms
 
-def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
+def _normalize_room(room: str) -> str:
+    """Removes spaces from room names for consistency."""
+    return room.replace(" ", "")
+
+def _get_entity_type(name: str) -> str:
+    """Determines the search category for a given entity name."""
+    # Check if it's a patient
+    patient_names = [p["name"].lower() for p in PATIENT_DATA.values()]
+    if name.lower() in patient_names:
+        return "patients"
+    
+    # Check if it's a potion
+    if "potion" in name.lower():
+        return "potions"
+    
+    # Default to NPCs (e.g. eliza, lola)
+    return "npcs"
+
+def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig, entity_type: str = None) -> ComponentScore:
     """
     Core logic for scoring the Information Access Cost (IAC) of a specific entity's location.
     """
+    if entity_type is None:
+        entity_type = _get_entity_type(target_name)
+
     # 1. Pre-calculate entity rooms for existential resolution
     entity_rooms = {}
     for room, objs in ground_truth._objects.items():
@@ -63,10 +89,12 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
     all_rooms = _get_all_rooms(map_graph)
     if not all_rooms:
         # Fallback to current room if graph is empty (shouldn't happen with valid map_graph)
-        all_rooms = {true_room} if true_room else {"room 0"}
+        all_rooms = {true_room} if true_room else {"room0"}
     
-    num_rooms = len(all_rooms)
-    max_cost = num_rooms / 2.0
+    # Nuanced cost calculation
+    max_cost = EXPECTED_SEARCH_COSTS_PER_ROOM_TYPE.get(entity_type, len(all_rooms) / 2.0)
+    baseline_rooms = set(_normalize_room(r) for r in SEARCH_ROOMS_PER_ENTITY_TYPE.get(entity_type, []))
+    num_rooms = len(baseline_rooms) if baseline_rooms else len(all_rooms)
 
     # 3. Filter facts about this entity
     entity_facts = []
@@ -143,20 +171,35 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
             satisfying_rooms.add(room)
 
     # 6. Final Score Calculation
-    if true_room in satisfying_rooms:
-        if len(satisfying_rooms) == 1:
-            return ComponentScore(credit_type=CreditType.FULL, max_cost=max_cost, partial_credit=1.0)
+    if true_room:
+        true_room_norm = _normalize_room(true_room)
+        satisfying_rooms_norm = set(_normalize_room(r) for r in satisfying_rooms)
+
+        if true_room_norm in satisfying_rooms_norm:
+            # Intersection with baseline to find relevant satisfying rooms
+            effective_satisfying = satisfying_rooms_norm
+            if baseline_rooms:
+                # Only count satisfying rooms that are in the baseline for this entity type
+                effective_satisfying = satisfying_rooms_norm.intersection(baseline_rooms)
+            
+            if len(effective_satisfying) == 1:
+                return ComponentScore(credit_type=CreditType.FULL, max_cost=max_cost, partial_credit=1.0)
+            else:
+                # Factor by which search space was reduced relative to baseline
+                reduction_factor = 1.0 - (len(effective_satisfying) / num_rooms)
+                # Clamp to [0, 1]
+                reduction_factor = max(0.0, min(1.0, reduction_factor))
+                return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=reduction_factor)
         else:
-            # Factor by which search space was reduced
-            reduction_factor = 1.0 - (len(satisfying_rooms) / num_rooms)
-            return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=reduction_factor)
+            # Correct room not in satisfying set -> Misinformation
+            return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
     else:
-        # Correct room not in satisfying set -> Misinformation
-        return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
+        # No true room found for entity
+        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0)
 
 def _score_location(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
     """Scores the accuracy of information about an entity's own location."""
-    return _calculate_location_score(entity, fact_set, ground_truth, map_graph, cost_config)
+    return _calculate_location_score(entity, fact_set, ground_truth, map_graph, cost_config, entity_type="patients")
 
 def _find_npc(ground_truth: GameState, name: str):
     """Finds an NPC object by name in the GameState."""
@@ -403,7 +446,8 @@ def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, 
         return ComponentScore(credit_type=CreditType.NONE, max_cost=0.0, partial_credit=0.0)
 
     # 2. Score the location of THIS resource using the shared scoring logic
-    return _calculate_location_score(resource_name, fact_set, ground_truth, map_graph, cost_config)
+    entity_type = "potions" if gold_fact.predicate == RelationPredicate.NEEDS_POTION else "npcs"
+    return _calculate_location_score(resource_name, fact_set, ground_truth, map_graph, cost_config, entity_type=entity_type)
 
 def _score_entity(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> EntityScore:
     location_score = _score_location(entity, fact_set, ground_truth, map_graph, cost_config)
