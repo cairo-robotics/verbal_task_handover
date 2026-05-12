@@ -13,6 +13,8 @@ class ComponentScore:
     credit_type: CreditType # full / partial / none / contradicted
     max_cost: float
     partial_credit: float
+    evaluated_fact: str | None = None  # Human-readable description of the candidate fact that was scored
+    ground_truth_fact: str | None = None  # Human-readable description of the expected ground truth fact
 
     cost_saved: float = field(init=False)
     omission_cost: float = field(init=False)

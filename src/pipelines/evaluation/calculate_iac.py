@@ -56,6 +56,33 @@ def _normalize_room(room: str) -> str:
     """Removes spaces from room names for consistency."""
     return room.replace(" ", "")
 
+def _describe_fact(fact: Fact) -> str:
+    """Returns a compact, human-readable string for a Fact."""
+    if isinstance(fact, LocationFact):
+        entity_str = fact.entity.value if fact.entity.type == "named" else f"?({fact.entity.location})"
+        loc = fact.location
+        if loc.type == "room":
+            return f"LocationFact: {entity_str} in {loc.room}"
+        elif loc.type == "directional":
+            dirs = ", ".join(str(d) for d in loc.directions)
+            return f"LocationFact: {entity_str} direction [{dirs}]"
+        return f"LocationFact: {entity_str} @ {loc}"
+    elif isinstance(fact, SpatialFact):
+        subj = fact.subject.value if fact.subject.type == "named" else "?"
+        ref = fact.reference.value if fact.reference and fact.reference.type == "named" else "origin"
+        return f"SpatialFact: {subj} {fact.direction} of {ref}"
+    elif isinstance(fact, RelationFact):
+        subj = fact.subject.value if fact.subject.type == "named" else f"?({fact.subject.location})"
+        obj_part = ""
+        if hasattr(fact, 'object') and fact.object:
+            obj_part = f" -> {fact.object.value}"
+        tgt_part = ""
+        if fact.target:
+            tgt_val = fact.target.value if fact.target.type == "named" else f"?({fact.target.location})"
+            tgt_part = f" -> {tgt_val}"
+        return f"RelationFact: {subj} {fact.predicate}{obj_part}{tgt_part}"
+    return repr(fact)
+
 def _get_entity_type(name: str) -> str:
     """Determines the search category for a given entity name."""
     # Check if it's a patient
@@ -78,13 +105,21 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
         entity_type = _get_entity_type(target_name)
 
     # 1. Pre-calculate entity rooms for existential resolution
+    # Note: _objects stores potions with underscore names (e.g. "gold_potion") per objects.json,
+    # but KG facts and gold facts use space-separated names (e.g. "gold potion").
+    # We normalize by inserting both forms so lookups succeed either way.
     entity_rooms = {}
     for room, objs in ground_truth._objects.items():
         for name in objs:
             entity_rooms[name] = room
+            # Also register the space-normalized form for potion names
+            normalized = name.replace("_", " ")
+            if normalized != name:
+                entity_rooms[normalized] = room
             
     true_room = entity_rooms.get(target_name)
-    
+    gt_fact_str = f"LocationFact: {target_name} in {true_room}" if true_room else f"(no ground truth room found for {target_name})"
+
     # 2. Get all rooms for max_cost and normalization
     all_rooms = _get_all_rooms(map_graph)
     if not all_rooms:
@@ -135,7 +170,9 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
                 ))
 
     if not entity_facts:
-        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0)
+        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0,
+                              evaluated_fact="(no matching location fact found)",
+                              ground_truth_fact=gt_fact_str)
 
     # 4. Selection Logic: Absolute > Directional
     # Sort facts: LocationFact (room) > LocationFact (directional) > SpatialFact
@@ -148,6 +185,7 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
     
     # Take the most specific (first in sorted list)
     best_fact = entity_facts[0]
+    evaluated_fact_str = _describe_fact(best_fact)
     
     # 5. Resolve fact against map
     constraint_loc = None
@@ -183,19 +221,23 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
                 effective_satisfying = satisfying_rooms_norm.intersection(baseline_rooms)
             
             if len(effective_satisfying) == 1:
-                return ComponentScore(credit_type=CreditType.FULL, max_cost=max_cost, partial_credit=1.0)
+                return ComponentScore(credit_type=CreditType.FULL, max_cost=max_cost, partial_credit=1.0,
+                                      evaluated_fact=evaluated_fact_str, ground_truth_fact=gt_fact_str)
             else:
                 # Factor by which search space was reduced relative to baseline
                 reduction_factor = 1.0 - (len(effective_satisfying) / num_rooms)
                 # Clamp to [0, 1]
                 reduction_factor = max(0.0, min(1.0, reduction_factor))
-                return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=reduction_factor)
+                return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=reduction_factor,
+                                      evaluated_fact=evaluated_fact_str, ground_truth_fact=gt_fact_str)
         else:
             # Correct room not in satisfying set -> Misinformation
-            return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
+            return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0,
+                                  evaluated_fact=evaluated_fact_str, ground_truth_fact=gt_fact_str)
     else:
         # No true room found for entity
-        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0)
+        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0,
+                              evaluated_fact=evaluated_fact_str, ground_truth_fact=gt_fact_str)
 
 def _score_location(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
     """Scores the accuracy of information about an entity's own location."""
@@ -272,6 +314,12 @@ def get_patient_status_facts(entity: str, ground_truth: GameState) -> list[Relat
                     subject=Argument(type="named", value=target_name),
                     target=Argument(type="named", value=entity)
                 )]
+            else:
+                return [RelationFact(
+                    predicate=RelationPredicate.NEEDS_POTION,
+                    subject=Argument(type="named", value=entity),
+                    object=Argument(type="named", value=f"{patient_info['potion']} potion")
+                )]
     
     return []
 
@@ -286,138 +334,226 @@ def _is_category_match(predicted_val: str, gold_val: str) -> bool:
 def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
     """
     Scores the accuracy of information about a patient NPC's needs (potions or messages).
+
+    Uses a three-tier resolution strength model for matching facts to this entity:
+      - 'definite': named match, or constrained existential resolving exclusively to this entity
+      - 'possible':  unconstrained existential (e.g. "someone"), or constrained existential
+                     that includes this entity among others
+      - 'none':      named different entity, or existential that excludes this entity
+
+    Only 'definite' matches can produce CONTRADICTED scores. 'possible' matches are capped
+    at PARTIAL (and only when the resource is an exact match), preventing "oliver HAS_MESSAGE_FOR
+    (someone)" from being treated as a contradiction when scoring lily.
     """
     # 1. Get gold facts
     gold_facts = get_patient_status_facts(entity, ground_truth)
     gold_fact = gold_facts[0] if gold_facts else None
-    
+
     max_cost = DIAGNOSIS_COST
-    
+    gt_fact_str = _describe_fact(gold_fact) if gold_fact else "(no outstanding need)"
+
     # 2. Pre-calculate entity rooms for existential resolution
+    # Normalize underscore-named keys (e.g. "gold_potion") to also be accessible
+    # with spaces (e.g. "gold potion") to match KG fact naming conventions.
     entity_rooms = {}
     for room, objs in ground_truth._objects.items():
         for name in objs:
             entity_rooms[name] = room
-            
-    def resolves_to(arg: Argument, target_name: str) -> bool:
+            normalized = name.replace("_", " ")
+            if normalized != name:
+                entity_rooms[normalized] = room
+
+    all_patient_names = [p["name"] for p in PATIENT_DATA.values()]
+
+    def resolution_strength(arg, target_name):
+        """
+        Returns 'definite', 'possible', or 'none' indicating how strongly
+        the argument resolves to target_name.
+        """
         if arg.type == "named":
-            return arg.value == target_name
+            return "definite" if arg.value == target_name else "none"
         elif arg.type == "existential":
             if not arg.location:
-                return True # Unconstrained existential matches everything
+                return "possible"  # Unconstrained existential — could be anyone
             target_room = entity_rooms.get(target_name)
             if not target_room:
-                return False
-            return is_location_satisfying_constraint(target_room, arg.location, map_graph, "room 0")
-        return False
+                return "none"
+            if not is_location_satisfying_constraint(target_room, arg.location, map_graph, "room 0"):
+                return "none"
+            # Target satisfies — check if any other patient also does
+            others_satisfy = any(
+                p != target_name
+                and entity_rooms.get(p)
+                and is_location_satisfying_constraint(entity_rooms[p], arg.location, map_graph, "room 0")
+                for p in all_patient_names
+            )
+            return "possible" if others_satisfy else "definite"
+        return "none"
 
-    # 3. Filter candidates for this entity and relevant predicates
-    candidates = []
+    def score_other_arg(f_other, g_other, f, is_definite):
+        """
+        Compare the 'other' argument (resource or message partner) of a candidate fact
+        against the gold. Returns a ComponentScore or None (meaning: skip this candidate).
+
+        When is_definite=True, full scoring tiers apply (FULL / PARTIAL / CONTRADICTED).
+        When is_definite=False (subject is only 'possible'), only an exact resource match
+        earns PARTIAL credit; everything else returns None so it doesn't block better matches.
+        This prevents "someone needs the red potion" from being a contradiction for lily.
+        """
+        if not f_other or not g_other:
+            if is_definite:
+                return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost,
+                                      partial_credit=cost_config.partial_need_credit,
+                                      evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+            return None
+
+        if f_other.type == "named" and g_other.type == "named":
+            if f_other.value == g_other.value:
+                # Exact resource match
+                return ComponentScore(
+                    credit_type=CreditType.FULL if is_definite else CreditType.PARTIAL,
+                    max_cost=max_cost,
+                    partial_credit=1.0 if is_definite else cost_config.partial_need_credit,
+                    evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+            elif _is_category_match(f_other.value, g_other.value):
+                # Generic category (e.g. "potion" for "gold potion") — only when subject is definite
+                # "someone needs_potion potion" is too vague on both axes to earn credit
+                if is_definite:
+                    return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost,
+                                          partial_credit=cost_config.partial_need_credit,
+                                          evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                return None
+            else:
+                # Definitively wrong resource
+                if is_definite:
+                    return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                          partial_credit=0.0,
+                                          evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                return None  # Possible subject + wrong resource — can't call it a contradiction
+
+        elif f_other.type == "existential":
+            g_other_room = entity_rooms.get(g_other.value) if g_other.type == "named" else None
+            is_satisfied = not f_other.location  # unconstrained existential always satisfies
+            if not is_satisfied and g_other_room:
+                is_satisfied = is_location_satisfying_constraint(
+                    g_other_room, f_other.location, map_graph, "room 0")
+            if is_satisfied:
+                if is_definite:
+                    return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost,
+                                          partial_credit=cost_config.partial_need_credit,
+                                          evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                return None  # Possible subject + vague existential object → too ambiguous
+            else:
+                if is_definite:
+                    return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                          partial_credit=0.0,
+                                          evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                return None
+        else:
+            if is_definite:
+                return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                      partial_credit=0.0,
+                                      evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+            return None
+
+    # 3. No outstanding gold need
+    if not gold_fact:
+        for f in fact_set:
+            if not isinstance(f, RelationFact):
+                continue
+            if f.predicate not in [RelationPredicate.NEEDS_POTION, RelationPredicate.HAS_MESSAGE_FOR]:
+                continue
+            subj_str = resolution_strength(f.subject, entity)
+            tgt_str = resolution_strength(f.target, entity) if f.target else "none"
+            if subj_str == "definite" or tgt_str == "definite":
+                return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                      partial_credit=0.0,
+                                      evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+        # No definite candidates about this entity — correct omission
+        return ComponentScore(credit_type=CreditType.FULL, max_cost=0.0, partial_credit=1.0,
+                              evaluated_fact="(no outstanding need — correct omission)",
+                              ground_truth_fact=gt_fact_str)
+
+    # 4. Evaluate candidates and find the best match
+    priority = {CreditType.FULL: 0, CreditType.PARTIAL: 1, CreditType.NONE: 2, CreditType.CONTRADICTED: 3}
+    best_score = None
+
     for f in fact_set:
         if not isinstance(f, RelationFact):
             continue
         if f.predicate not in [RelationPredicate.NEEDS_POTION, RelationPredicate.HAS_MESSAGE_FOR]:
             continue
-            
-        # Does this fact relate to our entity?
-        is_relevant = False
-        if resolves_to(f.subject, entity):
-            is_relevant = True
-        elif f.target and resolves_to(f.target, entity):
-            is_relevant = True
-            
-        if is_relevant:
-            candidates.append(f)
 
-    if not gold_fact:
-        if candidates:
-            # Report says there's a need when there isn't
-            return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-        else:
-            # Correct omission of need facts (neutral score with 0 max_cost)
-            return ComponentScore(credit_type=CreditType.FULL, max_cost=0.0, partial_credit=1.0)
-
-    if not candidates:
-        # Ground truth has a need but report has nothing -> Omission
-        return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0)
-
-    # 4. Evaluate each candidate against the gold fact and take the best
-    best_score = None
-    
-    for f in candidates:
         current_score = None
-        
-        # Predicate mismatch -> Misinformation (relative to this specific need)
-        if f.predicate != gold_fact.predicate:
-            current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-        else:
-            # Predicate matches!
-            # Determine which gold argument is the "other" (the one not necessarily the entity being scored)
-            g_other = None
-            if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
-                g_other = gold_fact.object
-            elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
-                if gold_fact.subject.value == entity:
-                    g_other = gold_fact.target
-                else:
-                    g_other = gold_fact.subject
-            
-            # Find the "other" argument in the candidate
-            f_other = None
-            subj_resolves = resolves_to(f.subject, entity)
-            target_resolves = f.target and resolves_to(f.target, entity)
-            
-            if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
-                if subj_resolves:
-                    f_other = f.object
-                else:
-                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-            elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
-                if gold_fact.subject.value == entity:
-                    if subj_resolves:
-                        f_other = f.target
-                    else:
-                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-                else:
-                    if target_resolves:
-                        f_other = f.subject
-                    else:
-                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
 
-            if current_score is None:
-                # Now compare f_other with g_other
-                if not f_other or not g_other:
-                    current_score = ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=cost_config.partial_need_credit)
-                else:
-                    # Compare Arguments
-                    if f_other.type == "named" and g_other.type == "named":
-                        if f_other.value == g_other.value:
-                            current_score = ComponentScore(credit_type=CreditType.FULL, max_cost=max_cost, partial_credit=1.0)
-                        elif _is_category_match(f_other.value, g_other.value):
-                            current_score = ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=cost_config.partial_need_credit)
-                        else:
-                            current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-                    elif f_other.type == "existential":
-                        target_room = entity_rooms.get(g_other.value)
-                        is_satisfied = False
-                        if not f_other.location:
-                            is_satisfied = True
-                        elif target_room:
-                            is_satisfied = is_location_satisfying_constraint(target_room, f_other.location, map_graph, "room 0")
-                        
-                        if is_satisfied:
-                            current_score = ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost, partial_credit=cost_config.partial_need_credit)
-                        else:
-                            current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
-                    else:
-                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost, partial_credit=0.0)
+        if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
+            # Entity is the subject (patient needing a potion)
+            subj_str = resolution_strength(f.subject, entity)
+            if subj_str == "none":
+                continue  # Fact is not about this entity
+            is_definite = (subj_str == "definite")
 
-        # Update best score: FULL > PARTIAL > NONE > CONTRADICTED
-        priority = {CreditType.FULL: 0, CreditType.PARTIAL: 1, CreditType.NONE: 2, CreditType.CONTRADICTED: 3}
-        if best_score is None or priority[current_score.credit_type] < priority[best_score.credit_type]:
-            best_score = current_score
-            
-    return best_score if best_score else ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0)
+            if f.predicate != gold_fact.predicate:
+                if is_definite:
+                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                   partial_credit=0.0,
+                                                   evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                else:
+                    continue  # Possible subject + wrong predicate → skip
+            else:
+                current_score = score_other_arg(f.object, gold_fact.object, f, is_definite)
+                if current_score is None:
+                    continue
+
+        elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
+            if gold_fact.subject.value == entity:
+                # Entity is the sender — look at candidate's subject
+                subj_str = resolution_strength(f.subject, entity)
+                if subj_str == "none":
+                    continue
+                is_definite = (subj_str == "definite")
+
+                if f.predicate != gold_fact.predicate:
+                    if is_definite:
+                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                       partial_credit=0.0,
+                                                       evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                    else:
+                        continue
+                else:
+                    current_score = score_other_arg(f.target, gold_fact.target, f, is_definite)
+                    if current_score is None:
+                        continue
+            else:
+                # Entity is the receiver — look at candidate's target
+                tgt_str = resolution_strength(f.target, entity) if f.target else "none"
+                if tgt_str == "none":
+                    continue
+                is_definite = (tgt_str == "definite")
+
+                if f.predicate != gold_fact.predicate:
+                    if is_definite:
+                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                       partial_credit=0.0,
+                                                       evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                    else:
+                        continue
+                else:
+                    current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite)
+                    if current_score is None:
+                        continue
+
+        if current_score is not None:
+            if best_score is None or priority[current_score.credit_type] < priority[best_score.credit_type]:
+                best_score = current_score
+
+    if best_score is not None:
+        return best_score
+
+    # Nothing relevant found
+    return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0,
+                          evaluated_fact="(no matching need fact found)",
+                          ground_truth_fact=gt_fact_str)
 
 def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
     """
@@ -427,7 +563,9 @@ def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, 
     gold_facts = get_patient_status_facts(entity, ground_truth)
     if not gold_facts:
         # No outstanding needs -> No search cost to save
-        return ComponentScore(credit_type=CreditType.FULL, max_cost=0.0, partial_credit=1.0)
+        return ComponentScore(credit_type=CreditType.FULL, max_cost=0.0, partial_credit=1.0,
+                              evaluated_fact="(no outstanding need — resource score not applicable)",
+                              ground_truth_fact="(no outstanding need — resource score not applicable)")
     
     # We take the first outstanding need as the priority resource
     gold_fact = gold_facts[0]
@@ -443,7 +581,9 @@ def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, 
             resource_name = gold_fact.subject.value
             
     if not resource_name:
-        return ComponentScore(credit_type=CreditType.NONE, max_cost=0.0, partial_credit=0.0)
+        return ComponentScore(credit_type=CreditType.NONE, max_cost=0.0, partial_credit=0.0,
+                              evaluated_fact="(could not determine resource name)",
+                              ground_truth_fact="(could not determine resource name)")
 
     # 2. Score the location of THIS resource using the shared scoring logic
     entity_type = "potions" if gold_fact.predicate == RelationPredicate.NEEDS_POTION else "npcs"
@@ -492,7 +632,8 @@ def main():
     parser.add_argument("--kg-file", type=str, required=True, help="Path to the KnowledgeGraph JSON file.")
     parser.add_argument("--pid", type=str, required=True, help="Player ID to load the saved GameState.")
     parser.add_argument("--output-file", type=str, required=True, help="Path to save the IACResult JSON.")
-    parser.add_argument("--map-dir", type=str, default="evaluation/map_data", help="Directory containing map transitions.")
+    # parser.add_argument("--map-dir", type=str, default="evaluation/map_data", help="Directory containing map transitions.")
+    parser.add_argument("--map-graph", type=str, required=True, help="Path to the map graph JSON file.")
 
     args = parser.parse_args()
 
@@ -514,14 +655,14 @@ def main():
         return
 
     # 3. Load Map Graph (Connectivity)
-    map_graph_path = os.path.join(args.map_dir, "map_graph.json")
-    if not os.path.exists(map_graph_path):
+    # map_graph_path = os.path.join(args.map_dir, "map_graph.json")
+    if not os.path.exists(args.map_graph):
         # Fallback to creating a KnowledgeGraph from transitions if map_graph.json doesn't exist?
         # For now, we'll assume it exists or the user will provide it.
-        print(f"Warning: Map graph file not found: {map_graph_path}")
+        print(f"Warning: Map graph file not found: {args.map_graph}")
         map_graph = KnowledgeGraph(facts=[])
     else:
-        with open(map_graph_path, "r") as f:
+        with open(args.map_graph, "r") as f:
             map_graph_data = json.load(f)
         map_graph = KnowledgeGraph.model_validate(map_graph_data)
 
@@ -529,7 +670,7 @@ def main():
     cost_config = CostConfig() # Could eventually take these from args too
     result = compute_iac(pred_facts, true_state, map_graph, cost_config)
 
-    # 4. Save result
+    # 5. Save result
     output_dir = os.path.dirname(args.output_file)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
