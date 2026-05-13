@@ -26,13 +26,13 @@ class RoomConnection(BaseModel):
 
 class CharacterView(BaseModel):
     name: str
-    interaction_history: List[str]
+    # interaction_history: List[str]
     requirements: List[str]
     miscellaneous_state_relations: List[str] = Field(default_factory=list)
 
 class RoomView(BaseModel):
     name: str
-    connected_to: List[RoomConnection]
+    # connected_to: List[RoomConnection]
     characters_present: List[CharacterView]
     items_present: List[str]
     miscellaneous_state_relations: List[str] = Field(default_factory=list)
@@ -49,6 +49,14 @@ class NarrativeView(BaseModel):
     world_state: WorldState
     unresolved_conflicts: List[ConflictSummary]
 
+
+# ---------------------------------------------------------------------------
+# Predicate categories for narrative views
+# ---------------------------------------------------------------------------
+_PAST_EVENT_PREDICATES = {
+    RelationPredicate.POTION_DELIVERED,
+    RelationPredicate.MESSAGE_DELIVERED,
+}
 
 # ---------------------------------------------------------------------------
 # Entity type heuristics (from entity_alignment.py)
@@ -205,7 +213,7 @@ def _format_relation_fact(fact: RelationFact) -> str:
     if fact.object:
         parts.append(fact.object.value or "something")
     if fact.target:
-        parts.append(f"to {fact.target.value or 'someone'}")
+        parts.append(f"{fact.target.value or 'someone'}")
     return " ".join(parts)
 
 def _miscellaneous_state_relations_for_room(
@@ -247,9 +255,9 @@ def _miscellaneous_state_relations_for_character(
         # Exclude relations already covered by specific fields
         if fact.predicate == RelationPredicate.HAS_ITEM and fact.subject.value == character_id and character_id == player_id:
             continue
-        if fact.predicate == RelationPredicate.NEEDS_POTION and fact.subject.value == character_id:
-            continue
-        if fact.predicate == RelationPredicate.HAS_MESSAGE_FOR and fact.target and fact.target.value == character_id:
+        
+        # Interaction history is reserved for past events; exclude them here
+        if fact.predicate in _PAST_EVENT_PREDICATES:
             continue
             
         lines.append(_format_relation_fact(fact))
@@ -261,14 +269,8 @@ def _build_interaction_history_by_character(
     """Map character (agent) id -> list of interaction summary strings."""
     history: Dict[str, List[str]] = defaultdict(list)
 
-    # Use "delivered" predicates as interaction history
-    event_predicates = {
-        RelationPredicate.POTION_DELIVERED,
-        RelationPredicate.MESSAGE_DELIVERED,
-    }
-
     for fact in facts:
-        if not isinstance(fact, RelationFact) or fact.predicate not in event_predicates:
+        if not isinstance(fact, RelationFact) or fact.predicate not in _PAST_EVENT_PREDICATES:
             continue
 
         participants = []
@@ -379,9 +381,9 @@ def craft_narrative_view(
         characters_present = [
             CharacterView(
                 name=char_id,
-                interaction_history=interaction_history_by_character.get(
-                    char_id, []
-                ),
+                # interaction_history=interaction_history_by_character.get(
+                #     char_id, []
+                # ),
                 requirements=requirements_by_character.get(char_id, []),
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_character(
                     char_id, player_id, graph.facts
@@ -395,7 +397,7 @@ def craft_narrative_view(
         room_views.append(
             RoomView(
                 name=room_id,
-                connected_to=room_connections,
+                # connected_to=room_connections,
                 characters_present=characters_present,
                 items_present=items_present,
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_room(
@@ -418,13 +420,20 @@ if __name__ == "__main__":
     import sys
     import json
     import os
+    import dotenv
+    dotenv.load_dotenv()
     data_dir = os.environ.get("DATA_DIR")
+    if not data_dir:
+        raise SystemExit("DATA_DIR environment variable is not set")
+    if len(sys.argv) < 2:
+        raise SystemExit("usage: craft_narrative_view.py <pid>")
 
-    graph_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_merged_graph.json")
+    graph_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + "_reconciled_kg.json")
     with open(graph_filename, "r") as f:
         graph = KnowledgeGraph.model_validate_json(f.read())
     narrative_view = craft_narrative_view(graph)
     
-    output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_narrative_view_output.json")
+    output_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + "_narrative_view.json")
+    os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     with open(output_filename, "w") as f:
         f.write(narrative_view.model_dump_json(indent=2))
