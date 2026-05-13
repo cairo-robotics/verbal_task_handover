@@ -115,6 +115,9 @@ def call_chatgpt(prompt: str, user_prompt: Template, narrative_view: NarrativeVi
 
 
 def main() -> None:
+    import dotenv
+    dotenv.load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="Send NarrativeView JSON to ChatGPT 4o-mini and get a report."
     )
@@ -145,7 +148,7 @@ def main() -> None:
     data_dir = os.environ.get("DATA_DIR")
     if data_dir:
         input_path = os.path.join(
-            data_dir, "processed_output", args.input + "_narrative_view_output.json"
+            data_dir, "processed_output", "kg", args.input + "_narrative_view.json"
         )
     else:
         input_path = args.input

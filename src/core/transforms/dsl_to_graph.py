@@ -10,6 +10,7 @@ try:
         Argument, Location, Direction, RelationPredicate, SpatialRelationType,
     )
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from pydantic_schema import (
         KnowledgeGraph, RelationFact, LocationFact, SpatialFact, ConnectionFact,
         Argument, Location, Direction, RelationPredicate, SpatialRelationType,
@@ -480,7 +481,9 @@ def _parse_line(line: str):
             provenance=line,
         )
 
-    raise ValueError(f"Line could not be matched to any DSL template: {line!r}")
+    # raise ValueError(f"Line could not be matched to any DSL template: {line!r}")
+    print(f"Line could not be matched to any DSL template: {line!r}")
+    return None
 
 
 # ---- Public API ----
@@ -508,8 +511,16 @@ def dsl_to_graph(text_filename: str, output_filename: str) -> None:
 
 if __name__ == "__main__":
     data_dir = os.environ.get("DATA_DIR")
-
-    # text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
-    text_filename = os.path.join(data_dir, "analysis", sys.argv[1] + "_report_dsl_output.txt")
-    output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_dsl_to_kg_output.json")
+    if not data_dir:
+        raise SystemExit("DATA_DIR environment variable is not set")
+    if len(sys.argv) < 2:
+        raise SystemExit("usage: dsl_to_graph.py <dsl_relative_path>")
+        
+    text_filename = os.path.join(data_dir, sys.argv[1])
+    
+    # Standardize output naming: [pid]_dsl_to_kg.json under processed_output/kg
+    stem = os.path.basename(sys.argv[1]).split(".")[0]
+    if stem.endswith("_dsl"):
+        stem = stem[:-4]
+    output_filename = os.path.join(data_dir, "processed_output", "kg", f"{stem}_dsl_to_kg.json")
     dsl_to_graph(text_filename, output_filename)

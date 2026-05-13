@@ -80,21 +80,21 @@ def main():
     args = parser.parse_args()
     
     data_dir = os.environ.get("DATA_DIR")
-    
+
     if args.new_graph is None:
         # PID mode
         if not data_dir:
             print("Error: DATA_DIR environment variable must be set for PID-based merging.")
             sys.exit(1)
         pid = args.pid_or_base
-        base_path = os.path.join(data_dir, "processed_output", f"{pid}_telemetry_to_kg_output.json")
-        new_path = os.path.join(data_dir, "processed_output", f"{pid}_user_dsl_to_kg_output.json")
-        output_path = args.output or os.path.join(data_dir, "processed_output", f"{pid}_merge_graphs_output.json")
+        base_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_telemetry_to_kg.json")
+        new_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_dsl_to_kg.json")
+        output_path = args.output or os.path.join(data_dir, "processed_output", "kg", f"{pid}_merged_kg.json")
     else:
         # Explicit path mode
         base_path = args.pid_or_base
         new_path = args.new_graph
-        output_path = args.output or "merged_graph.json"
+        output_path = args.output or "merged_kg.json"
 
     if not os.path.exists(base_path):
         print(f"Error: Base graph file not found: {base_path}")

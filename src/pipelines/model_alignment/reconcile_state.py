@@ -187,8 +187,8 @@ def main() -> None:
         nargs="?",
         metavar="PID",
         help=(
-            "Participant id: reads DATA_DIR/processed_output/<pid>_merge_graphs_output.json "
-            "and writes <pid>_reconcile_state_output.json (requires DATA_DIR)."
+            "Participant id: reads DATA_DIR/processed_output/kg/<pid>_merged_kg.json "
+            "and writes <pid>_reconciled_kg.json (requires DATA_DIR)."
         ),
     )
     parser.add_argument(
@@ -213,10 +213,10 @@ def main() -> None:
         if not data_dir:
             parser.error("Set DATA_DIR or pass both --input and --output.")
         in_path = os.path.join(
-            data_dir, "processed_output", f"{args.pid}_merge_graphs_output.json"
+            data_dir, "processed_output", "kg", f"{args.pid}_merged_kg.json"
         )
         out_path = os.path.join(
-            data_dir, "processed_output", f"{args.pid}_reconcile_state_output.json"
+            data_dir, "processed_output", "kg", f"{args.pid}_reconciled_kg.json"
         )
     else:
         parser.error("Provide a participant PID or both --input and --output.")

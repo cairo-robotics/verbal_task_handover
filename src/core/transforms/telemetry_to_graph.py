@@ -18,6 +18,7 @@ try:
         Direction,
     )
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from pydantic_schema import (
         Argument,
         ConnectionFact,
@@ -418,7 +419,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit("usage: telemetry_to_graph.py <telemetry_basename>")
     text_filename = os.path.join(data_dir, "telemetry", sys.argv[1] + ".txt")
-    output_filename = os.path.join(
-        data_dir, "processed_output", sys.argv[1] + "_telemetry_to_kg_output.json"
-    )
+    output_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + "_telemetry_to_kg.json")
     create_kg_json(text_filename, output_filename)

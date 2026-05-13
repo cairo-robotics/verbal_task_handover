@@ -7,6 +7,7 @@ from openai import OpenAI
 try:
     from src.core.utils.extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
 
 try:
@@ -21,10 +22,11 @@ DEFAULT_MODEL = "gpt-4o-mini"
 PROMPT = """
 You are an information extraction system.
 
-Your task is to extract structured facts about a game task from a narrative. Extract all facts that are explicitly stated in the text.
+Your task is to extract structured facts about outstanding needs in a game task from a narrative. Extract all facts that are explicitly stated in the text.
 
 Return the facts using a controlled language with STRICT formatting rules. Each fact should be on a new line.
 Do not include information that can not fit in this format.
+Do not include past-tense information or completed tasks. 
 
 ---
 
