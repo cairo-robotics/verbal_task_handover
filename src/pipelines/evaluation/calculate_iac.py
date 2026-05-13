@@ -32,6 +32,17 @@ DIAGNOSIS_COST = 5.0
 
 def _load_game_state(pid: str) -> GameState:
     """Loads the GameState for a given player ID."""
+    # Try current directory first
+    if os.path.exists(f"{pid}.pkl"):
+        return GameState.load(pid)
+    
+    # Try DATA_DIR
+    data_dir = os.environ.get("DATA_DIR")
+    if data_dir:
+        path = os.path.join(data_dir, pid)
+        if os.path.exists(f"{path}.pkl"):
+            return GameState.load(path)
+            
     return GameState.load(pid)
 
 def _load_map_data(map_directory: str) -> Dict:

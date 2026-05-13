@@ -41,11 +41,10 @@ def _collect_pids(args: argparse.Namespace) -> list[str]:
 def _run_step(
     python: str,
     script: Path,
-    pid: str,
-    extra_args: list[str],
+    args: list[str],
     env: dict[str, str],
 ) -> None:
-    cmd = [python, str(script), pid, *extra_args]
+    cmd = [python, str(script)] + args
     print(f"  {' '.join(cmd)}", flush=True)
     subprocess.run(cmd, check=True, env=env)
 
@@ -58,38 +57,30 @@ def run_pipeline_for_pid(
     python_exe: str,
 ) -> None:
     env = {**os.environ, "DATA_DIR": data_dir}
-    
-    # Define absolute paths for all modules relative to repo root
-    # assuming this script is in src/experiments/
     repo_root = Path(__file__).resolve().parent.parent.parent
     
+    # Standard naming:
+    # Telemetry KG: <pid>_telemetry_to_kg.json
+    # DSL: processed_output/dsl/<pid>_user_report_dsl.txt
+    # DSL KG: <pid>_dsl_to_kg.json
+    
+    dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
+    dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+
     scripts = [
-        (repo_root / "src/core/transforms/telemetry_to_graph.py", []),
+        (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
         (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
-        (repo_root / "src/core/transforms/dsl_to_graph.py", [pid]),
+        (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
         (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
-        (repo_root / "src/core/transforms/reconcile_state.py", [pid]),
+        (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
         (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
         (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", prompt_set]),
     ]
     
-    for path, extra in scripts:
+    for path, args in scripts:
         if not path.is_file():
-            # Fallback check for text_to_graph if it's still needed (currently in unused/)
-            if "text_to_graph.py" in str(path):
-                 print(f"Warning: {path} not found. Skipping single-stage extraction.")
-                 continue
             raise FileNotFoundError(f"Missing pipeline script: {path}")
-        
-        # Some scripts take pid as first arg, some as a specific named arg or positional
-        # Most scripts in the pipeline take {pid} as the first argument.
-        # report_to_dsl takes the report filename.
-        
-        if "report_to_dsl.py" in str(path):
-            # report_to_dsl.py <report_file>
-             _run_step(python_exe, path, extra[0], extra[1:], env)
-        else:
-             _run_step(python_exe, path, pid, extra, env)
+        _run_step(python_exe, path, args, env)
 
 
 def main() -> None:
@@ -116,7 +107,7 @@ def main() -> None:
         "--prompt-set",
         choices=("full_realization", "task_aware", "both"),
         default="both",
-        help="Forwarded to generate_reports.py (default: full_realization).",
+        help="Forwarded to generate_reports.py (default: both).",
     )
     parser.add_argument(
         "--continue-on-error",
@@ -142,20 +133,23 @@ def main() -> None:
         print(f"\n=== Pipeline: {pid} ===", flush=True)
         try:
             if args.dry_run:
-                root = _alignment_dir()
-                extra = ["--prompt-set", args.prompt_set]
-                for name in (
-                    "telemetry_to_graph.py",
-                    "text_to_graph.py",
-                    "merge_graphs.py",
-                    "reconcile_state.py",
-                    "craft_narrative_view.py",
-                    "generate_reports.py",
-                ):
-                    cmd = [python_exe, str(root / name), pid] + (
-                        extra if name == "generate_reports.py" else []
-                    )
-                    print(f"  {' '.join(cmd)}", flush=True)
+                # Mock run to show what would happen, using the same logic as run_pipeline_for_pid
+                repo_root = Path(__file__).resolve().parent.parent.parent
+                dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
+                dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+                
+                scripts = [
+                    (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
+                    (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
+                    (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
+                    (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+                    (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
+                    (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+                    (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", args.prompt_set]),
+                ]
+                for path, step_args in scripts:
+                    cmd = [python_exe, str(path)] + step_args
+                    print(f"  (dry-run) {' '.join(cmd)}", flush=True)
             else:
                 run_pipeline_for_pid(
                     pid,

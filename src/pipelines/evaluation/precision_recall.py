@@ -145,7 +145,11 @@ def error_breakdown(pred_facts: list[Fact], gold_facts: list[Fact]) -> dict:
         if len(t) == 2 and isinstance(t[1], tuple):
             # This looks like (fact_type, attributes_tuple)
             fact_type, attrs = t
-            return {"fact_type": fact_type, "attributes": {k: tuple_to_reportable(v) for k, v in attrs}}
+            try:
+                return {"fact_type": fact_type, "attributes": {k: tuple_to_reportable(v) for k, v in attrs}}
+            except (ValueError, TypeError):
+                # Not a dict-like structure after all
+                pass
         return [tuple_to_reportable(x) for x in t]
 
     false_positives = sorted(pred_set - gold_set)

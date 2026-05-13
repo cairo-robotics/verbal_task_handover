@@ -1,8 +1,9 @@
-import re
-import os
-import sys
+import argparse
 import json
-from typing import Optional, List, Tuple
+import os
+import re
+import sys
+from typing import List, Optional, Tuple
 
 try:
     from src.core.representations.pydantic_schema import (
@@ -509,18 +510,45 @@ def dsl_to_graph(text_filename: str, output_filename: str) -> None:
         json.dump(kg.model_dump(), f, indent=2)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Parse a DSL text file into a KnowledgeGraph and write it as JSON."
+    )
+    parser.add_argument(
+        "dsl_file",
+        help="Path to the DSL text file (relative to DATA_DIR if DATA_DIR is set)."
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Path to the output JSON file. If not provided, a default path is used."
+    )
+    args = parser.parse_args()
+
     data_dir = os.environ.get("DATA_DIR")
-    if not data_dir:
-        raise SystemExit("DATA_DIR environment variable is not set")
-    if len(sys.argv) < 2:
-        raise SystemExit("usage: dsl_to_graph.py <dsl_relative_path>")
-        
-    text_filename = os.path.join(data_dir, sys.argv[1])
-    
-    # Standardize output naming: [pid]_dsl_to_kg.json under processed_output/kg
-    stem = os.path.basename(sys.argv[1]).split(".")[0]
-    if stem.endswith("_dsl"):
-        stem = stem[:-4]
-    output_filename = os.path.join(data_dir, "processed_output", "kg", f"{stem}_dsl_to_kg.json")
+    if data_dir:
+        text_filename = os.path.join(data_dir, args.dsl_file)
+    else:
+        text_filename = args.dsl_file
+
+    if not os.path.isfile(text_filename):
+        print(f"Error: DSL file not found: {text_filename}", file=sys.stderr)
+        sys.exit(1)
+
+    if args.output:
+        output_filename = args.output
+    elif data_dir:
+        # Standardize output naming: [pid]_dsl_to_kg.json under processed_output/kg
+        stem = os.path.basename(args.dsl_file).split(".")[0]
+        if stem.endswith("_dsl"):
+            stem = stem[:-4]
+        output_filename = os.path.join(data_dir, "processed_output", "kg", f"{stem}_dsl_to_kg.json")
+    else:
+        stem = os.path.basename(args.dsl_file).split(".")[0]
+        output_filename = f"{stem}_dsl_to_kg.json"
+
     dsl_to_graph(text_filename, output_filename)
+
+
+if __name__ == "__main__":
+    main()
