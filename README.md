@@ -24,6 +24,7 @@ To support this, we use:
 - `src/core/` : fundamental data models (Pydantic schemas) and transformation logic (telemetry/report to graph).
 - `src/experiments/` : high-level scripts for running the full task-handover pipeline and ablation studies.
 - `src/pipelines/` : multi-stage workflows for report generation (model alignment) and evaluation (metrics).
+- `visualisation/` : tools for visualizing knowledge graphs and evaluation metrics (IAC).
 - `scripts/` : helper scripts for working with participant telemetry/report files.
 
 ## Tech Stack (dev/run-time)
@@ -228,9 +229,12 @@ Environment variables used by the pipeline:
 - `OPENAI_API_KEY` : required for `src/core/transforms/report_to_dsl.py`, `src/pipelines/model_alignment/merge_graphs.py` (for entity alignment), and `src/pipelines/model_alignment/generate_reports.py`
 - `DATA_DIR` : base directory for inputs/outputs as described above
 
-## Extraction metrics pipeline: `src/pipelines/evaluation/`
+## Evaluation pipeline: `src/pipelines/evaluation/`
 
-The `src/pipelines/evaluation/` pipeline evaluates report quality by extracting structured facts from reports and comparing them against a ground truth derived from the `NarrativeView`. Uses a two-stage extraction approach (report → DSL → JSON) designed to support inter-rater reliability checks.
+The `src/pipelines/evaluation/` pipeline evaluates report quality using several metrics:
+
+1. **Extraction Accuracy**: Extracting structured facts from reports and comparing them against a ground truth.
+2. **Information Access Cost (IAC)**: Quantifying the "cost" (search time) for a subsequent agent to find required entities based on the information provided in the report.
 
 ### Data layout
 
@@ -241,24 +245,30 @@ Scripts read and write under `DATA_DIR`:
 - `$DATA_DIR/analysis/<stem>_dsl_output.txt` — stage 1 DSL output
 - `$DATA_DIR/analysis/<stem>_fact_extraction_output.json` — stage 2 / direct fact extraction output
 - `$DATA_DIR/analysis/<stem>_nv_fact_extraction_output.json` — NarrativeView-derived ground truth facts
+- `$DATA_DIR/analysis/<stem>_iac.json` — IAC calculation results
 
-### Extraction scripts
+### Key evaluation scripts
 
-1. `src/core/transforms/report_to_dsl.py` (stage 1)
-  - Extracts line-based DSL facts from a report text file via OpenAI (e.g., `emily needs red potion`, `lily is in room1`).
-  - Intended to be run by both an LLM and a human annotator (~20% of reports) to verify inter-rater reliability via Cohen's Kappa.
-  - Output: `$DATA_DIR/analysis/<stem>_dsl_output.txt`
-2. `src/core/transforms/dsl_to_graph.py` (stage 2)
-  - Converts the line-based DSL output from stage 1 into structured `FactExtraction` JSON via OpenAI.
-  - Can accept a DSL filename, a `reports/` path (resolves the corresponding stage-1 artifact), or an `analysis/` path.
-  - Output: `$DATA_DIR/analysis/<stem>_fact_extraction_output.json`
-3. `src/pipelines/evaluation/precision_recall.py`
+1. `src/pipelines/evaluation/precision_recall.py`
   - Computes precision, recall, F1, and an error breakdown (false positives / false negatives) by comparing two `FactExtraction` JSON files.
   - Usage: `python src/pipelines/evaluation/precision_recall.py <pred.json> <gt.json>`
-  - Paths can be absolute, relative, or bare filenames resolved under `$DATA_DIR/analysis/`.
   - Output: `$DATA_DIR/analysis/<pred_stem>_pr.json`
+2. `src/pipelines/evaluation/calculate_iac.py`
+  - Calculates Information Access Cost (IAC) for a report.
+  - It assesses three components per patient: `location_score` (cost to find the patient), `need_score` (identifying the need), and `resource_score` (cost to find the required potion/NPC).
+  - Usage: `python src/pipelines/evaluation/calculate_iac.py --kg-file <pred_kg.json> --pid <pid> --map-graph <map_graph.json> --output-file <output.json>`
+3. `src/experiments/run_evaluation_pipeline.py`
+  - Orchestrates the full evaluation for a list of PIDs, running extraction and metric calculations.
 
-`src/core/utils/extraction_paths.py` provides shared path-resolution helpers used by the extraction scripts.
+## Visualization: `visualisation/`
+
+We provide several tools to visualize the output of our pipeline:
+
+- `visualisation/vizkg.py`: A terminal-based visualizer for Knowledge Graph JSON files. Supports side-by-side comparison of two graphs.
+  - Usage: `python visualisation/vizkg.py <file1.json> [<file2.json>]`
+- `visualisation/viziac.py`: A terminal-based visualizer for IAC result JSON files, providing a clear breakdown of scores and costs.
+  - Usage: `python visualisation/viziac.py <iac_result.json>`
+- `visualisation/dash_graph_vis.py`: An interactive, web-based visualization tool using Dash and Plotly for exploring complex knowledge graphs.
 
 ## Current focus
 

@@ -24,12 +24,13 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
         - `telemetry_to_graph.py`: Game telemetry -> KG.
         - `report_to_dsl.py`: Report text -> intermediate DSL via LLM.
         - `dsl_to_graph.py`: Parser for intermediate DSL -> KG.
-        
     - `utils/`
         - `extraction_paths.py`: Path helpers for evaluation.
+        - `spatial_reasoning.py`: Helpers for spatial constraints and relative locations.
 
 - `src/experiments/` - Scripts for running the full pipeline or specific variants.
     - `run_full_pipeline_for_pids.py`: Orchestrates the entire model alignment process.
+    - `run_evaluation_pipeline.py`: Orchestrates the full evaluation (extraction + IAC metrics).
     - `generate_reports_raw_ablation.py`: Bypasses graph pipeline for raw LLM comparison.
 
 - `src/pipelines/` - Multi-stage workflows for report generation and evaluation.
@@ -37,29 +38,25 @@ RQ2: Does task-aware filtering in report generation improve the efficiency of in
         - `reconcile_state.py`: Corrects KG state based on event logs.
         - `entity_alignment.py`: Normalizes entities and resolves existentials via LLM.
         - `fact_alignment.py`: Matches facts and identifies conflicts.
-        - `merge_graphs.py`: Consolidates alignment and merging (uses `entity_alignment.py` and `fact_alignment.py`).
+        - `merge_graphs.py`: Consolidates alignment and merging.
         - `craft_narrative_view.py`: Preparing KG for report generation (NarrativeView).
         - `generate_reports.py`: Final report generation using OpenAI API.
     - `evaluation/`
+        - `calculate_iac.py`: Computes Information Access Cost (IAC) based on game state and map graph.
         - `precision_recall.py`: Compares extracted facts against ground truth.
+        - `map_graph.py`: Map graph representation for navigation costs.
 
+- `visualisation/` - Visualization tools for graphs and metrics.
+    - `vizkg.py`: CLI visualizer for Knowledge Graphs (with conflict highlighting).
+    - `viziac.py`: CLI visualizer for IAC results.
+    - `dash_graph_vis.py`: Interactive Dash-based graph visualization.
 
 ## Current focus / Active work
-Updating graph comparison and merging within `merge_graphs.py` (alignment flow):
-report_graph, telemetry_graph
-        │
-        ▼
-[1] Entity normalization       ← deterministic, lookup table
-        │
-        ▼
-[2] Existential resolution     ← LLM call per unresolved existential
-        │                         input: constraints + candidate entities
-        ▼
-[3] Fact matching & diff       ← deterministic
-        │
-        ▼
-[4] Merged graph + ConflictRecords
 
+Developing and refining the automated evaluation pipeline:
+- **IAC Calculation**: Improving the accuracy of cost assessments for different entity types (patients, potions, NPCs).
+- **Visualization**: Enhancing `vizkg.py` and `viziac.py` to provide actionable insights into report quality and pipeline performance.
+- **Large-scale Evaluation**: Running the full pipeline and evaluation across all participant IDs to generate final metrics for the paper.
 
 ## Known constraints / don'ts
 - Don't worry about anything in `unused/` -- that's just in case we need to recover anything from older versions of the project
