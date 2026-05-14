@@ -388,8 +388,22 @@ def _parse_line(line: str):
     # "<entity> is in <room>"  (also covers "player is in <room>")
     m = re.match(r'^(.+?) is in (.+)$', line, re.IGNORECASE)
     if m:
-        entity = _parse_entity(m.group(1))
-        location = _parse_room_location(m.group(2))
+        entity_text = m.group(1).strip()
+        location_text = m.group(2).strip()
+
+        # Handle "X is in inventory" as a RelationFact (HAS_ITEM) instead of LocationFact
+        if location_text.lower() == "inventory":
+            entity = _parse_entity(entity_text)
+            return RelationFact(
+                predicate=RelationPredicate.HAS_ITEM,
+                subject=Argument(type="named", value="player"),
+                object=entity,
+                is_partial=entity.type == "existential",
+                provenance=line,
+            )
+
+        entity = _parse_entity(entity_text)
+        location = _parse_room_location(location_text)
         return LocationFact(
             entity=entity,
             location=location,

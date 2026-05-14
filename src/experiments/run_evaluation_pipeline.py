@@ -55,6 +55,11 @@ def run_evaluation_for_pid(
         print(f"Warning: Telemetry KG not found at {telemetry_kg}. Attempting to generate...")
         _run_step(python_exe, repo_root / "src/core/transforms/telemetry_to_graph.py", [pid], env)
     
+    reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_reconciled_kg.json"
+    if not reconciled_kg.exists():
+        print(f"Warning: Reconciled KG not found at {reconciled_kg}. This is required for AI report P/R.")
+        # Note: We don't auto-generate this here as it requires the full alignment pipeline.
+    
     report_types = ["user_report", "full_realization", "task_aware"]
     
     # Metrics output dirs
@@ -111,8 +116,17 @@ def run_evaluation_for_pid(
 
         # 2. Run Precision/Recall
         pr_output = pr_dir / f"{pid}_{r_type}_pr.json"
-        _run_step(python_exe, repo_root / "src/pipelines/evaluation/precision_recall.py", 
-                  [str(kg_path), str(telemetry_kg), "--output-path", str(pr_output)], env)
+        
+        # Ground Truth for P/R: 
+        # - User report is compared against telemetry (reporting accuracy)
+        # - AI reports are compared against reconciled graph (information survival)
+        gt_kg = telemetry_kg if r_type == "user_report" else reconciled_kg
+        
+        if not gt_kg.exists():
+            print(f"    Error: Ground truth KG {gt_kg} missing. Skipping P/R for {r_type}.")
+        else:
+            _run_step(python_exe, repo_root / "src/pipelines/evaluation/precision_recall.py", 
+                      [str(kg_path), str(gt_kg), "--output-path", str(pr_output)], env)
         
         # 3. Run IAC
         iac_output = iac_dir / f"{pid}_{r_type}_iac.json"

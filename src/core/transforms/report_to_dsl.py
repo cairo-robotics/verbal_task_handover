@@ -51,6 +51,7 @@ If the entity agent is unspecified (e.g., "someone", "a patient", "a potion"), u
 - npcs: someone
 - items: a potion
 - locations: somewhere
+Otherwise, use only the name (e.g. "nick", not "patient nick")
 
 FACT TEMPLATES:
 

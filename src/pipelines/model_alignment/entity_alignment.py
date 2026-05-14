@@ -37,23 +37,7 @@ dotenv.load_dotenv()
 
 log = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Domain alias table
-# ---------------------------------------------------------------------------
-# Maps variants that appear in reporter text → canonical telemetry form.
-# Keys are already *normalised* (lowercase, no underscores/hyphens/spaces).
-# Values are the canonical surface form used in the telemetry graph.
-_ALIAS_TABLE: dict[str, str] = {
-    # Potion colour variants
-    "goldpotion": "gold potion",
-    "redpotion": "red potion",
-    "bluepotion": "blue potion",
-    "greenpotion": "green potion",
-    "purplepotion": "purple potion",
-    "silverpotion": "silver potion",
-    "whitepotion": "white potion",
-    "blackpotion": "black potion",
-}
+from src.core.utils.normalization import normalize_entity_name as _normalize, _ALIAS_TABLE
 
 
 # ---------------------------------------------------------------------------
@@ -117,14 +101,7 @@ class AlignmentResult:
     existential_resolutions: list[ExistentialResolution] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# Normalisation helpers
-# ---------------------------------------------------------------------------
-
-def _normalize(s: str) -> str:
-    """Canonical form: lowercase, strip, remove underscores/hyphens/spaces."""
-    s = s.strip().lower()
-    return "".join(ch for ch in s if ch not in " _-\t\n\r\f\v")
+# Normalization helper _normalize is imported from src.core.utils.normalization
 
 
 def _match_named(report_value: str, telem_by_norm: dict[str, str]) -> str | None:

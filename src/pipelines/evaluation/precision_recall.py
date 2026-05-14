@@ -8,21 +8,15 @@ from typing import Any, Union
 from src.core.representations.pydantic_schema import KnowledgeGraph, Fact, RelationFact, LocationFact, SpatialFact, ConnectionFact
 
 
+from src.core.utils.normalization import normalize_entity_name
+
+
 def _normalize_value(value: str) -> str:
     """
-    Ontology-style normalization to make matching robust across sources.
-
-    Mirrors `narrative_view_to_fact_extraction._normalize_value`:
-    - lowercase
-    - spaces -> underscores
-    - collapse non [a-z0-9_] to underscores
-    - collapse repeated underscores
-    - strip underscores
+    Robust normalization to make matching robust across sources.
+    Lowercase, removes spaces/underscores/hyphens.
     """
-    s = value.strip().lower().replace(" ", "_")
-    s = re.sub(r"[^a-z0-9_]+", "_", s)
-    s = re.sub(r"_+", "_", s).strip("_")
-    return s
+    return normalize_entity_name(value)
 
 def load_facts(path: str) -> list[Fact]:
     """

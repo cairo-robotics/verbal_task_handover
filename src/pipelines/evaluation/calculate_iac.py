@@ -25,6 +25,7 @@ from src.pipelines.evaluation.costs import (
 from src.pipelines.evaluation.map_graph import load_transitions
 from src.pipelines.evaluation.report_iac import IACResult, EntityScore, ComponentScore, CreditType
 from src.core.utils.spatial_reasoning import is_location_satisfying_constraint, ConnectionFact
+from src.core.utils.normalization import normalize_entity_name
 
 from treasure_hunt.src.game_mdp import GameState
 
@@ -64,8 +65,8 @@ def _get_all_rooms(map_graph: KnowledgeGraph) -> set[str]:
     return rooms
 
 def _normalize_room(room: str) -> str:
-    """Removes spaces from room names for consistency."""
-    return room.replace(" ", "")
+    """Robustly normalizes room names for consistency."""
+    return normalize_entity_name(room)
 
 def _describe_fact(fact: Fact) -> str:
     """Returns a compact, human-readable string for a Fact."""
@@ -123,12 +124,12 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
     for room, objs in ground_truth._objects.items():
         for name in objs:
             entity_rooms[name] = room
-            # Also register the space-normalized form for potion names
-            normalized = name.replace("_", " ")
+            # Also register the normalized form (removing underscores/spaces)
+            normalized = normalize_entity_name(name)
             if normalized != name:
                 entity_rooms[normalized] = room
             
-    true_room = entity_rooms.get(target_name)
+    true_room = entity_rooms.get(target_name) or entity_rooms.get(normalize_entity_name(target_name))
     gt_fact_str = f"LocationFact: {target_name} in {true_room}" if true_room else f"(no ground truth room found for {target_name})"
 
     # 2. Get all rooms for max_cost and normalization
@@ -151,7 +152,7 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
         elif arg.type == "existential":
             if not arg.location:
                 return True # Unconstrained existential matches everything
-            cand_room = entity_rooms.get(candidate_name)
+            cand_room = entity_rooms.get(candidate_name) or entity_rooms.get(normalize_entity_name(candidate_name))
             if not cand_room:
                 return False
             return is_location_satisfying_constraint(cand_room, arg.location, map_graph, "room 0")
@@ -370,7 +371,7 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
     for room, objs in ground_truth._objects.items():
         for name in objs:
             entity_rooms[name] = room
-            normalized = name.replace("_", " ")
+            normalized = normalize_entity_name(name)
             if normalized != name:
                 entity_rooms[normalized] = room
 
@@ -386,16 +387,18 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
         elif arg.type == "existential":
             if not arg.location:
                 return "possible"  # Unconstrained existential — could be anyone
-            target_room = entity_rooms.get(target_name)
+            target_room = entity_rooms.get(target_name) or entity_rooms.get(normalize_entity_name(target_name))
             if not target_room:
                 return "none"
             if not is_location_satisfying_constraint(target_room, arg.location, map_graph, "room 0"):
                 return "none"
-            # Target satisfies — check if any other patient also does
+            def _get_room(name):
+                return entity_rooms.get(name) or entity_rooms.get(normalize_entity_name(name))
+            
             others_satisfy = any(
                 p != target_name
-                and entity_rooms.get(p)
-                and is_location_satisfying_constraint(entity_rooms[p], arg.location, map_graph, "room 0")
+                and _get_room(p)
+                and is_location_satisfying_constraint(_get_room(p), arg.location, map_graph, "room 0")
                 for p in all_patient_names
             )
             return "possible" if others_satisfy else "definite"
@@ -443,7 +446,7 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
                 return None  # Possible subject + wrong resource — can't call it a contradiction
 
         elif f_other.type == "existential":
-            g_other_room = entity_rooms.get(g_other.value) if g_other.type == "named" else None
+            g_other_room = entity_rooms.get(g_other.value) or entity_rooms.get(normalize_entity_name(g_other.value)) if g_other.type == "named" else None
             is_satisfied = not f_other.location  # unconstrained existential always satisfies
             if not is_satisfied and g_other_room:
                 is_satisfied = is_location_satisfying_constraint(
