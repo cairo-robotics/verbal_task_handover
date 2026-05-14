@@ -28,25 +28,26 @@ Do not infer information not explicitly present.
 """
 
 FULL_REALIZATION_USER_PROMPT = Template("""
-Generate a clear and well-structured handoff report based on the structured state below.
+Generate a detailed and exhaustive handoff report for a teammate who will continue the task. 
 
-The report should include sections for:
-- Current Player Status
-- NPC Patients and Their Needs
-- Items and Potions
-- Message Requests and Responses
-- Explored Locations
-- Any Unresolved Inconsistencies
+Include ALL known information from the provided state, including:
+- Current player status (location, inventory)
+- All NPC patients and their specific needs
+- All explored locations and any interesting findings there
+- Any pending message delivery tasks (requests or responses)
+- Any unanchored or directional facts that haven't been resolved yet
+- Any unresolved inconsistencies or conflicts
 
-All information in the structured state must be included somewhere in the report.
-Use complete sentences and natural language.
+Do not add new facts.
+Do not summarize aggressively. 
+Include specific room names and NPC names.
 
 Structured state:
 $narrativeview
 """)
 
 TASK_AWARE_SYSTEM_PROMPT = """
-You are generating a handoff report for a teammate who will continue the task.
+You are generating a task-focused handoff report for a teammate who will continue the task.
 
 The primary objective of the task is to fulfill the needs of NPC patients by:
 - Delivering required potions
@@ -55,16 +56,17 @@ The primary objective of the task is to fulfill the needs of NPC patients by:
 
 Your report should prioritize information that is relevant to completing this objective.
 
-You may briefly mention other explored information if useful for context, but you should emphasize:
-- Which patients still need potions
-- Which messages are pending delivery (omit if none)
-- Which responses need to be returned (omit if none)
-- What items are currently held that are relevant to patient needs (omit if none)
-- The player’s current location relative to relevant NPCs
+You MUST include the names and current locations of all NPCs involved in outstanding tasks. This includes:
+- Patients who still need potions.
+- Patients whose requests are currently in your inventory.
+- NPCs who need to receive a message or provide a response.
+- Patients who are waiting for a response that you currently hold.
 
+If there are "unanchored facts" describing needs (e.g., "someone to the east needs a red potion"), include them in your report, even if they aren't linked to a specific NPC name or room yet.
+
+Briefly mention other explored information only if useful for context. Do not omit the names or locations of task-relevant NPCs.
 Do not introduce new facts.
 Do not speculate about information not present in the structured state.
-Do not invent strategies beyond what can be logically inferred from the data.
 """
 
 TASK_AWARE_USER_PROMPT = Template("""
@@ -73,15 +75,15 @@ Generate a concise and task-focused handoff report for a teammate.
 The goal is to fulfill NPC patient needs (potions and message delivery).
 
 Prioritize:
-- Outstanding patient needs
-- Pending requests and responses (omit if none)
-- Relevant inventory items (omit if none)
-- NPC locations relevant to completing tasks
+- Outstanding patient needs (identify NPC by name and room).
+- Pending requests and responses (identify who they are from and who they are for).
+- NPC locations relevant to completing these tasks.
+- Relevant inventory items.
+- Vague or directional needs (from the "unanchored_facts" section) that haven't been linked to a specific person yet.
 
-De-emphasize or briefly summarize information that is not directly relevant to patient care.
+De-emphasize or briefly summarize information that is not directly connected to any unfulfilled objective (e.g., characters who don't need anything and have no pending messages).
 
-Do not omit critical task-relevant information.
-Do not add new facts.
+CRITICAL: Always include the specific NPC name and their location for every outstanding task. Do not just refer to "rooms" or "patients" generically.
 
 Structured state:
 $narrativeview

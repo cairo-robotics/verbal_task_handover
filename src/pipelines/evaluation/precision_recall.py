@@ -47,7 +47,7 @@ def canonicalize_fact(fact: Fact) -> tuple:
     fact_type = fact.__class__.__name__
     
     # Convert to dict and exclude metadata
-    data = fact.model_dump(exclude={"id", "provenance"})
+    data = fact.model_dump(exclude={"id", "provenance", "source"})
     
     # Recursively canonicalize the dictionary
     attributes = _canonicalize_item(data)
@@ -190,9 +190,13 @@ def main() -> None:
 
     pred_path = resolve_path(args.pred_path)
     gt_path = resolve_path(args.gt_path)
-    
+
     pred_facts = load_facts(pred_path)
     gold_facts = load_facts(gt_path)
+
+    # Exclude ConnectionFacts from evaluation as they are often omitted from narrative reports
+    pred_facts = [f for f in pred_facts if not isinstance(f, ConnectionFact)]
+    gold_facts = [f for f in gold_facts if not isinstance(f, ConnectionFact)]
     metrics = compute_precision_recall(pred_facts, gold_facts)
 
     metrics = add_f1(metrics)

@@ -47,7 +47,8 @@ class ConflictSummary(BaseModel):
 class NarrativeView(BaseModel):
     player_state: PlayerState
     world_state: WorldState
-    unresolved_conflicts: List[ConflictSummary]
+    unresolved_conflicts: List[str]
+    unanchored_facts: List[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -144,19 +145,26 @@ def _get_player_location(
 
 def _build_requirements_by_character(
     facts: List[Fact],
+    player_id: str,
 ) -> Dict[str, List[str]]:
     requirements: Dict[str, List[str]] = defaultdict(list)
+    
+    # 1. Direct requirements from NEEDS_POTION and HAS_MESSAGE_FOR
     for fact in facts:
         if not isinstance(fact, RelationFact):
             continue
             
         if fact.predicate == RelationPredicate.NEEDS_POTION:
             if fact.subject.value and fact.object and fact.object.value:
-                requirements[fact.subject.value].append(fact.object.value)
+                requirements[fact.subject.value].append(f"needs {fact.object.value}")
         elif fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
             # Message/request entity is subject; recipient agent is target
             if fact.target and fact.target.value and fact.subject.value:
-                requirements[fact.target.value].append(fact.subject.value)
+                requirements[fact.target.value].append(f"needs delivery of {fact.subject.value}")
+
+    # 2. Inferred requirements from inventory requests (e.g. "request from room 1")
+    # We associate these with the ROOM name for now, or we can resolve to character later.
+    # Actually, we'll just add them to the requirements of anyone in that room during the room loop.
     return requirements
 
 def _build_characters_by_room(
@@ -346,11 +354,11 @@ def craft_narrative_view(
     if not graph.facts:
         player_state = PlayerState(inventory=[], current_location="")
         world_state = WorldState(rooms=[])
-        unresolved_conflicts: List[ConflictSummary] = []
         return NarrativeView(
             player_state=player_state,
             world_state=world_state,
-            unresolved_conflicts=unresolved_conflicts,
+            unresolved_conflicts=[],
+            unanchored_facts=[],
         )
 
     entities = _get_all_entities(graph.facts)
@@ -363,28 +371,35 @@ def craft_narrative_view(
         current_location=current_location,
     )
 
-    requirements_by_character = _build_requirements_by_character(graph.facts)
+    requirements_by_character = _build_requirements_by_character(graph.facts, player_id)
     characters_by_room = _build_characters_by_room(entities, graph.facts)
     items_by_room = _build_items_by_room(entities, graph.facts)
     connections_by_room = _build_connections_by_room(graph.facts)
-    interaction_history_by_character = _build_interaction_history_by_character(
-        graph.facts
-    )
+
+    # Pre-calculate which rooms have requests in inventory to mark NPCs as relevant
+    rooms_with_inventory_requests = set()
+    for item in inventory:
+        lower_item = item.lower()
+        if "request from" in lower_item:
+            # Try to extract room name: "request from room 1" -> "room 1"
+            room_name = lower_item.split("request from")[-1].strip()
+            rooms_with_inventory_requests.add(room_name)
 
     room_views: List[RoomView] = []
     for room_id, etype in entities.items():
         if etype != "location":
             continue
 
-        room_connections = connections_by_room.get(room_id, [])
         character_ids = characters_by_room.get(room_id, [])
+        
+        char_requirements = []
+        if room_id.lower() in rooms_with_inventory_requests:
+            char_requirements.append(f"outstanding request from {room_id}")
+
         characters_present = [
             CharacterView(
                 name=char_id,
-                # interaction_history=interaction_history_by_character.get(
-                #     char_id, []
-                # ),
-                requirements=requirements_by_character.get(char_id, []),
+                requirements=requirements_by_character.get(char_id, []) + char_requirements,
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_character(
                     char_id, player_id, graph.facts
                 ),
@@ -397,7 +412,6 @@ def craft_narrative_view(
         room_views.append(
             RoomView(
                 name=room_id,
-                # connected_to=room_connections,
                 characters_present=characters_present,
                 items_present=items_present,
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_room(
@@ -406,13 +420,33 @@ def craft_narrative_view(
             )
         )
 
-    world_state = WorldState(rooms=room_views)
-    unresolved_conflicts = _build_conflict_summaries(graph.conflicts)
+    # Identify unanchored/directional facts to include globally
+    unanchored_facts = []
+    for fact in graph.facts:
+        if isinstance(fact, RelationFact):
+            # If subject or target is directional/existential and not anchored to a room
+            subject_loc = fact.subject.location
+            is_unanchored = False
+            if subject_loc and subject_loc.type == "directional":
+                is_unanchored = True
+            elif fact.subject.type == "existential" and not subject_loc:
+                is_unanchored = True
+            
+            if is_unanchored:
+                unanchored_facts.append(str(fact))
+        elif isinstance(fact, SpatialFact):
+            # Spatial facts about items/entities that aren't in a specific room
+            if fact.type == "absolute":
+                unanchored_facts.append(str(fact))
+        elif isinstance(fact, LocationFact):
+            if fact.location and fact.location.type == "directional":
+                unanchored_facts.append(str(fact))
 
     return NarrativeView(
         player_state=player_state,
-        world_state=world_state,
-        unresolved_conflicts=unresolved_conflicts,
+        world_state=WorldState(rooms=room_views),
+        unresolved_conflicts=[str(c) for c in graph.conflicts],
+        unanchored_facts=unanchored_facts,
     )
 
 

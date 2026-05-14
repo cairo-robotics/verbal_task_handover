@@ -70,23 +70,46 @@ player is in <room>
 <entity> is <direction> of <entity>
 
 # Inventory
-player has <item>
-
+player has <item> (for items in player inventory)
 
 If the agent is unspecified (e.g., "someone", "a patient"), use:
 
-someone needs <potion_color> potion
-someone has a message for someone
-
-If a location constraint is given, include it:
-
-someone to the <direction> needs <potion_color> potion
+someone to the <direction> needs a <potion_color> potion
+someone needs a <potion_color> potion
+someone has a message for <npc or someone>
+<item> is to the <direction>
+<entity> is in <location>
 
 Do not infer specific agents, locations, or objects.
 
 ---
 
 EXAMPLE 1:
+
+INPUT:
+"**Outstanding Patient Needs:**
+1. **Guy** - Location: **Room 5**  
+   - Needs: Orange potion
+2. **Marie** - Location: **Room 4**  
+   - Outstanding request
+
+**Vague or Directional Needs:**
+1. Someone to the east needs a red potion.
+2. Someone to the east needs a green potion.
+3. Teal potion is to the south."
+
+OUTPUT:
+guy needs a orange potion
+guy is in room 5
+marie has a message for someone
+marie is in room 4
+someone to the east needs a red potion
+someone to the east needs a green potion
+teal potion is to the south
+
+---
+
+EXAMPLE 2:
 
 INPUT:
 "Northwest Room (Room 1) needs the gold potion
@@ -111,7 +134,8 @@ guy is in room 5
 room 5 needs a potion
 
 ---
-EXAMPLE 2:
+
+EXAMPLE 3:
 
 INPUT:
 "You have to assist with delivering potions and messages from certain people. I have done some of it. These are the things you need to finish for me and there are some more that I do not remember.

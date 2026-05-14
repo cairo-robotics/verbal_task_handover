@@ -12,9 +12,11 @@ from src.core.representations.pydantic_schema import (
 
 def get_entity_location(graph: KnowledgeGraph, entity_name: str) -> Optional[str]:
     """Find the room name where an entity is located in the graph."""
+    from src.core.utils.normalization import normalize_entity_name
+    entity_norm = normalize_entity_name(entity_name)
     for fact in graph.facts:
         if isinstance(fact, LocationFact):
-            if fact.entity.type == "named" and fact.entity.value == entity_name:
+            if fact.entity.type == "named" and normalize_entity_name(fact.entity.value) == entity_norm:
                 if fact.location.type == "room":
                     return fact.location.room
     return None
@@ -26,8 +28,10 @@ def is_location_satisfying_constraint(
     reference_room: str = "room 0"
 ) -> bool:
     """Check if a room satisfies a location constraint (e.g. 'room 1' or 'west')."""
+    from src.core.utils.normalization import normalize_entity_name
+    
     if constraint.type == "room":
-        return target_room == constraint.room
+        return normalize_entity_name(target_room) == normalize_entity_name(constraint.room)
     
     if constraint.type == "directional" and constraint.directions:
         return is_room_in_direction(graph, target_room, reference_room, constraint.directions)
@@ -45,8 +49,13 @@ def is_room_in_direction(
     Uses ConnectionFacts and SpatialFacts to find the shortest path.
     Returns True if expected_directions is a prefix of the shortest path.
     """
-    if target_room == source_room:
-        return not expected_directions # Empty path matches same room? Or False? Usually False if constraint exists.
+    from src.core.utils.normalization import normalize_entity_name
+    
+    target_norm = normalize_entity_name(target_room)
+    source_norm = normalize_entity_name(source_room)
+    
+    if target_norm == source_norm:
+        return not expected_directions
         
     # Build adjacency map: source -> list of (target, direction)
     adj: Dict[str, List[Tuple[str, Direction]]] = {}
@@ -64,8 +73,8 @@ def is_room_in_direction(
 
     for fact in graph.facts:
         if isinstance(fact, ConnectionFact):
-            u = fact.location_a.room
-            v = fact.location_b.room
+            u = normalize_entity_name(fact.location_a.room) if fact.location_a.room else None
+            v = normalize_entity_name(fact.location_b.room) if fact.location_b.room else None
             d = fact.direction
             if u and v and d:
                 adj.setdefault(u, []).append((v, d))
@@ -76,8 +85,8 @@ def is_room_in_direction(
             if fact.type == SpatialRelationType.RELATIVE:
                 if (fact.subject.type == "named" and fact.subject.value and 
                     fact.reference and fact.reference.type == "named" and fact.reference.value):
-                    u = fact.reference.value
-                    v = fact.subject.value
+                    u = normalize_entity_name(fact.reference.value)
+                    v = normalize_entity_name(fact.subject.value)
                     d = fact.direction
                     adj.setdefault(u, []).append((v, d))
                     # Add reverse edge
@@ -85,14 +94,13 @@ def is_room_in_direction(
                         adj.setdefault(v, []).append((u, opposite[d]))
 
     # BFS to find shortest path of directions
-    # queue stores (current_room, direction_path_so_far)
-    visited = {source_room}
-    queue = [(source_room, [])]
+    visited = {source_norm}
+    queue = [(source_norm, [])]
     
     while queue:
         curr, path = queue.pop(0)
         
-        if curr == target_room:
+        if curr == target_norm:
             # Check if expected_directions is a prefix of path
             if len(expected_directions) > len(path):
                 return False
