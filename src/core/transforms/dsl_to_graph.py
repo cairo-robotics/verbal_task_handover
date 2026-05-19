@@ -431,7 +431,9 @@ def _parse_line(line: str):
             )
         d = _parse_direction(dir_text)
         if d is None:
-            raise ValueError(f"Unknown direction {dir_text!r}")
+            # raise ValueError(f"Unknown direction {dir_text!r}")
+            print(f"Unknown direction {dir_text!r}")
+            return None
         return SpatialFact(
             type=SpatialRelationType.ABSOLUTE,
             subject=entity,

@@ -146,24 +146,34 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
     # 3. Filter facts about this entity
     entity_facts = []
     
-    def resolves_to(arg: Argument, candidate_name: str) -> bool:
+    def resolves_to(arg: Argument, candidate_name: str, explicit_location: Location = None, ref_room: str = "room 0") -> bool:
         if arg.type == "named":
             return arg.value == candidate_name
         elif arg.type == "existential":
-            if not arg.location:
+            loc_constraint = arg.location or explicit_location
+            if not loc_constraint:
                 return True # Unconstrained existential matches everything
             cand_room = entity_rooms.get(candidate_name) or entity_rooms.get(normalize_entity_name(candidate_name))
             if not cand_room:
                 return False
-            return is_location_satisfying_constraint(cand_room, arg.location, map_graph, "room 0")
+            return is_location_satisfying_constraint(cand_room, loc_constraint, map_graph, ref_room)
         return False
 
     for fact in fact_set:
         if isinstance(fact, LocationFact):
-            if fact.entity.type == "named" and fact.entity.value == target_name:
+            if resolves_to(fact.entity, target_name, explicit_location=fact.location):
                 entity_facts.append(fact)
         elif isinstance(fact, SpatialFact):
-            if fact.subject.type == "named" and fact.subject.value == target_name:
+            spatial_loc = Location(
+                type="directional",
+                directions=[fact.direction],
+                mode="path"
+            )
+            ref_room = "room 0"
+            if fact.type == SpatialRelationType.RELATIVE and fact.reference and fact.reference.type == "named":
+                ref_room = fact.reference.value
+                
+            if resolves_to(fact.subject, target_name, explicit_location=spatial_loc, ref_room=ref_room):
                 entity_facts.append(fact)
         elif isinstance(fact, RelationFact):
             # Check if subject or target refers to our entity and has a location constraint

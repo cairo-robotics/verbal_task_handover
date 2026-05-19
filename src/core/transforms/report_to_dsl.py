@@ -67,7 +67,6 @@ message delivered from <npc> to <npc>
 player is in <room>
 <entity> is in <room>
 <entity> is to the <direction>
-<entity> is <direction> of <entity>
 
 # Inventory
 player has <item> (for items in player inventory)
