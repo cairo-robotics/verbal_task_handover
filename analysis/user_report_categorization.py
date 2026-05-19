@@ -31,7 +31,8 @@ unclear. Use for hedged location claims, strategic claims that
 imply state, or anything you can't cleanly assign.
 
 M — Meta/Other: About the report or the player's experience rather 
-than the task. Includes confidence hedges, apologies, filler.
+than the task. Includes confidence hedges, apologies, comments about 
+the task framework, and filler.
 
 ## Instructions
 
@@ -73,8 +74,7 @@ Output:
     {
       "text": "Focus on the west side first.",
       "label": "K",
-      "justification": "Strategic priority based on player 
-        experience, not a state fact."
+      "justification": "Strategic priority based on player experience, not a state fact."
     },
     {
       "text": "I already cleared the east rooms and there's 
@@ -94,7 +94,7 @@ Output:
     {
       "text": "Tutorial is basic.",
       "label": "M",
-      "justification": "Comment about the tutorial, not the task"
+      "justification": "Comment about the task framework (not a claim about strategy or the state of the game)"
     }
   ]
 }
@@ -134,10 +134,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Categorize a user report using ChatGPT 4o-mini."
     )
+    # parser.add_argument(
+    #     "report_filename",
+    #     help="Input report file name (e.g., 'user1_report.txt').",
+    # )
     parser.add_argument(
-        "report_filename",
-        help="Input report file name (e.g., 'user1_report.txt').",
+        "pids",
+        nargs="*",
+        help="Participant IDs (e.g. 302 303).",
     )
+
     parser.add_argument(
         "--data-dir",
         help="Path to DATA_DIR. Defaults to DATA_DIR env variable.",
@@ -151,27 +157,28 @@ def main() -> None:
         print("Error: DATA_DIR must be provided via --data-dir or environment variable.", file=sys.stderr)
         sys.exit(1)
         
-    input_path = os.path.join(data_dir, "reports", args.report_filename)
-    if not os.path.isfile(input_path):
-        print(f"Error: input file not found: {input_path}", file=sys.stderr)
-        sys.exit(1)
+    for pid in args.pids:
+        report_filename = f"{pid}_user_report.txt"
+        input_path = os.path.join(data_dir, "reports", report_filename)
+        if not os.path.isfile(input_path):
+            print(f"Error: input file not found: {input_path}", file=sys.stderr)
+            sys.exit(1)
         
-    with open(input_path, "r", encoding="utf-8") as f:
-        report_text = f.read()
+        with open(input_path, "r", encoding="utf-8") as f:
+            report_text = f.read()
+            
+        print(f"Processing report: {input_path}...")
+        result = call_chatgpt(report_text)
         
-    print(f"Processing report: {input_path}...")
-    result = call_chatgpt(report_text)
-    
-    output_dir = os.path.join(data_dir, "analysis", "content_categorization")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    base_name = os.path.splitext(args.report_filename)[0]
-    output_path = os.path.join(output_dir, f"{base_name}_categorization.json")
-    
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(result.model_dump_json(indent=2))
+        output_dir = os.path.join(data_dir, "analysis", "content_categorization")
+        os.makedirs(output_dir, exist_ok=True)
         
-    print(f"Categorization saved to {output_path}")
+        output_path = os.path.join(output_dir, f"{pid}_categorization.json")
+        
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(result.model_dump_json(indent=2))
+            
+        print(f"Categorization saved to {output_path}")
 
 if __name__ == "__main__":
     main()
