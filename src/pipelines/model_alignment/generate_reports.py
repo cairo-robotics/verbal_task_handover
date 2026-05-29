@@ -77,13 +77,9 @@ The goal is to fulfill NPC patient needs (potions and message delivery).
 Prioritize:
 - Outstanding patient needs (identify NPC by name and room).
 - Pending requests and responses (identify who they are from and who they are for).
-- NPC locations relevant to completing these tasks.
-- Relevant inventory items.
-- Vague or directional needs (from the "unanchored_facts" section) that haven't been linked to a specific person yet.
+- NPC and item locations relevant to completing these tasks.
 
-De-emphasize or briefly summarize information that is not directly connected to any unfulfilled objective (e.g., characters who don't need anything and have no pending messages).
-
-CRITICAL: Always include the specific NPC name and their location for every outstanding task. Do not just refer to "rooms" or "patients" generically.
+De-emphasize or omit information that is not relevant to completing the task, such as irrelevant spatial information, or past actions that do not affect current objectives.
 
 Structured state:
 $narrativeview
@@ -106,7 +102,8 @@ def call_chatgpt(prompt: str, user_prompt: Template, narrative_view: NarrativeVi
     client = OpenAI()
     user_content = user_prompt.substitute(narrativeview=narrative_view.model_dump_json(indent=2))
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        # model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         temperature=0,
         messages=[
             {"role": "system", "content": prompt},
@@ -130,12 +127,6 @@ def main() -> None:
             "or path to a NarrativeView .json file."
         ),
     )
-    # parser.add_argument(
-    #     "-o",
-    #     "--output",
-    #     metavar="FILE",
-    #     help="Write the model response to FILE instead of stdout.",
-    # )
     parser.add_argument(
         "--prompt-set",
         choices=("full_realization", "task_aware", "both"),

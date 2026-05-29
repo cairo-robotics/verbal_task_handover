@@ -46,6 +46,7 @@ def run_evaluation_for_pid(
     *,
     data_dir: str,
     python_exe: str,
+    use_human_dsl: bool = False,
 ) -> None:
     env = {**os.environ, "DATA_DIR": data_dir}
     repo_root = Path(__file__).resolve().parent.parent.parent
@@ -86,18 +87,29 @@ def run_evaluation_for_pid(
             
             if not kg_path:
                 print(f"    Warning: No KG found for user_report. Attempting to generate...")
-                report_file = f"{pid}_user_report.txt"
-                if not (Path(data_dir) / "reports" / report_file).exists():
-                    print(f"    Error: {report_file} not found. Skipping user_report.")
-                    continue
                 
-                # Generate DSL
-                _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
-                # Generate KG (using extraction_paths default)
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
-                _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
-                          [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
+                if use_human_dsl:
+                    dsl_path = Path(data_dir) / "annotations" / f"{pid}_user_report_dsl.txt"
+                    if not dsl_path.exists():
+                        print(f"    Error: {dsl_path} not found. Skipping user_report.")
+                        continue
+                    
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
+                    _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
+                              [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
+                else:
+                    report_file = f"{pid}_user_report.txt"
+                    if not (Path(data_dir) / "reports" / report_file).exists():
+                        print(f"    Error: {report_file} not found. Skipping user_report.")
+                        continue
+                    
+                    # Generate DSL
+                    _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
+                    # Generate KG (using extraction_paths default)
+                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
+                    _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
+                              [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
         else:
             # AI reports: full_realization, task_aware
             report_file = f"{pid}_{r_type}_report.txt"
@@ -159,6 +171,11 @@ def main() -> None:
         action="store_true",
         help="Process remaining pids after a failure; exit non-zero if any pid failed.",
     )
+    parser.add_argument(
+        "--use-human-dsl",
+        action="store_true",
+        help="Use human-written DSL from $DATA_DIR/annotations instead of generating it.",
+    )
     args = parser.parse_args()
 
     data_dir = args.data_dir or os.environ.get("DATA_DIR")
@@ -176,6 +193,7 @@ def main() -> None:
                 pid,
                 data_dir=data_dir,
                 python_exe=python_exe,
+                use_human_dsl=args.use_human_dsl,
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"Error for pid {pid}: {e}", file=sys.stderr, flush=True)

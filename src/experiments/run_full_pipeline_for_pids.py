@@ -55,27 +55,42 @@ def run_pipeline_for_pid(
     data_dir: str,
     prompt_set: str,
     python_exe: str,
+    use_human_dsl: bool = False,
 ) -> None:
     env = {**os.environ, "DATA_DIR": data_dir}
     repo_root = Path(__file__).resolve().parent.parent.parent
     
-    # Standard naming:
-    # Telemetry KG: <pid>_telemetry_to_kg.json
-    # DSL: processed_output/dsl/<pid>_user_report_dsl.txt
-    # DSL KG: <pid>_dsl_to_kg.json
     
-    dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
-    dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+    if use_human_dsl:
+        dsl_source_path = Path(data_dir) / "annotations" / "dsl" / f"kb_annotated_{pid}_user_report.txt"
+        dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+        
+        scripts = [
+            (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
+            (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_source_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
+            (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", prompt_set]),
+        ]
+    else:
+        # Standard naming:
+        # Telemetry KG: <pid>_telemetry_to_kg.json
+        # DSL: processed_output/dsl/<pid>_user_report_dsl.txt
+        # DSL KG: <pid>_dsl_to_kg.json
+        
+        dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
+        dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
 
-    scripts = [
-        (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
-        (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
-        (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
-        (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
-        (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
-        (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
-        (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", prompt_set]),
-    ]
+        scripts = [
+            (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
+            (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
+            (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
+            (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+            (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", prompt_set]),
+        ]
     
     for path, args in scripts:
         if not path.is_file():
@@ -115,6 +130,11 @@ def main() -> None:
         help="Process remaining pids after a failure; exit non-zero if any pid failed.",
     )
     parser.add_argument(
+        "--use-human-dsl",
+        action="store_true",
+        help="Use human-written DSL from $DATA_DIR/annotations instead of generating it.",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print steps only; do not run subprocesses.",
@@ -135,18 +155,30 @@ def main() -> None:
             if args.dry_run:
                 # Mock run to show what would happen, using the same logic as run_pipeline_for_pid
                 repo_root = Path(__file__).resolve().parent.parent.parent
-                dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
-                dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
-                
-                scripts = [
-                    (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
-                    (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
-                    (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
-                    (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
-                    (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
-                    (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
-                    (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", args.prompt_set]),
-                ]
+                if args.use_human_dsl:
+                    dsl_source_path = Path(data_dir) / "annotations" / f"{pid}_user_report_dsl.txt"
+                    dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+                    scripts = [
+                        (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
+                        (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_source_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
+                        (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", args.prompt_set]),
+                    ]
+                else:
+                    dsl_output_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
+                    dsl_kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json"
+                    
+                    scripts = [
+                        (repo_root / "src/core/transforms/telemetry_to_graph.py", [pid]),
+                        (repo_root / "src/core/transforms/report_to_dsl.py", [f"{pid}_user_report.txt"]),
+                        (repo_root / "src/core/transforms/dsl_to_graph.py", [str(dsl_output_path.relative_to(data_dir)), "--output", str(dsl_kg_path)]),
+                        (repo_root / "src/pipelines/model_alignment/merge_graphs.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/reconcile_state.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/craft_narrative_view.py", [pid]),
+                        (repo_root / "src/pipelines/model_alignment/generate_reports.py", [pid, "--prompt-set", args.prompt_set]),
+                    ]
                 for path, step_args in scripts:
                     cmd = [python_exe, str(path)] + step_args
                     print(f"  (dry-run) {' '.join(cmd)}", flush=True)
@@ -156,6 +188,7 @@ def main() -> None:
                     data_dir=data_dir,
                     prompt_set=args.prompt_set,
                     python_exe=python_exe,
+                    use_human_dsl=args.use_human_dsl,
                 )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"Error for pid {pid}: {e}", file=sys.stderr, flush=True)

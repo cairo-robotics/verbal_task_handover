@@ -26,7 +26,7 @@ class RoomConnection(BaseModel):
 
 class CharacterView(BaseModel):
     name: str
-    # interaction_history: List[str]
+    interaction_history: List[str] = Field(default_factory=list)
     requirements: List[str]
     miscellaneous_state_relations: List[str] = Field(default_factory=list)
 
@@ -217,11 +217,21 @@ def _build_items_by_room(
     return items_by_room
 
 def _format_relation_fact(fact: RelationFact) -> str:
+    if fact.predicate == RelationPredicate.POTION_DELIVERED:
+        potion_name = fact.object.value if fact.object and fact.object.value else "a potion"
+        target_name = fact.subject.value if fact.subject and fact.subject.value else "someone"
+        return f"player delivered {potion_name} to {target_name}"
+        
+    if fact.predicate == RelationPredicate.MESSAGE_DELIVERED:
+        sender_name = fact.subject.value if fact.subject and fact.subject.value else "someone"
+        target_name = fact.target.value if fact.target and fact.target.value else "someone"
+        return f"player delivered message from {sender_name} to {target_name}"
+
     parts = [fact.subject.value or "someone", fact.predicate.value]
     if fact.object:
         parts.append(fact.object.value or "something")
     if fact.target:
-        parts.append(f"{fact.target.value or 'someone'}")
+        parts.append(f"to {fact.target.value or 'someone'}")
     return " ".join(parts)
 
 def _miscellaneous_state_relations_for_room(
@@ -287,7 +297,6 @@ def _build_interaction_history_by_character(
         if fact.target and fact.target.value: participants.append(fact.target.value)
 
         summary = _format_relation_fact(fact)
-        
         for p_id in set(participants):
             history[p_id].append(summary)
 
@@ -375,6 +384,7 @@ def craft_narrative_view(
     characters_by_room = _build_characters_by_room(entities, graph.facts)
     items_by_room = _build_items_by_room(entities, graph.facts)
     connections_by_room = _build_connections_by_room(graph.facts)
+    interaction_history_by_character = _build_interaction_history_by_character(graph.facts)
 
     # Pre-calculate which rooms have requests in inventory to mark NPCs as relevant
     rooms_with_inventory_requests = set()
@@ -399,6 +409,7 @@ def craft_narrative_view(
         characters_present = [
             CharacterView(
                 name=char_id,
+                interaction_history=interaction_history_by_character.get(char_id, []),
                 requirements=requirements_by_character.get(char_id, []) + char_requirements,
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_character(
                     char_id, player_id, graph.facts

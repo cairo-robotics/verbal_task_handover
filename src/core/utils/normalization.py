@@ -19,10 +19,32 @@ def normalize_entity_name(s: str) -> str:
     """
     Robustly normalizes an entity or location name for comparison.
     Lowercase, stripped, and removes all spaces, underscores, and hyphens.
+    Also strips leading articles, maps word numbers to digits, and cleans room references.
     """
     if not s:
         return ""
     s = s.strip().lower()
+    
+    # 1. Strip leading articles (a, an, the)
+    s = re.sub(r"^(?:a|an|the)\b\s*", "", s)
+    
+    # 2. Map word numbers to digits
+    num_map = {
+        "zero": "0",
+        "one": "1",
+        "two": "2",
+        "three": "3",
+        "four": "4",
+        "five": "5"
+    }
+    for word, digit in num_map.items():
+        s = re.sub(rf"\b{word}\b", digit, s)
+        
+    # 3. Strip word "room" when accompanied by storage/lounge/hallway
+    for word in ["storage", "lounge", "hallway"]:
+        if word in s and "room" in s:
+            s = s.replace("room", "")
+            
     return "".join(ch for ch in s if ch not in " _-\t\n\r\f\v")
 
 def canonicalize_entity_name(s: str) -> str:

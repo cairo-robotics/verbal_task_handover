@@ -234,6 +234,7 @@ def _parse_directional_location(dir_text: str) -> Optional[Location]:
     ("west-then-north", "north-and-east").
     """
     dir_text = dir_text.strip().lower()
+    dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
     if "-then-" in dir_text:
         parts = [p.strip() for p in dir_text.split("-then-")]
         dirs = [_parse_direction(p) for p in parts]
@@ -369,6 +370,34 @@ def _parse_line(line: str):
             provenance=line,
         )
 
+    # "<npc> has received [a/the] <item>"
+    m = re.match(r'^(.+?) has received (?:an?|the)?\s*(.+)$', line, re.IGNORECASE)
+    if m:
+        npc = _parse_subject(m.group(1))
+        item_text = m.group(2).strip()
+        obj = _parse_potion_arg(item_text)
+        is_partial = npc.type == "existential" or obj.type == "existential"
+        return RelationFact(
+            predicate=RelationPredicate.POTION_DELIVERED,
+            subject=npc,
+            object=obj,
+            is_partial=is_partial,
+            provenance=line,
+        )
+
+    # "<npc> was delivered a message from <npc>"
+    m = re.match(r'^(.+?) was delivered (?:an?|the)?\s*(?:message|response) from (.+)$', line, re.IGNORECASE)
+    if m:
+        recipient = _parse_subject(m.group(1))
+        sender = _parse_subject(m.group(2))
+        return RelationFact(
+            predicate=RelationPredicate.MESSAGE_DELIVERED,
+            subject=sender,
+            target=recipient,
+            is_partial=sender.type == "existential" or recipient.type == "existential",
+            provenance=line,
+        )
+
     # "player has <item>"
     m = re.match(r'^player has (.+)$', line, re.IGNORECASE)
     if m:
@@ -417,6 +446,7 @@ def _parse_line(line: str):
     if m:
         entity = _parse_entity(m.group(1))
         dir_text = m.group(2).strip().lower()
+        dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
         if "-then-" in dir_text or "-and-" in dir_text:
             loc = _parse_directional_location(dir_text)
             if loc is None:

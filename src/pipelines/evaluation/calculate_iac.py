@@ -27,6 +27,7 @@ from src.pipelines.evaluation.report_iac import IACResult, EntityScore, Componen
 from src.core.utils.spatial_reasoning import is_location_satisfying_constraint, ConnectionFact
 from src.core.utils.normalization import normalize_entity_name
 
+# pyrefly: ignore [missing-import]
 from treasure_hunt.src.game_mdp import GameState
 
 DIAGNOSIS_COST = 5.0
@@ -146,10 +147,45 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
     # 3. Filter facts about this entity
     entity_facts = []
     
+    def is_potion(name: str) -> bool:
+        return "potion" in name.lower() or _get_entity_type(name) == "potions"
+
+    def is_generic_potion(val: str) -> bool:
+        v = val.lower()
+        specific_colors = ["gold", "red", "blue", "green", "orange", "purple", "teal", "pale", "pink", "black", "white", "silver", "yellow"]
+        if "potion" in v:
+            return not any(color in v for color in specific_colors)
+        return False
+
+    def is_generic_person(val: str) -> bool:
+        v = val.lower()
+        if v in ["someone", "somebody", "anyone", "anybody"]:
+            return True
+        if "person" in v or "people" in v or "patient" in v or "npc" in v:
+            specific_names = ["lily", "oliver", "nick", "marie", "guy", "steve", "john", "eliza", "lola", "donna", "brittany"]
+            return not any(name in v for name in specific_names)
+        return False
+
     def resolves_to(arg: Argument, candidate_name: str, explicit_location: Location = None, ref_room: str = "room 0") -> bool:
+        candidate_is_potion = is_potion(candidate_name)
+        
         if arg.type == "named":
-            return arg.value == candidate_name
+            if is_generic_potion(arg.value):
+                return candidate_is_potion
+            elif is_generic_person(arg.value):
+                return not candidate_is_potion
+                
+            return normalize_entity_name(arg.value) == normalize_entity_name(candidate_name)
+            
         elif arg.type == "existential":
+            if arg.value:
+                if is_generic_potion(arg.value):
+                    if not candidate_is_potion:
+                        return False
+                elif is_generic_person(arg.value):
+                    if candidate_is_potion:
+                        return False
+            
             loc_constraint = arg.location or explicit_location
             if not loc_constraint:
                 return True # Unconstrained existential matches everything
@@ -176,20 +212,22 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
             if resolves_to(fact.subject, target_name, explicit_location=spatial_loc, ref_room=ref_room):
                 entity_facts.append(fact)
         elif isinstance(fact, RelationFact):
-            # Check if subject or target refers to our entity and has a location constraint
-            if resolves_to(fact.subject, target_name) and fact.subject.location:
-                # Treat as a location fact for the target_name
-                entity_facts.append(LocationFact(
-                    id=fact.id,
-                    entity=Argument(type="named", value=target_name),
-                    location=fact.subject.location
-                ))
-            elif fact.target and resolves_to(fact.target, target_name) and fact.target.location:
-                entity_facts.append(LocationFact(
-                    id=fact.id,
-                    entity=Argument(type="named", value=target_name),
-                    location=fact.target.location
-                ))
+            # Check if subject or target refers to our entity and has a location constraint.
+            # RelationFact subject/target must represent a person, not a potion.
+            if not is_potion(target_name):
+                if resolves_to(fact.subject, target_name) and fact.subject.location:
+                    # Treat as a location fact for the target_name
+                    entity_facts.append(LocationFact(
+                        id=fact.id,
+                        entity=Argument(type="named", value=target_name),
+                        location=fact.subject.location
+                    ))
+                elif fact.target and resolves_to(fact.target, target_name) and fact.target.location:
+                    entity_facts.append(LocationFact(
+                        id=fact.id,
+                        entity=Argument(type="named", value=target_name),
+                        location=fact.target.location
+                    ))
 
     if not entity_facts:
         return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0,

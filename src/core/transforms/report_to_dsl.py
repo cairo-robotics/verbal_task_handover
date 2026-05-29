@@ -22,11 +22,10 @@ DEFAULT_MODEL = "gpt-4o-mini"
 PROMPT = """
 You are an information extraction system.
 
-Your task is to extract structured facts about outstanding needs in a game task from a narrative. Extract all facts that are explicitly stated in the text.
+Your task is to extract structured facts from a handoff report about a game task. Extract ALL facts that are explicitly stated in the text, including both outstanding needs and completed past events.
 
 Return the facts using a controlled language with STRICT formatting rules. Each fact should be on a new line.
-Do not include information that can not fit in this format.
-Do not include past-tense information or completed tasks. 
+Do not include information that cannot fit in this format.
 
 ---
 
@@ -70,6 +69,10 @@ player is in <room>
 
 # Inventory
 player has <item> (for items in player inventory)
+
+# Past events
+<npc> has received <item>
+<npc> was delivered a message from <npc>
 
 If the agent is unspecified (e.g., "someone", "a patient"), use:
 
@@ -159,7 +162,7 @@ some potion is to the north-then-east
 someone to the west has a message for someone
 
 ---
-EXAMPLE 3:
+EXAMPLE 4:
 
 INPUT:
 "**Handoff Report**
@@ -185,26 +188,82 @@ INPUT:
 - **Storage 1** (where **red potion** is located) is accessible from **Hallway 3**.
 
 **Current Location:**
-- The player is currently in **Hallway 1**. 
+- The player is currently in **Hallway 1**.
 
 **Next Steps:**
 - Retrieve the required potions from the respective storage areas and deliver them to the patients in their rooms."
 
 OUTPUT:
-room 1 needs a gold potion
-room 2 needs a blue potion
-room 3 needs a red potion
-room 4 needs a green potion
+lily needs a gold potion
+oliver needs a blue potion
+nick needs a red potion
+marie needs a green potion
 lily is in room 1
 oliver is in room 2
 nick is in room 3
 marie is in room 4
 blue potion is in storage 2
 green potion is in storage 2
-storage 2 is connected to hallway 5
 red potion is in storage 1
-storage 1 is connected to hallway 3
 player is in hallway 1
+---
+
+EXAMPLE 5:
+
+INPUT:
+"Handoff Report:
+
+1. Player Status:
+- Current Location: hallway 5
+- Inventory: empty
+
+2. NPC Patients and Their Status:
+- Lily (room 1): Has received a gold potion and messages from Eliza and Lola. No outstanding needs.
+- Oliver (room 2): Has received a blue potion and a message from John. No outstanding needs.
+- Nick (room 3): Has received a red potion and a message from Donna. No outstanding needs.
+- Marie (room 4): Present but no interactions or requirements noted.
+- Guy (room 5): Has received an orange potion. No outstanding needs.
+- Steve (lounge 1): Present but no interactions noted.
+- Eliza (lounge 1): Received a message from an unspecified sender. Sent a message to Lily.
+- John (lounge 2): Received a message from an unspecified sender. Sent a message to Oliver.
+- Lola (lounge 2): Received a message from an unspecified sender. Sent a message to Lily.
+- Donna (lounge 3): Received a message from an unspecified sender. Sent a message to Nick.
+- Brittany (lounge 3): Present but no interactions noted.
+
+3. Pending Message Delivery Tasks:
+- None. All known messages have been delivered.
+
+5. Unanchored or Directional Facts:
+- A potion is located somewhere to the north.
+- A potion is located somewhere to the south."
+
+OUTPUT:
+player is in hallway 5
+lily is in room 1
+oliver is in room 2
+nick is in room 3
+marie is in room 4
+guy is in room 5
+steve is in lounge 1
+eliza is in lounge 1
+john is in lounge 2
+lola is in lounge 2
+donna is in lounge 3
+brittany is in lounge 3
+lily has received the gold potion
+oliver has received the blue potion
+nick has received the red potion
+guy has received the orange potion
+eliza was delivered a message from someone
+john was delivered a message from someone
+lola was delivered a message from someone
+donna was delivered a message from someone
+lily was delivered a message from eliza
+lily was delivered a message from lola
+oliver was delivered a message from john
+nick was delivered a message from donna
+a potion is to the north
+a potion is to the south
 ---
 
 Now extract facts from the following text:
