@@ -3,11 +3,12 @@ import json
 import csv
 import glob
 import argparse
+from token_count import TokenCount
 
 # Default base directory (used when no arguments are supplied)
 DEFAULT_BASE_DIR = "/media/kaleb/T7/handover_project/participant_data/analysis/metrics_output/"
 
-CONDITIONS = ["full_realization", "task_aware", "user_report"]
+CONDITIONS = ["no_report_full_realization", "no_report_task_aware", "full_realization", "task_aware", "user_report", "task_aware_raw_ablation"]
 
 
 def parse_filename(filename, suffix):
@@ -153,14 +154,51 @@ def main():
         print("No metrics found to aggregate.")
         return
 
+    # Derive kg_dirs and reports_dirs from base_dirs
+    kg_dirs = [os.path.normpath(os.path.join(b, "..", "..", "processed_output", "kg")) for b in base_dirs]
+    kg_dirs = list(set(kg_dirs))
+    
+    reports_dirs = [os.path.normpath(os.path.join(b, "..", "..", "reports")) for b in base_dirs]
+    reports_dirs = list(set(reports_dirs))
+    
+    tk = TokenCount(model_name="gpt-4o-mini")
+
+    # 2.5 Process Raw IAC files and Token Counts
+    for row_data in rows.values():
+        pid = row_data["participant_id"]
+        cond = row_data["condition"]
+        
+        # Token Count
+        row_data["token_count"] = 0
+        report_filename = f"{pid}_{cond}.txt" if cond == "user_report" else f"{pid}_{cond}_report.txt"
+        
+        for reports_dir in reports_dirs:
+            report_path = os.path.join(reports_dir, report_filename)
+            if os.path.exists(report_path):
+                with open(report_path, "r", encoding="utf-8") as rf:
+                    content = rf.read()
+                    row_data["token_count"] = tk.num_tokens_from_string(content)
+                break
+                
+        # Raw IAC
+        # for kg_dir in kg_dirs:
+        #     raw_iac_path = os.path.join(kg_dir, f"{pid}_raw_iac.json")
+        #     if os.path.exists(raw_iac_path):
+        #         raw_metrics = process_iac(raw_iac_path)
+        #         for k, v in raw_metrics.items():
+        #             row_data[f"raw_{k}"] = v
+        #         break
+
     # 3. Sort data
     all_data = sorted(rows.values(), key=lambda x: (x["participant_id"], x["condition"]))
 
     # 4. Define column order
     cols = [
-        "participant_id", "condition", "precision", "recall", "f1", "tp", "fp", "fn",
+        "participant_id", "condition", "token_count", "precision", "recall", "f1", "tp", "fp", "fn",
         "iac_cost_saved", "iac_omission_cost", "iac_misinformation_cost", "iac_combined_cost",
         "iac_location_savings", "iac_need_savings", "iac_resource_savings",
+        # "raw_iac_cost_saved", "raw_iac_omission_cost", "raw_iac_misinformation_cost", "raw_iac_combined_cost",
+        # "raw_iac_location_savings", "raw_iac_need_savings", "raw_iac_resource_savings",
     ]
 
     # 5. Save to CSV
