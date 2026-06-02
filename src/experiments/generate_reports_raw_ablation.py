@@ -19,95 +19,50 @@ import sys
 from string import Template
 
 from openai import OpenAI
-
-FULL_REALIZATION_SYSTEM_PROMPT = """
-You are generating a clear and well-organized handoff report for a teammate who will continue the game.
-
-Use natural language.
-Organize the information logically.
-Do not omit information from the inputs below.
-Do not introduce new facts or strategies.
-Do not infer information not explicitly present.
-"""
-
-FULL_REALIZATION_USER_PROMPT = Template("""
-Generate a clear and well-structured handoff report based on the raw telemetry log and the
-participant-written report below.
-
-The report should include sections for:
-- Current Player Status
-- NPC Patients and Their Needs
-- Items and Potions
-- Message Requests and Responses
-- Explored Locations
-- Any Unresolved Inconsistencies
-
-All information that appears in those two sources must be included somewhere in the report.
-Use complete sentences and natural language.
-
---- Raw telemetry log ---
-$telemetry
-
---- Participant-written report ---
-$user_report
-""")
-
-TASK_AWARE_SYSTEM_PROMPT = """
-You are generating a handoff report for a teammate who will continue the task.
-
-The primary objective of the task is to fulfill the needs of NPC patients by:
-- Delivering required potions
-- Carrying request messages to specified NPCs
-- Returning response messages to the original requester
-
-Your report should prioritize information that is relevant to completing this objective.
-
-You may briefly mention other explored information if useful for context, but you should emphasize:
-- Which patients still need potions
-- Which messages are pending delivery
-- Which responses need to be returned
-- What items are currently held that are relevant to patient needs
-- The player’s current location relative to relevant NPCs
-
-Do not introduce new facts.
-Do not speculate about information not present in the inputs.
-Do not invent strategies beyond what can be logically inferred from the data.
-"""
+# pyrefly: ignore [missing-import]
+from src.pipelines.model_alignment.generate_reports import TASK_AWARE_SYSTEM_PROMPT
 
 TASK_AWARE_USER_PROMPT = Template("""
-Generate a concise and task-focused handoff report for a teammate.
+Generate a high-density, task-focused handoff report based on the provided telemetry and user report.
 
-The goal is to fulfill NPC patient needs (potions and message delivery).
-
-Prioritize:
-- Outstanding patient needs
-- Pending requests and responses
-- Relevant inventory items
-- NPC locations relevant to completing tasks
-
-De-emphasize or briefly summarize information that is not directly relevant to patient care.
-
-Do not omit critical task-relevant information.
-Do not add new facts.
-
---- Raw telemetry log ---
-$telemetry
+Remember the rules:
+- Strictly use the three header sections: "### OUTSTANDING NEEDS", "### POTION & NPC LOCATIONS", and "### UNRESOLVED / DIRECTIONAL FACTS".
+- Be extremely concise. Avoid complete conversational sentences. Use the exact bullet-point format specified.
+- List ALL encountered NPCs and potions in the locations section, even if they have no active needs.
+- Omit all past completed events.
 
 --- Participant-written report ---
 $user_report
+
+--- Raw telemetry log ---
+$telemetry
 """)
 
 PROMPT_SETS = {
-    "full_realization": (FULL_REALIZATION_SYSTEM_PROMPT, FULL_REALIZATION_USER_PROMPT),
+    # "full_realization": (FULL_REALIZATION_SYSTEM_PROMPT, FULL_REALIZATION_USER_PROMPT),
     "task_aware": (TASK_AWARE_SYSTEM_PROMPT, TASK_AWARE_USER_PROMPT),
 }
 
+def _collect_pids(args: argparse.Namespace) -> list[str]:
+    # from_file: list[str] = []
+    # if args.pids_file is not None:
+    #     text = args.pids_file.read_text(encoding="utf-8")
+    #     for line in text.splitlines():
+    #         s = line.strip()
+    #         if s and not s.startswith("#"):
+    #             from_file.append(s)
+    # combined = list(dict.fromkeys(from_file + args.pids))  # stable dedupe
+    combined = args.pids
+    if not combined:
+        raise SystemExit("No participant IDs: pass pids as arguments and/or use --pids-file.")
+    return combined
 
 def call_chatgpt(system_prompt: str, user_prompt: Template, telemetry: str, user_report: str) -> str:
     client = OpenAI()
     user_content = user_prompt.substitute(telemetry=telemetry, user_report=user_report)
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        # model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         temperature=0,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -123,14 +78,19 @@ def read_text(path: str) -> str:
 
 
 def main() -> None:
+
+
+    import dotenv
+    dotenv.load_dotenv()
     parser = argparse.ArgumentParser(
         description=(
             "Send raw telemetry + participant user report to ChatGPT 4o-mini (ablation; no NarrativeView)."
         )
     )
     parser.add_argument(
-        "id",
-        help="Participant id (e.g. 302); used for default input paths and output filenames under DATA_DIR.",
+        "pids",
+        nargs="*",
+        help="Participant IDs (e.g. 302 303). Combine with --pids-file.",
     )
     parser.add_argument(
         "--telemetry",
@@ -143,63 +103,44 @@ def main() -> None:
         help="Override user report file (default: DATA_DIR/reports/<id>_user_report.txt).",
     )
     parser.add_argument(
-        "--prompt-set",
-        choices=("full_realization", "task_aware", "both"),
-        default="full_realization",
-        help=(
-            "Prompt style: exhaustive report (full_realization), task-focused (task_aware), "
-            "or both API calls in that order."
-        ),
+        "--data-dir",
+        metavar="PATH",
+        help="Override the data directory path. Default is the DATA_DIR environment variable.",
     )
-    args = parser.parse_args()
 
-    data_dir = os.environ.get("DATA_DIR")
+    args = parser.parse_args()
+    pids = _collect_pids(args)
+
+    data_dir = args.data_dir or os.environ.get("DATA_DIR")
     if not data_dir:
         print("Error: DATA_DIR must be set.", file=sys.stderr)
         sys.exit(1)
 
-    participant_id = args.id
-    telemetry_path = args.telemetry or os.path.join(data_dir, "telemetry", f"{participant_id}.txt")
-    user_report_path = args.user_report or os.path.join(
-        data_dir, "reports", f"{participant_id}_user_report.txt"
-    )
-
-    if not os.path.isfile(telemetry_path):
-        print(f"Error: telemetry file not found: {telemetry_path}", file=sys.stderr)
-        sys.exit(1)
-    if not os.path.isfile(user_report_path):
-        print(f"Error: user report file not found: {user_report_path}", file=sys.stderr)
-        sys.exit(1)
-
-    telemetry_text = read_text(telemetry_path)
-    user_report_text = read_text(user_report_path)
-
-    reports_dir = os.path.join(data_dir, "reports")
-    os.makedirs(reports_dir, exist_ok=True)
-
-    if args.prompt_set == "both":
-        fr_sys, fr_user = PROMPT_SETS["full_realization"]
-        ta_sys, ta_user = PROMPT_SETS["task_aware"]
-        r1 = call_chatgpt(fr_sys, fr_user, telemetry_text, user_report_text)
-        r2 = call_chatgpt(ta_sys, ta_user, telemetry_text, user_report_text)
-
-        out_fr = os.path.join(
-            reports_dir, f"{participant_id}_full_realization_raw_ablation_report.txt"
+    for pid in pids:
+        telemetry_path = args.telemetry or os.path.join(data_dir, "telemetry", f"{pid}.txt")
+        user_report_path = args.user_report or os.path.join(
+            data_dir, "reports", f"{pid}_user_report.txt"
         )
-        out_ta = os.path.join(reports_dir, f"{participant_id}_task_aware_raw_ablation_report.txt")
-        with open(out_fr, "w", encoding="utf-8") as f:
-            f.write(r1)
-        print(f"Full realization (raw ablation) report saved to {out_fr}")
-        with open(out_ta, "w", encoding="utf-8") as f:
-            f.write(r2)
-        print(f"Task-aware (raw ablation) report saved to {out_ta}")
-    else:
-        sys_p, user_p = PROMPT_SETS[args.prompt_set]
+
+        if not os.path.isfile(telemetry_path):
+            print(f"Error: telemetry file not found: {telemetry_path}", file=sys.stderr)
+            sys.exit(1)
+        if not os.path.isfile(user_report_path):
+            print(f"Error: user report file not found: {user_report_path}", file=sys.stderr)
+            sys.exit(1)
+
+        telemetry_text = read_text(telemetry_path)
+        user_report_text = read_text(user_report_path)
+
+        reports_dir = os.path.join(data_dir, "reports")
+        os.makedirs(reports_dir, exist_ok=True)
+
+        sys_p, user_p = PROMPT_SETS["task_aware"]
         report = call_chatgpt(sys_p, user_p, telemetry_text, user_report_text)
-        suffix = "full_realization" if args.prompt_set == "full_realization" else "task_aware"
-        output_path = os.path.join(reports_dir, f"{participant_id}_{suffix}_raw_ablation_report.txt")
+        suffix = "task_aware"
+        output_path = os.path.join(reports_dir, f"{pid}_{suffix}_raw_ablation_report.txt")
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(report)
+                f.write(report)
         print(f"Report saved to {output_path}")
 
 

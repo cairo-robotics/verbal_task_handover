@@ -38,6 +38,7 @@ OUTPUT FORMAT RULES:
 - Do NOT paraphrase templates
 - Do NOT infer unstated facts
 - Do NOT include duplicate facts
+- IMPORTANT: If a sentence mentions both an NPC's location and their need/status/history inline (e.g., 'Lily in room 1 needs a gold potion', 'Oliver (room 2) needs a blue potion', or 'Lily in room 1 has received a gold potion'), you MUST extract both facts separately. For example, extract both '<npc> needs a <potion_color> potion' AND '<npc> is in <room>', or both '<npc> has received <potion_color> potion' AND '<npc> is in <room>'.
 
 ---
 ENTITY TYPES include npcs, locations, and items (potions, requests or messages, responses).
@@ -66,6 +67,7 @@ message delivered from <npc> to <npc>
 player is in <room>
 <entity> is in <room>
 <entity> is to the <direction>
+<entity> is to the <direction> of <reference>
 
 # Inventory
 player has <item> (for items in player inventory)
@@ -94,6 +96,7 @@ INPUT:
    - Needs: Orange potion
 2. **Marie** - Location: **Room 4**  
    - Outstanding request
+   - already received blue potion
 
 **Vague or Directional Needs:**
 1. Someone to the east needs a red potion.
@@ -105,6 +108,7 @@ guy needs a orange potion
 guy is in room 5
 marie has a message for someone
 marie is in room 4
+marie has received a blue potion
 someone to the east needs a red potion
 someone to the east needs a green potion
 teal potion is to the south
@@ -162,53 +166,8 @@ some potion is to the north-then-east
 someone to the west has a message for someone
 
 ---
+
 EXAMPLE 4:
-
-INPUT:
-"**Handoff Report**
-
-**Outstanding Patient Needs:**
-1. **Room 1 (Lily)** - Requires **gold potion**.
-2. **Room 2 (Oliver)** - Requires **blue potion**.
-3. **Room 3 (Nick)** - Requires **red potion**.
-4. **Room 4 (Marie)** - Requires **green potion**.
-
-**Pending Requests and Responses:**
-- None.
-
-**Relevant Inventory Items:**
-- None.
-
-**NPC Locations:**
-- **Lily** is in **Room 1**.
-- **Oliver** is in **Room 2**.
-- **Nick** is in **Room 3**.
-- **Marie** is in **Room 4**.
-- **Storage 2** (where **blue potion** and **green potion** are located) is accessible from **Hallway 5**.
-- **Storage 1** (where **red potion** is located) is accessible from **Hallway 3**.
-
-**Current Location:**
-- The player is currently in **Hallway 1**.
-
-**Next Steps:**
-- Retrieve the required potions from the respective storage areas and deliver them to the patients in their rooms."
-
-OUTPUT:
-lily needs a gold potion
-oliver needs a blue potion
-nick needs a red potion
-marie needs a green potion
-lily is in room 1
-oliver is in room 2
-nick is in room 3
-marie is in room 4
-blue potion is in storage 2
-green potion is in storage 2
-red potion is in storage 1
-player is in hallway 1
----
-
-EXAMPLE 5:
 
 INPUT:
 "Handoff Report:

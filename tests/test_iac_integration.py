@@ -91,5 +91,49 @@ def test_compute_iac_wiring():
     
     print("Wiring test passed!")
 
+def test_compute_iac_global_misinformation():
+    # Setup mock GameState
+    objects = defaultdict(dict)
+    for p_id, p_info in PATIENT_DATA.items():
+        name = p_info["name"]
+        objects[p_info["location"]][name] = NPC(name, (0,0), "NORTH", [["hello", None]])
+    true_state = GameState((0,0), (0,1), "room 0", objects=objects)
+
+    # 1. We create predicted facts including untrue location/need facts about non-patients
+    lily_loc = LocationFact(
+        entity=Argument(type="named", value="lily"),
+        location=Location(type="room", room="room 1")
+    )
+    # Hallucinated relation fact (non-patient need)
+    distraction_rel = RelationFact(
+        predicate=RelationPredicate.NEEDS_POTION,
+        subject=Argument(type="named", value="player2"),
+        object=Argument(type="named", value="blue potion")
+    )
+    # Hallucinated location fact (non-existent entity)
+    distraction_loc = LocationFact(
+        entity=Argument(type="named", value="playerwithredgem"),
+        location=Location(type="room", room="room 2")
+    )
+
+    pred_facts = [lily_loc, distraction_rel, distraction_loc]
+    map_graph = KnowledgeGraph(facts=[])
+
+    cost_config = CostConfig()
+    result = compute_iac(pred_facts, true_state, map_graph, cost_config)
+
+    # distraction_cost must always be 0.0 under the new rules
+    assert result.distraction_cost == 0.0
+
+    # distraction_rel needs_potion cost = 30.0 (DIAGNOSIS_COST)
+    # distraction_loc location cost = 45.67 (npcs cost fallback)
+    # total global misinformation_cost = 75.67
+    assert abs(result.misinformation_cost - 75.67) < 0.01
+
+    # Combined cost includes misinformation penalty scaled by misinformation_multiplier
+    expected_combined = result.omission_cost + result.misinformation_multiplier * result.misinformation_cost
+    assert abs(result.combined_cost - expected_combined) < 0.01
+
 if __name__ == "__main__":
     test_compute_iac_wiring()
+    test_compute_iac_global_misinformation()

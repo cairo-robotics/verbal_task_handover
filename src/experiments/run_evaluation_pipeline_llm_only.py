@@ -47,9 +47,7 @@ def run_evaluation_for_pid(
     data_dir: str,
     python_exe: str,
     use_human_dsl: bool = False,
-    no_user_report: bool = False,
-    raw_ablation: bool = False,
-    ) -> None:
+) -> None:
     env = {**os.environ, "DATA_DIR": data_dir}
     repo_root = Path(__file__).resolve().parent.parent.parent
     
@@ -58,20 +56,13 @@ def run_evaluation_for_pid(
         print(f"Warning: Telemetry KG not found at {telemetry_kg}. Attempting to generate...")
         _run_step(python_exe, repo_root / "src/core/transforms/telemetry_to_graph.py", [pid], env)
     
-    if no_user_report:
-        reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_reconciled_kg.json"
-    else:
-        reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_reconciled_kg.json"
-
+    reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_reconciled_kg.json"
     if not reconciled_kg.exists():
         print(f"Warning: Reconciled KG not found at {reconciled_kg}. This is required for AI report P/R.")
         # Note: We don't auto-generate this here as it requires the full alignment pipeline.
     
-    if no_user_report or raw_ablation:
-        report_types = ["task_aware"]
-    else:
-        # report_types = ["user_report", "full_realization", "task_aware"]
-        report_types = ["user_report", "task_aware"]
+    # report_types = ["user_report", "full_realization", "task_aware"]
+    report_types = ["task_aware_raw_ablation"]
     
     # Metrics output dirs
     pr_dir = Path(data_dir) / "analysis" / "metrics_output" / "precision_recall"
@@ -99,7 +90,7 @@ def run_evaluation_for_pid(
                 print(f"    Warning: No KG found for user_report. Attempting to generate...")
                 
                 if use_human_dsl:
-                    dsl_path = Path(data_dir) / "annotations" / "dsl" / f"kb_annotated_{pid}_user_report.txt"
+                    dsl_path = Path(data_dir) / "annotations" / f"{pid}_user_report_dsl.txt"
                     if not dsl_path.exists():
                         print(f"    Error: {dsl_path} not found. Skipping user_report.")
                         continue
@@ -122,41 +113,22 @@ def run_evaluation_for_pid(
                               [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
         else:
             # AI reports: full_realization, task_aware
-            if no_user_report:
-                report_file = f"{pid}_no_report_{r_type}_report.txt"
-            elif raw_ablation:
-                report_file = f"{pid}_{r_type}_raw_ablation_report.txt"
-            else:
-                report_file = f"{pid}_{r_type}_report.txt"
-
+            report_file = f"{pid}_{r_type}_report.txt"
             if not (Path(data_dir) / "reports" / report_file).exists():
                 print(f"    Warning: {report_file} not found. Skipping {r_type}.")
                 continue
             
             # Generate DSL
-            _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
+            # _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
             
             # Generate KG
-            if no_user_report:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_no_report_{r_type}_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_{r_type}_report_dsl_to_kg.json"
-            elif raw_ablation:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_raw_ablation_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_raw_ablation_report_dsl_to_kg.json"
-            else:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_report_dsl_to_kg.json"
-
+            dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_report_dsl.txt"
+            kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_report_dsl_to_kg.json"
             _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
                       [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
 
         # 2. Run Precision/Recall
-        if no_user_report:
-            pr_output = pr_dir / f"{pid}_no_report_{r_type}_pr.json"
-        elif raw_ablation:
-            pr_output = pr_dir / f"{pid}_{r_type}_raw_ablation_pr.json"
-        else:
-            pr_output = pr_dir / f"{pid}_{r_type}_pr.json"
+        pr_output = pr_dir / f"{pid}_{r_type}_pr.json"
         
         # Ground Truth for P/R: 
         # - User report is compared against telemetry (reporting accuracy)
@@ -170,13 +142,7 @@ def run_evaluation_for_pid(
                       [str(kg_path), str(gt_kg), "--output-path", str(pr_output)], env)
         
         # 3. Run IAC
-        if no_user_report:
-            iac_output = iac_dir / f"{pid}_no_report_{r_type}_iac.json"
-        elif raw_ablation:
-            iac_output = iac_dir / f"{pid}_{r_type}_raw_ablation_iac.json"
-        else:
-            iac_output = iac_dir / f"{pid}_{r_type}_iac.json"
-
+        iac_output = iac_dir / f"{pid}_{r_type}_iac.json"
         _run_step(python_exe, repo_root / "src/pipelines/evaluation/calculate_iac.py", 
                   ["--kg-file", str(kg_path), "--pid", pid, "--output-file", str(iac_output), "--map-graph", str(telemetry_kg)], env)
 
@@ -211,20 +177,7 @@ def main() -> None:
         action="store_true",
         help="Use human-written DSL from $DATA_DIR/annotations instead of generating it.",
     )
-    parser.add_argument(
-        "--no-user-report",
-        action="store_true",
-        help="Run evaluations on only the no_report (ablation) reports.",
-    )
-    parser.add_argument(
-        "--raw-ablation",
-        action="store_true",
-        help="Run evaluations on only the raw_ablation reports.",
-    )
     args = parser.parse_args()
-
-    if args.no_user_report and args.use_human_dsl:
-        parser.error("Cannot use both --no-user-report and --use-human-dsl.")
 
     data_dir = args.data_dir or os.environ.get("DATA_DIR")
     if not data_dir:
@@ -242,8 +195,6 @@ def main() -> None:
                 data_dir=data_dir,
                 python_exe=python_exe,
                 use_human_dsl=args.use_human_dsl,
-                no_user_report=args.no_user_report,
-                raw_ablation=args.raw_ablation,
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"Error for pid {pid}: {e}", file=sys.stderr, flush=True)

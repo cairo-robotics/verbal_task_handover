@@ -38,6 +38,28 @@ def is_location_satisfying_constraint(
     
     return False
 
+def expand_directions(dirs: List[Direction]) -> List[List[Direction]]:
+    if not dirs:
+        return [[]]
+    first = dirs[0]
+    rest_expanded = expand_directions(dirs[1:])
+    
+    # Define expansions for compound directions
+    expansions = {
+        Direction.NORTHWEST: [[Direction.NORTH, Direction.WEST], [Direction.WEST, Direction.NORTH]],
+        Direction.NORTHEAST: [[Direction.NORTH, Direction.EAST], [Direction.EAST, Direction.NORTH]],
+        Direction.SOUTHWEST: [[Direction.SOUTH, Direction.WEST], [Direction.WEST, Direction.SOUTH]],
+        Direction.SOUTHEAST: [[Direction.SOUTH, Direction.EAST], [Direction.EAST, Direction.SOUTH]],
+    }
+    
+    first_paths = expansions.get(first, [[first]])
+    
+    result = []
+    for fp in first_paths:
+        for rp in rest_expanded:
+            result.append(fp + rp)
+    return result
+
 def is_room_in_direction(
     graph: KnowledgeGraph, 
     target_room: str, 
@@ -55,7 +77,9 @@ def is_room_in_direction(
     source_norm = normalize_entity_name(source_room)
     
     if target_norm == source_norm:
-        return not expected_directions
+        # For target == source, it satisfies if the expected direction list expands to an empty path
+        possible_expected_paths = expand_directions(expected_directions)
+        return any(not p for p in possible_expected_paths)
         
     # Build adjacency map: source -> list of (target, direction)
     adj: Dict[str, List[Tuple[str, Direction]]] = {}
@@ -101,10 +125,12 @@ def is_room_in_direction(
         curr, path = queue.pop(0)
         
         if curr == target_norm:
-            # Check if expected_directions is a prefix of path
-            if len(expected_directions) > len(path):
-                return False
-            return path[:len(expected_directions)] == expected_directions
+            # Check if any of the expanded paths is a prefix of path
+            possible_expected_paths = expand_directions(expected_directions)
+            for exp_path in possible_expected_paths:
+                if len(exp_path) <= len(path) and path[:len(exp_path)] == exp_path:
+                    return True
+            return False
             
         for neighbor, d in adj.get(curr, []):
             if neighbor not in visited:
@@ -112,3 +138,55 @@ def is_room_in_direction(
                 queue.append((neighbor, path + [d]))
                     
     return False
+
+
+def resolve_directional_path(
+    start_room: str,
+    directions: List[Direction],
+    graph: KnowledgeGraph
+) -> Optional[str]:
+    """
+    Resolve a directional path starting from a room using ConnectionFacts in the graph.
+    Returns the resolved room name, or None if the path cannot be fully resolved.
+    """
+    from src.core.utils.normalization import normalize_entity_name
+    
+    # Build opposite direction map for bidirectional traversal
+    opposite = {
+        Direction.NORTH: Direction.SOUTH,
+        Direction.SOUTH: Direction.NORTH,
+        Direction.EAST: Direction.WEST,
+        Direction.WEST: Direction.EAST,
+        Direction.NORTHEAST: Direction.SOUTHWEST,
+        Direction.SOUTHWEST: Direction.NORTHEAST,
+        Direction.NORTHWEST: Direction.SOUTHEAST,
+        Direction.SOUTHEAST: Direction.NORTHWEST,
+    }
+    
+    current_room = start_room
+    
+    for d in directions:
+        found_next = False
+        current_norm = normalize_entity_name(current_room)
+        
+        # Look for a ConnectionFact connecting current_room in direction d
+        for fact in graph.facts:
+            if isinstance(fact, ConnectionFact):
+                u = normalize_entity_name(fact.location_a.room) if fact.location_a.room else None
+                v = normalize_entity_name(fact.location_b.room) if fact.location_b.room else None
+                conn_dir = fact.direction
+                
+                if u == current_norm and conn_dir == d:
+                    current_room = fact.location_b.room
+                    found_next = True
+                    break
+                elif v == current_norm and conn_dir and opposite.get(conn_dir) == d:
+                    current_room = fact.location_a.room
+                    found_next = True
+                    break
+                    
+        if not found_next:
+            return None
+            
+    return current_room
+

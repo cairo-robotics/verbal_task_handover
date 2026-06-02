@@ -35,8 +35,8 @@ class ComponentScore:
             self.misinformation_cost = 0
         elif self.credit_type == CreditType.CONTRADICTED:
             self.cost_saved = 0
-            self.omission_cost = 0
-            self.misinformation_cost = self.max_cost
+            self.omission_cost = self.max_cost
+            self.misinformation_cost = 0
             
 @dataclass
 class EntityScore:
@@ -54,16 +54,16 @@ class EntityScore:
 class IACResult:
     entity_scores: Dict[str, EntityScore]
     misinformation_multiplier: float # misinformation penalty weight, passed from CostConfig
+    distraction_cost: float = 0.0
+    misinformation_cost: float = 0.0
     
     # Derived aggregates
     total_cost_saved: float = field(init=False)
     omission_cost: float = field(init=False)
-    misinformation_cost: float = field(init=False)
     combined_cost: float = field(init=False)
 
 
     def __post_init__(self):
         self.omission_cost = sum([score.omission_cost for score in self.entity_scores.values()])
-        self.misinformation_cost = sum([score.misinformation_cost for score in self.entity_scores.values()])
         self.total_cost_saved = sum([score.total_cost_saved for score in self.entity_scores.values()])
-        self.combined_cost = self.omission_cost + self.misinformation_multiplier * self.misinformation_cost
+        self.combined_cost = self.omission_cost + self.misinformation_multiplier * self.misinformation_cost + self.distraction_cost

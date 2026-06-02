@@ -3,7 +3,7 @@ from src.core.representations.pydantic_schema import (
     KnowledgeGraph, Location, Argument, RelationFact, 
     RelationPredicate, ConnectionFact, Direction
 )
-from src.pipelines.evaluation.calculate_iac import _score_need
+from src.pipelines.evaluation.calculate_iac import _score_need, DIAGNOSIS_COST
 from src.pipelines.evaluation.costs import CostConfig
 from src.pipelines.evaluation.report_iac import CreditType
 
@@ -55,8 +55,8 @@ def test_score_need_existential_subject(cost_config, empty_map):
     ]
     
     score = _score_need("lily", fact_set, gs, empty_map, cost_config)
-    assert score.credit_type == CreditType.FULL
-    assert score.partial_credit == 1.0
+    assert score.credit_type == CreditType.PARTIAL
+    assert score.partial_credit == cost_config.partial_need_credit
 
 def test_score_need_existential_object(cost_config, empty_map):
     lily = MockNPC("lily", held_item_interact_complete=False)
@@ -167,7 +167,7 @@ def test_score_need_has_message(cost_config, empty_map):
             target=Argument(type="named", value="eliza")
         )
     ]
-    assert _score_need("lily", fact_set_3, gs, empty_map, cost_config).credit_type == CreditType.FULL
+    assert _score_need("lily", fact_set_3, gs, empty_map, cost_config).credit_type == CreditType.PARTIAL
 
 def test_score_need_omission(cost_config, empty_map):
     lily = MockNPC("lily", held_item_interact_complete=False)
@@ -177,17 +177,20 @@ def test_score_need_omission(cost_config, empty_map):
     
     score = _score_need("lily", fact_set, gs, empty_map, cost_config)
     assert score.credit_type == CreditType.NONE
-    assert score.max_cost == 5.0
+    assert score.max_cost == DIAGNOSIS_COST
 
-def test_score_need_no_gold_fact(cost_config, empty_map):
-    # Lily is all done
+def test_score_need_potion_again(cost_config, empty_map):
+    # Lily got potion, both Lola and Eliza got request, Lily got both responses.
+    # Outstanding need is the gold potion again.
     lily = MockNPC("lily", held_item_interact_complete=True, conditional_interact_counts={"response from Eliza": 1, "response from Lola": 1})
     gs = MockGameState({"room 1": {"lily": lily}})
     
-    # Candidate 1: No facts (correct)
-    assert _score_need("lily", [], gs, empty_map, cost_config).max_cost == 0.0
+    # Candidate 1: No facts (omission)
+    score1 = _score_need("lily", [], gs, empty_map, cost_config)
+    assert score1.credit_type == CreditType.NONE
+    assert score1.max_cost == DIAGNOSIS_COST
     
-    # Candidate 2: Erroneous fact (misinformation)
+    # Candidate 2: Correct fact (full match)
     fact_set_2 = [
         RelationFact(
             predicate=RelationPredicate.NEEDS_POTION,
@@ -195,7 +198,46 @@ def test_score_need_no_gold_fact(cost_config, empty_map):
             object=Argument(type="named", value="gold potion")
         )
     ]
-    assert _score_need("lily", fact_set_2, gs, empty_map, cost_config).credit_type == CreditType.CONTRADICTED
+    score2 = _score_need("lily", fact_set_2, gs, empty_map, cost_config)
+    assert score2.credit_type == CreditType.FULL
+    assert score2.max_cost == DIAGNOSIS_COST
+
+def test_score_need_tightened_contradiction_predicate(cost_config, empty_map):
+    # Oliver's gold need is NEEDS_POTION -> blue potion
+    oliver = MockNPC("oliver", held_item_interact_complete=False)
+    gs = MockGameState({"room 2": {"oliver": oliver}})
+
+    # Candidate has predicate HAS_MESSAGE_FOR instead of NEEDS_POTION, but definite oliver target
+    fact_set = [
+        RelationFact(
+            predicate=RelationPredicate.HAS_MESSAGE_FOR,
+            subject=Argument(type="named", value="john"),
+            target=Argument(type="named", value="oliver")
+        )
+    ]
+
+    score = _score_need("oliver", fact_set, gs, empty_map, cost_config)
+    assert score.credit_type == CreditType.CONTRADICTED
+    assert score.max_cost == DIAGNOSIS_COST
+
+def test_score_need_tightened_contradiction_role_reversal(cost_config, empty_map):
+    # Lily's expected need is HAS_MESSAGE_FOR eliza (Lily is sender)
+    lily = MockNPC("lily", held_item_interact_complete=True)
+    eliza = MockNPC("eliza", held_item_interact_complete=False, conditional_interact_counts={"request from room 1": 0})
+    gs = MockGameState({"room 1": {"lily": lily}, "lounge_1": {"eliza": eliza}})
+
+    # Candidate has role reversed: lily is the target/receiver
+    fact_set = [
+        RelationFact(
+            predicate=RelationPredicate.HAS_MESSAGE_FOR,
+            subject=Argument(type="named", value="eliza"),
+            target=Argument(type="named", value="lily")
+        )
+    ]
+
+    score = _score_need("lily", fact_set, gs, empty_map, cost_config)
+    assert score.credit_type == CreditType.CONTRADICTED
+    assert score.max_cost == DIAGNOSIS_COST
 
 if __name__ == "__main__":
     pytest.main([__file__])

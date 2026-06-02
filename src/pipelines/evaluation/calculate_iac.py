@@ -30,7 +30,7 @@ from src.core.utils.normalization import normalize_entity_name
 # pyrefly: ignore [missing-import]
 from treasure_hunt.src.game_mdp import GameState
 
-DIAGNOSIS_COST = 5.0
+DIAGNOSIS_COST = 30.0
 
 def _load_game_state(pid: str) -> GameState:
     """Loads the GameState for a given player ID."""
@@ -330,18 +330,15 @@ def get_patient_status_facts(entity: str, ground_truth: GameState) -> list[Relat
     if not patient_npc:
         return []
 
-    facts = []
-    
-    # 3. Check potion need
+    # 3. Check potion need (Step 1)
     if not patient_npc.held_item_interact_complete:
-        facts.append(RelationFact(
+        return [RelationFact(
             predicate=RelationPredicate.NEEDS_POTION,
             subject=Argument(type="named", value=entity),
             object=Argument(type="named", value=f"{patient_info['potion']} potion")
-        ))
-        return facts
+        )]
     
-    # 4. Check targets (messages and responses)
+    # 4. Check targets (messages and responses - Steps 2 and 3)
     targets = []
     if "npc_target" in patient_info:
         targets.append(patient_info["npc_target"])
@@ -364,24 +361,23 @@ def get_patient_status_facts(entity: str, ground_truth: GameState) -> list[Relat
                 subject=Argument(type="named", value=entity),
                 target=Argument(type="named", value=target_name)
             )]
-        else:
-            # Target received request, check if patient received response
-            # Response items are typically "response from [TargetName]"
-            response_item = f"response from {target_name.capitalize()}"
-            if patient_npc.conditional_interact_counts.get(response_item, 0) == 0:
-                return [RelationFact(
-                    predicate=RelationPredicate.HAS_MESSAGE_FOR,
-                    subject=Argument(type="named", value=target_name),
-                    target=Argument(type="named", value=entity)
-                )]
-            else:
-                return [RelationFact(
-                    predicate=RelationPredicate.NEEDS_POTION,
-                    subject=Argument(type="named", value=entity),
-                    object=Argument(type="named", value=f"{patient_info['potion']} potion")
-                )]
-    
-    return []
+        
+        # Target received request, check if patient received response
+        # Response items are typically "response from [TargetName]"
+        response_item = f"response from {target_name.capitalize()}"
+        if patient_npc.conditional_interact_counts.get(response_item, 0) == 0:
+            return [RelationFact(
+                predicate=RelationPredicate.HAS_MESSAGE_FOR,
+                subject=Argument(type="named", value=target_name),
+                target=Argument(type="named", value=entity)
+            )]
+            
+    # 5. When steps 1-3 are complete, it should always return the NEEDS_POTION fact
+    return [RelationFact(
+        predicate=RelationPredicate.NEEDS_POTION,
+        subject=Argument(type="named", value=entity),
+        object=Argument(type="named", value=f"{patient_info['potion']} potion")
+    )]
 
 def _is_category_match(predicted_val: str, gold_val: str) -> bool:
     """Checks if a predicted value is a generic category for a specific gold value."""
@@ -549,61 +545,65 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
         current_score = None
 
         if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
-            # Entity is the subject (patient needing a potion)
             subj_str = resolution_strength(f.subject, entity)
-            if subj_str == "none":
-                continue  # Fact is not about this entity
-            is_definite = (subj_str == "definite")
+            tgt_str = resolution_strength(f.target, entity) if f.target else "none"
 
-            if f.predicate != gold_fact.predicate:
-                if is_definite:
+            if subj_str == "definite":
+                # Definite subject match
+                if f.predicate != gold_fact.predicate:
                     current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                    partial_credit=0.0,
                                                    evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
                 else:
-                    continue  # Possible subject + wrong predicate → skip
-            else:
-                current_score = score_other_arg(f.object, gold_fact.object, f, is_definite)
-                if current_score is None:
-                    continue
+                    current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=True)
+            elif tgt_str == "definite":
+                # Definite target match, but active gold need is NEEDS_POTION (different!)
+                current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                               partial_credit=0.0,
+                                               evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+            elif subj_str == "possible":
+                # Possible subject match
+                if f.predicate == gold_fact.predicate:
+                    current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=False)
 
         elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
+            subj_str = resolution_strength(f.subject, entity)
+            tgt_str = resolution_strength(f.target, entity) if f.target else "none"
+
             if gold_fact.subject.value == entity:
-                # Entity is the sender — look at candidate's subject
-                subj_str = resolution_strength(f.subject, entity)
-                if subj_str == "none":
-                    continue
-                is_definite = (subj_str == "definite")
-
-                if f.predicate != gold_fact.predicate:
-                    if is_definite:
+                # Entity is the expected sender
+                if subj_str == "definite":
+                    if f.predicate != gold_fact.predicate:
                         current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                        partial_credit=0.0,
                                                        evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
                     else:
-                        continue
-                else:
-                    current_score = score_other_arg(f.target, gold_fact.target, f, is_definite)
-                    if current_score is None:
-                        continue
+                        current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=True)
+                elif tgt_str == "definite":
+                    # Role reversal: patient is the receiver in candidate but sender in gold need (different!)
+                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                   partial_credit=0.0,
+                                                   evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                elif subj_str == "possible":
+                    if f.predicate == gold_fact.predicate:
+                        current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=False)
             else:
-                # Entity is the receiver — look at candidate's target
-                tgt_str = resolution_strength(f.target, entity) if f.target else "none"
-                if tgt_str == "none":
-                    continue
-                is_definite = (tgt_str == "definite")
-
-                if f.predicate != gold_fact.predicate:
-                    if is_definite:
+                # Entity is the expected receiver
+                if tgt_str == "definite":
+                    if f.predicate != gold_fact.predicate:
                         current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                        partial_credit=0.0,
                                                        evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
                     else:
-                        continue
-                else:
-                    current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite)
-                    if current_score is None:
-                        continue
+                        current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=True)
+                elif subj_str == "definite":
+                    # Role reversal: patient is the sender in candidate but receiver in gold need (different!)
+                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                   partial_credit=0.0,
+                                                   evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                elif tgt_str == "possible":
+                    if f.predicate == gold_fact.predicate:
+                        current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=False)
 
         if current_score is not None:
             if best_score is None or priority[current_score.credit_type] < priority[best_score.credit_type]:
@@ -667,6 +667,148 @@ def _score_entity(entity: str, fact_set: list[Fact], ground_truth: GameState, ma
         resource_score=resource_score
     )
 
+def _is_location_fact_misinfo(f: Fact, true_state: GameState, map_graph: KnowledgeGraph, entity_rooms: dict) -> bool:
+    """Checks if a location or spatial fact is not true in the ground truth state."""
+    if not isinstance(f, (LocationFact, SpatialFact)):
+        return False
+
+    entity_arg = f.entity if isinstance(f, LocationFact) else f.subject
+
+    constraint_loc = None
+    reference_room = "room 0"
+
+    if isinstance(f, LocationFact):
+        constraint_loc = f.location
+    elif isinstance(f, SpatialFact):
+        constraint_loc = Location(
+            type="directional",
+            directions=[f.direction],
+            mode="path"
+        )
+        if f.type == SpatialRelationType.RELATIVE and f.reference and f.reference.type == "named":
+            reference_room = f.reference.value
+
+    if entity_arg.type == "named" and entity_arg.value:
+        entity_name = normalize_entity_name(entity_arg.value)
+        is_room_name = any(
+            entity_name.lower().strip().startswith(prefix)
+            for prefix in ["room", "hallway", "storage", "lounge"]
+        )
+        if is_room_name:
+            true_room = entity_name
+        else:
+            true_room = entity_rooms.get(entity_name)
+            
+        if true_room is None:
+            return True
+        is_satisfied = is_location_satisfying_constraint(true_room, constraint_loc, map_graph, reference_room)
+        return not is_satisfied
+    elif entity_arg.type == "existential":
+        # Check if there is ANY entity in entity_rooms that satisfies the constraint and matches the type/category (if provided)
+        candidates = []
+        for name, room in entity_rooms.items():
+            if entity_arg.value:
+                val = entity_arg.value.lower()
+                is_potion_entity = "potion" in name.lower()
+                if "potion" in val:
+                    if not is_potion_entity:
+                        continue
+                else:
+                    if is_potion_entity:
+                        continue
+            candidates.append(room)
+        
+        if not candidates:
+            return True
+            
+        any_satisfied = any(
+            is_location_satisfying_constraint(room, constraint_loc, map_graph, reference_room)
+            for room in candidates
+        )
+        return not any_satisfied
+
+    return False
+
+def _is_need_fact_misinfo(f: Fact, true_state: GameState, map_graph: KnowledgeGraph, entity_rooms: dict) -> bool:
+    """Checks if a relation fact with needs/messages is not true in the ground truth state."""
+    if not isinstance(f, RelationFact):
+        return False
+        
+    if f.predicate not in [RelationPredicate.NEEDS_POTION, RelationPredicate.HAS_MESSAGE_FOR]:
+        return False
+        
+    patient_npcs = [p["name"] for p in PATIENT_DATA.values()]
+    all_gt_needs = []
+    for patient in patient_npcs:
+        all_gt_needs.extend(get_patient_status_facts(patient, true_state))
+        
+    def _is_category_match_local(predicted_val: str, gold_val: str) -> bool:
+        categories = ["potion", "request", "message", "response"]
+        if predicted_val.lower() in categories:
+            return predicted_val.lower() in gold_val.lower()
+        return False
+
+    def matches_gt(gt_fact: RelationFact) -> bool:
+        if f.predicate != gt_fact.predicate:
+            return False
+            
+        # Match subject
+        if f.subject.type == "named":
+            if normalize_entity_name(f.subject.value) != normalize_entity_name(gt_fact.subject.value):
+                return False
+        elif f.subject.type == "existential":
+            if f.subject.location:
+                gt_room = entity_rooms.get(normalize_entity_name(gt_fact.subject.value))
+                if not gt_room or not is_location_satisfying_constraint(gt_room, f.subject.location, map_graph, "room 0"):
+                    return False
+                    
+        # Match object/target
+        if f.predicate == RelationPredicate.NEEDS_POTION:
+            if not f.object or not gt_fact.object:
+                return False
+            if f.object.type == "named":
+                f_val = normalize_entity_name(f.object.value)
+                gt_val = normalize_entity_name(gt_fact.object.value)
+                if f_val != gt_val and not _is_category_match_local(f.object.value, gt_fact.object.value):
+                    return False
+            elif f.object.type == "existential":
+                if f.object.location:
+                    gt_potion_room = entity_rooms.get(normalize_entity_name(gt_fact.object.value))
+                    if not gt_potion_room or not is_location_satisfying_constraint(gt_potion_room, f.object.location, map_graph, "room 0"):
+                        return False
+        elif f.predicate == RelationPredicate.HAS_MESSAGE_FOR:
+            if not f.target or not gt_fact.target:
+                return False
+            if f.target.type == "named":
+                f_val = normalize_entity_name(f.target.value)
+                gt_val = normalize_entity_name(gt_fact.target.value)
+                if f_val != gt_val:
+                    return False
+            elif f.target.type == "existential":
+                if f.target.location:
+                    gt_target_room = entity_rooms.get(normalize_entity_name(gt_fact.target.value))
+                    if not gt_target_room or not is_location_satisfying_constraint(gt_target_room, f.target.location, map_graph, "room 0"):
+                        return False
+                        
+        return True
+
+    for gt in all_gt_needs:
+        if matches_gt(gt):
+            return False
+            
+    return True
+
+def _get_misinfo_fact_cost(f: Fact) -> float:
+    """Returns the expected search cost or diagnosis cost for a misinformation fact."""
+    if isinstance(f, (LocationFact, SpatialFact)):
+        entity_arg = f.entity if isinstance(f, LocationFact) else f.subject
+        entity_name = entity_arg.value if entity_arg.type == "named" else ""
+        entity_type = _get_entity_type(entity_name) if entity_name else "npcs"
+        return EXPECTED_SEARCH_COSTS_PER_ROOM_TYPE.get(entity_type, 45.67)
+    elif isinstance(f, RelationFact):
+        return DIAGNOSIS_COST # 30.0
+    return 0.0
+
 def compute_iac(
     pred_facts: list[Fact],
     true_state: GameState,
@@ -684,9 +826,37 @@ def compute_iac(
     for entity in patient_npcs:
         entity_scores[entity] = _score_entity(entity, pred_facts, true_state, map_graph, cost_config)
 
+    # 3. Build global entity rooms mapping for misinformation verification
+    entity_rooms = {}
+    if hasattr(true_state, "current_room") and true_state.current_room:
+        entity_rooms["player"] = true_state.current_room
+        entity_rooms["player1"] = true_state.current_room
+
+    for room, objs in true_state._objects.items():
+        for name in objs:
+            entity_rooms[name] = room
+            normalized = normalize_entity_name(name)
+            if normalized != name:
+                entity_rooms[normalized] = room
+
+    # 4. Check each predicted fact to see if it is misinformation (untrue location or need fact)
+    global_misinformation_cost = 0.0
+    for f in pred_facts:
+        if isinstance(f, ConnectionFact):
+            continue
+        
+        # Check location/spatial fact or relation/need fact
+        if _is_location_fact_misinfo(f, true_state, map_graph, entity_rooms) or _is_need_fact_misinfo(f, true_state, map_graph, entity_rooms):
+            global_misinformation_cost += _get_misinfo_fact_cost(f)
+
+    # Distraction calculation is disabled/removed per user request, always 0.0
+    distraction_cost = 0.0
+
     return IACResult(
         entity_scores=entity_scores,
-        misinformation_multiplier=cost_config.misinformation_multiplier
+        misinformation_multiplier=cost_config.misinformation_multiplier,
+        distraction_cost=distraction_cost,
+        misinformation_cost=global_misinformation_cost
     )
 
 def main():

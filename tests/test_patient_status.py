@@ -69,6 +69,7 @@ def test_sequence_progression():
 
 def test_all_done():
     # Lily got potion, both Lola and Eliza got request, Lily got both responses.
+    # Under the handover task design, steps 1-3 being complete means she needs the potion again (step 4).
     lily = MockNPC("lily", held_item_interact_complete=True, 
                    conditional_interact_counts={"response from Eliza": 1, "response from Lola": 1})
     lola = MockNPC("lola", held_item_interact_complete=False, conditional_interact_counts={"request from room 1": 1})
@@ -77,7 +78,10 @@ def test_all_done():
     gs = MockGameState({"room 1": {"lily": lily}, "lounge_1": {"lola": lola, "eliza": eliza}})
     
     facts = get_patient_status_facts("lily", gs)
-    assert len(facts) == 0
+    assert len(facts) == 1
+    assert facts[0].predicate == RelationPredicate.NEEDS_POTION
+    assert facts[0].subject.value == "lily"
+    assert facts[0].object.value == "gold potion"
 
 def test_single_target_patient():
     # Oliver needs blue potion

@@ -19,6 +19,12 @@ except ImportError:
 
 import dotenv
 
+try:
+    from src.core.utils.normalization import standardize_room_name
+except ImportError:
+    # pyrefly: ignore [missing-import]
+    from normalization import standardize_room_name
+
 dotenv.load_dotenv()
 
 # for reference when implementing the parser
@@ -193,14 +199,25 @@ DIRECTION_MAP = {
     "northwest": Direction.NORTHWEST,
     "southeast": Direction.SOUTHEAST,
     "southwest": Direction.SOUTHWEST,
+    
+    # top/bottom/left/right aliases
+    "top": Direction.NORTH,
+    "bottom": Direction.SOUTH,
+    "left": Direction.WEST,
+    "right": Direction.EAST,
+    "topleft": Direction.NORTHWEST,
+    "topright": Direction.NORTHEAST,
+    "bottomleft": Direction.SOUTHWEST,
+    "bottomright": Direction.SOUTHEAST,
 }
 
 # Regex fragment matching any single direction keyword
-_DIR_RE = r"(?:north(?:east|west)?|south(?:east|west)?|east|west)"
+_DIR_RE = r"(?:north[- ]?(?:east|west)?|south[- ]?(?:east|west)?|east|west|top[- ]?(?:left|right)?|bottom[- ]?(?:left|right)?|left|right)"
 
 
 def _parse_direction(text: str) -> Optional[Direction]:
-    return DIRECTION_MAP.get(text.strip().lower())
+    t = text.strip().lower().replace("-", "").replace(" ", "")
+    return DIRECTION_MAP.get(t)
 
 
 def _is_location(text: str) -> bool:
@@ -254,37 +271,77 @@ def _parse_directional_location(dir_text: str) -> Optional[Location]:
 
 # ---- Argument helpers ----
 
+def _is_generic_person(text: str) -> bool:
+    v = text.lower().strip()
+    if v in ["someone", "somebody", "anyone", "anybody", "some body", "any body"]:
+        return True
+    if "person" in v or "people" in v or "patient" in v or "npc" in v:
+        specific_names = ["lily", "oliver", "nick", "marie", "guy", "steve", "john", "eliza", "lola", "donna", "brittany"]
+        return not any(name in v for name in specific_names)
+    return False
+
+
+def _is_generic_potion(text: str) -> bool:
+    v = text.lower().strip()
+    # Strip common articles/pronouns
+    v = re.sub(r'^(?:an?|the|some) +', '', v)
+    if v == "potion" or v == "somepotion" or v == "some potion":
+        return True
+    if "potion" in v:
+        specific_colors = ["gold", "red", "blue", "green", "orange", "purple", "teal", "pale", "pink", "black", "white", "silver", "yellow"]
+        return not any(color in v for color in specific_colors)
+    return False
+
+
 def _parse_subject(text: str) -> Argument:
     """Parse a subject, handling 'someone', 'someone to the <dir>', and named entities."""
     text = text.strip()
-    m = re.match(r'^someone to the (.+)$', text, re.IGNORECASE)
-    if m:
-        loc = _parse_directional_location(m.group(1).strip())
+    
+    # Handle "someone/some NPC/somebody to the <dir>"
+    m = re.match(r'^(.+?)\s+to the\s+(.+)$', text, re.IGNORECASE)
+    if m and _is_generic_person(m.group(1)):
+        loc = _parse_directional_location(m.group(2).strip())
+        return Argument(type="existential", value="someone", location=loc)
+        
+    # Handle "someone in [the] <room>"
+    m_room = re.match(r'^(.+?)\s+in\s+(?:the\s+)?(.+)$', text, re.IGNORECASE)
+    if m_room and _is_generic_person(m_room.group(1)):
+        room_name = m_room.group(2).strip()
+        loc = Location(type="room", room=standardize_room_name(room_name))
+        return Argument(type="existential", value="someone", location=loc)
+
+    # Handle if the subject itself is a location (e.g., "room 1")
+    if _is_location(text):
+        loc = Location(type="room", room=standardize_room_name(text))
         return Argument(type="existential", location=loc)
-    if text.lower() == "someone":
-        return Argument(type="existential")
-    return Argument(type="named", value=text)
+
+    if _is_generic_person(text):
+        return Argument(type="existential", value="someone")
+        
+    return Argument(type="named", value=standardize_room_name(text))
 
 
 def _parse_entity(text: str) -> Argument:
     """Parse a plain entity reference (no location constraint expected)."""
     text = text.strip()
-    if text.lower() == "someone":
-        return Argument(type="existential")
-    return Argument(type="named", value=text)
+    if _is_generic_person(text):
+        return Argument(type="existential", value="someone")
+    if _is_generic_potion(text):
+        return Argument(type="existential", value="potion")
+    return Argument(type="named", value=standardize_room_name(text))
 
 
 def _parse_potion_arg(text: str) -> Argument:
-    """Parse a potion description like 'a gold potion', 'an orange potion', 'a potion'.
+    """Parse a potion description like 'a gold potion', 'an orange potion', 'a potion', 'the potion'.
 
     Strips any leading article and trailing ' potion'.  Returns existential if
     no colour is specified.
     """
     text = text.strip().lower()
-    # Strip leading article
-    text = re.sub(r'^an? +', '', text)
-    if text == "potion":
-        return Argument(type="existential")
+    if _is_generic_potion(text):
+        return Argument(type="existential", value="potion")
+    # Strip leading article (a/an/the)
+    text = re.sub(r'^(?:an?|the) +', '', text)
     if text.endswith(" potion"):
         color = text[: -len(" potion")].strip()
         return Argument(type="named", value=color + " potion")
@@ -293,8 +350,81 @@ def _parse_potion_arg(text: str) -> Argument:
     return Argument(type="named", value=text + " potion")
 
 
+def _clean_directional_room(text: str) -> Optional[Location]:
+    """
+    If the text describes a room directionally (e.g. 'the north room', 'northwest room', 
+    'a room up in the north west'), parse and return it as a directional Location.
+    Otherwise, return None.
+    """
+    s = text.lower().strip()
+    # Remove common prefix/suffix words
+    s = re.sub(r"^(?:a|an|the)\b\s*", "", s)
+    s = re.sub(r"\brooms?\b", "", s)
+    s = re.sub(r"\bup\b", "", s)
+    s = re.sub(r"\bin\b", "", s)
+    s = re.sub(r"\bto the\b", "", s)
+    s = s.strip()
+    
+    # Normalize spaces/hyphens for compound directions
+    s = s.replace(" then ", "-then-").replace(" and ", "-and-")
+    s = re.sub(r"\s+", "-", s) # e.g. "north west" -> "north-west"
+    
+    # Try parsing as a directional location
+    # If the cleaned text can be parsed as a directional location, return it!
+    norm_dir = s.replace("-", "")
+    if norm_dir in DIRECTION_MAP:
+        return Location(type="directional", directions=[DIRECTION_MAP[norm_dir]])
+        
+    # Also handle compound path/set like "west-then-north" or "north-and-east"
+    if "-then-" in s or "-and-" in s:
+        return _parse_directional_location(s)
+        
+    return None
+
+
+def _parse_contains_entities(entities_text: str) -> List[str]:
+    # E.g. "gold and red potions" or "orange blue and green potions" or "donna and brittany"
+    text = entities_text.strip().lower()
+    
+    # Check if the whole list refers to potions
+    is_potion_list = False
+    if text.endswith("potions"):
+        is_potion_list = True
+        text = text[:-7].strip()
+    elif text.endswith("potion"):
+        is_potion_list = True
+        text = text[:-6].strip()
+        
+    # Split text by commas and the word "and"
+    text = text.replace(" and ", ", ")
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    
+    # Re-assemble the entities
+    entities = []
+    for part in parts:
+        subparts = []
+        if is_potion_list:
+            for sp in part.split():
+                sp = sp.strip()
+                if sp:
+                    subparts.append(sp)
+        else:
+            subparts.append(part)
+            
+        for sp in subparts:
+            if is_potion_list:
+                if not sp.endswith("potion"):
+                    entities.append(f"{sp} potion")
+                else:
+                    entities.append(sp)
+            else:
+                entities.append(sp)
+                
+    return entities
+
+
 def _parse_room_location(text: str) -> Location:
-    return Location(type="room", room=text.strip())
+    return Location(type="room", room=standardize_room_name(text))
 
 
 # ---- Line parser ----
@@ -314,7 +444,7 @@ def _parse_line(line: str):
     # ------------------------------------------------------------------
 
     # "<subject> needs [a|an] [<color>] potion"
-    m = re.match(r'^(.+?) needs (.+)$', line, re.IGNORECASE)
+    m = re.match(r'^(.+?)(?:\s+might)?\s+needs?\s+(.+)$', line, re.IGNORECASE)
     if m:
         rest = m.group(2).strip()
         if re.match(r'^(?:an? +)?(?:.+ +)?potion$', rest, re.IGNORECASE):
@@ -414,8 +544,8 @@ def _parse_line(line: str):
     # Location / spatial facts
     # ------------------------------------------------------------------
 
-    # "<entity> is in <room>"  (also covers "player is in <room>")
-    m = re.match(r'^(.+?) is in (.+)$', line, re.IGNORECASE)
+    # "<entity> is in <room>"  (also covers "player is in <room>", and plural "are in")
+    m = re.match(r'^(.+?) (?:is|are) in (.+)$', line, re.IGNORECASE)
     if m:
         entity_text = m.group(1).strip()
         location_text = m.group(2).strip()
@@ -432,7 +562,12 @@ def _parse_line(line: str):
             )
 
         entity = _parse_entity(entity_text)
-        location = _parse_room_location(location_text)
+        dir_loc = _clean_directional_room(location_text)
+        if dir_loc is not None:
+            location = dir_loc
+        else:
+            location = _parse_room_location(location_text)
+            
         return LocationFact(
             entity=entity,
             location=location,
@@ -440,40 +575,32 @@ def _parse_line(line: str):
             provenance=line,
         )
 
-    # "<entity> is to the <direction>"
-    # Single direction → SpatialFact(absolute); compound path → LocationFact
-    m = re.match(r'^(.+?) is to the (.+)$', line, re.IGNORECASE)
+    # "<location> contains <entities>"
+    m = re.match(r'^(.+?) contains (?:an?|the)?\s*(.+)$', line, re.IGNORECASE)
     if m:
-        entity = _parse_entity(m.group(1))
-        dir_text = m.group(2).strip().lower()
-        dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
-        if "-then-" in dir_text or "-and-" in dir_text:
-            loc = _parse_directional_location(dir_text)
-            if loc is None:
-                raise ValueError(
-                    f"Cannot parse compound direction {dir_text!r}"
-                )
-            return LocationFact(
-                entity=entity,
-                location=loc,
-                is_partial=entity.type == "existential",
-                provenance=line,
-            )
-        d = _parse_direction(dir_text)
-        if d is None:
-            # raise ValueError(f"Unknown direction {dir_text!r}")
-            print(f"Unknown direction {dir_text!r}")
-            return None
-        return SpatialFact(
-            type=SpatialRelationType.ABSOLUTE,
-            subject=entity,
-            direction=d,
-            is_partial=entity.type == "existential",
-            provenance=line,
-        )
+        location_text = m.group(1).strip()
+        entities_text = m.group(2).strip()
 
-    # "<entity> is <direction> of <reference>"
-    m = re.match(r"^(.+?) is (" + _DIR_RE + r") of (.+)$", line, re.IGNORECASE)
+        location = _clean_directional_room(location_text)
+        if location is None:
+            location = _parse_room_location(location_text)
+
+        parsed_entities = _parse_contains_entities(entities_text)
+        facts = []
+        for ent in parsed_entities:
+            entity_arg = _parse_entity(ent)
+            facts.append(
+                LocationFact(
+                    entity=entity_arg,
+                    location=location,
+                    is_partial=entity_arg.type == "existential",
+                    provenance=line,
+                )
+            )
+        return facts
+
+    # "<entity> is [to the ]<direction> of <reference>"
+    m = re.match(r"^(.+?) is (?:to the )?(" + _DIR_RE + r") of (.+)$", line, re.IGNORECASE)
     if m:
         entity_text = m.group(1).strip()
         direction_text = m.group(2).strip()
@@ -508,6 +635,38 @@ def _parse_line(line: str):
             direction=direction,
             reference=reference,
             is_partial=entity.type == "existential" or reference.type == "existential",
+            provenance=line,
+        )
+
+    # "<entity> is to the <direction>"
+    # Single direction → SpatialFact(absolute); compound path → LocationFact
+    m = re.match(r'^(.+?) is to the (.+)$', line, re.IGNORECASE)
+    if m:
+        entity = _parse_entity(m.group(1))
+        dir_text = m.group(2).strip().lower()
+        dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
+        if "-then-" in dir_text or "-and-" in dir_text:
+            loc = _parse_directional_location(dir_text)
+            if loc is None:
+                raise ValueError(
+                    f"Cannot parse compound direction {dir_text!r}"
+                )
+            return LocationFact(
+                entity=entity,
+                location=loc,
+                is_partial=entity.type == "existential",
+                provenance=line,
+            )
+        d = _parse_direction(dir_text)
+        if d is None:
+            # raise ValueError(f"Unknown direction {dir_text!r}")
+            print(f"Unknown direction {dir_text!r}")
+            return None
+        return SpatialFact(
+            type=SpatialRelationType.ABSOLUTE,
+            subject=entity,
+            direction=d,
+            is_partial=entity.type == "existential",
             provenance=line,
         )
 
@@ -547,7 +706,10 @@ def dsl_to_graph(text_filename: str, output_filename: str) -> None:
         except ValueError as exc:
             raise ValueError(f"Parse error on line {lineno}: {exc}") from exc
         if fact is not None:
-            facts.append(fact)
+            if isinstance(fact, list):
+                facts.extend(fact)
+            else:
+                facts.append(fact)
 
     kg = KnowledgeGraph(facts=facts)
 

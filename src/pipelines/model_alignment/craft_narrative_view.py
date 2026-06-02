@@ -160,7 +160,7 @@ def _build_requirements_by_character(
         elif fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
             # Message/request entity is subject; recipient agent is target
             if fact.target and fact.target.value and fact.subject.value:
-                requirements[fact.target.value].append(f"needs delivery of {fact.subject.value}")
+                requirements[fact.subject.value].append(f"has message for {fact.target.value}")
 
     # 2. Inferred requirements from inventory requests (e.g. "request from room 1")
     # We associate these with the ROOM name for now, or we can resolve to character later.

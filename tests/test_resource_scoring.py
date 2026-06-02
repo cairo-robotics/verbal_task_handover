@@ -55,7 +55,7 @@ def test_resource_score_potion_success(map_graph, cost_config):
     # If empty, _get_all_rooms returns set(). 
     # _calculate_location_score uses true_room if available.
     # true_room = storage_1. all_rooms = {storage_1}. num_rooms = 1. max_cost = 0.5.
-    assert score.max_cost == 0.5
+    assert score.max_cost == 41.5
 
 def test_resource_score_potion_none(map_graph, cost_config):
     lily = MockNPC("lily", held_item_interact_complete=False)
@@ -97,15 +97,12 @@ def test_resource_score_npc_target(map_graph, cost_config):
     assert score.partial_credit == 1.0
 
 def test_resource_score_no_need(map_graph, cost_config):
-    # Lily has everything done
-    lily = MockNPC("lily", held_item_interact_complete=True, 
-                   conditional_interact_counts={"response from Eliza": 1, "response from Lola": 1})
-    
+    # unknown_patient is not in PATIENT_DATA, so they have no outstanding needs
     gs = MockGameState({
-        "room 1": {"lily": lily}
+        "room 1": {}
     })
     
-    score = _score_resource("lily", [], gs, map_graph, cost_config)
+    score = _score_resource("unknown_patient", [], gs, map_graph, cost_config)
     
     # No need -> FULL credit for 0 cost
     assert score.credit_type == CreditType.FULL

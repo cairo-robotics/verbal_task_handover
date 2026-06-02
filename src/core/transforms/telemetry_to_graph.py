@@ -312,7 +312,10 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                     continue
 
                 item_name = _normalize_item(raw_item)
-                if "potion" not in item_name:
+                if "potion" in item_name:
+                    potion_arg = _named(item_name)
+                    builder.add_location(potion_arg, state.player_room, provenance=text)
+                else:
                     item_arg = _named(item_name)
                     builder.add_relation(
                         RelationPredicate.HAS_ITEM,

@@ -42,6 +42,7 @@ def run_metrics_for_pid(
     *,
     data_dir: str,
     python_exe: str,
+    no_user_report: bool = False,
 ) -> None:
     repo_root = Path(__file__).resolve().parent.parent.parent
     env = {**os.environ, "DATA_DIR": data_dir, "PYTHONPATH": str(repo_root)}
@@ -54,7 +55,10 @@ def run_metrics_for_pid(
         print(f"Error: Telemetry KG not found at {telemetry_kg}. Skipping metrics for {pid}.")
         return
 
-    report_types = ["user_report", "full_realization", "task_aware"]
+    if no_user_report:
+        report_types = ["no_report_task_aware"]
+    else:
+        report_types = ["user_report", "full_realization", "task_aware", "task_aware_raw_ablation", "no_report_task_aware"]
     
     # Metrics output dirs
     metrics_root = Path(data_dir) / "analysis" / "metrics_output"
@@ -125,6 +129,11 @@ def main() -> None:
         action="store_true",
         help="Process remaining pids after a failure; exit non-zero if any pid failed.",
     )
+    parser.add_argument(
+        "--no-user-report",
+        action="store_true",
+        help="Run evaluations on only the no_report (ablation) reports.",
+    )
     args = parser.parse_args()
 
     data_dir = args.data_dir or os.environ.get("DATA_DIR")
@@ -142,6 +151,7 @@ def main() -> None:
                 pid,
                 data_dir=data_dir,
                 python_exe=python_exe,
+                no_user_report=args.no_user_report
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"Error for pid {pid}: {e}", file=sys.stderr, flush=True)

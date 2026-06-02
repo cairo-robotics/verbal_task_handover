@@ -20,7 +20,8 @@ from src.core.representations.pydantic_schema import (
     Location,
 )
 from src.pipelines.model_alignment.entity_alignment import AlignmentResult, ExistentialResolution
-from src.core.utils.spatial_reasoning import get_entity_location, is_location_satisfying_constraint
+from src.core.utils.spatial_reasoning import get_entity_location, is_location_satisfying_constraint, resolve_directional_path
+from src.core.utils.normalization import normalize_entity_name
 
 
 class ConflictRecord(BaseModel):
@@ -208,13 +209,22 @@ def align_facts(
         
         if isinstance(rf, LocationFact) and isinstance(tf, LocationFact):
             if not _compare_values(rf.location, tf.location):
-                conflicts.append(ConflictRecord(
-                    source_fact_id=rf.id,
-                    target_fact_id=tf.id,
-                    field_name="location",
-                    expected_value=tf.location.model_dump(),
-                    actual_value=rf.location.model_dump()
-                ))
+                # Try to resolve directional path before raising conflict
+                resolved = False
+                if rf.location.type == "directional" and rf.location.directions and tf.location.type == "room" and tf.location.room:
+                    start_room = rf.location.room or get_entity_location(telemetry_graph, "player") or "room 0"
+                    resolved_room = resolve_directional_path(start_room, rf.location.directions, telemetry_graph)
+                    if resolved_room and normalize_entity_name(resolved_room) == normalize_entity_name(tf.location.room):
+                        resolved = True
+                
+                if not resolved:
+                    conflicts.append(ConflictRecord(
+                        source_fact_id=rf.id,
+                        target_fact_id=tf.id,
+                        field_name="location",
+                        expected_value=tf.location.model_dump(),
+                        actual_value=rf.location.model_dump()
+                    ))
                 
         elif isinstance(rf, RelationFact) and isinstance(tf, RelationFact):
             if not _compare_arguments(rf.object, tf.object, rf.id, "object", alignment_result, telemetry_graph):

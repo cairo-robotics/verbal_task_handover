@@ -290,3 +290,84 @@ class TestFactAlignment:
         result = align_facts(report, telemetry, AlignmentResult())
 
         assert "r1" in result.resolution_confirmed_fact_ids
+
+    def test_room_normalization_alignment(self):
+        """Report has 'storage room 1', Telemetry has 'storage 1'. They should align without conflict."""
+        from src.core.transforms.dsl_to_graph import _parse_line
+        
+        # DSL line creates location storage 1 thanks to standardization!
+        rf = _parse_line("player is in storage room 1")
+        tf = LocationFact(
+            id="t1",
+            entity=_named("player"),
+            location=_room("storage 1")
+        )
+        
+        result = align_facts(_kg(rf), _kg(tf), AlignmentResult())
+        
+        assert "t1" in result.confirmed_fact_ids or rf.id in result.confirmed_fact_ids
+        assert not result.conflicts
+
+    def test_directional_path_resolution_success(self):
+        """Valid directional path matches the telemetry location exactly and aligns as shared."""
+        # Telemetry: room 1 --NORTH--> room 2 --WEST--> lounge 3
+        # Lily is in lounge 3
+        tf = LocationFact(id="t1", entity=_named("lily"), location=_room("lounge 3"))
+        tl_conn1 = ConnectionFact(id="c1", location_a=_room("room 1"), location_b=_room("room 2"), direction=Direction.NORTH)
+        tl_conn2 = ConnectionFact(id="c2", location_a=_room("room 2"), location_b=_room("lounge 3"), direction=Direction.WEST)
+        telemetry = _kg(tf, tl_conn1, tl_conn2)
+
+        # Report: Lily is at north-then-west starting at room 1
+        rf = LocationFact(
+            id="r1",
+            entity=_named("lily"),
+            location=Location(type="directional", room="room 1", directions=[Direction.NORTH, Direction.WEST], mode="path")
+        )
+
+        result = align_facts(_kg(rf), telemetry, AlignmentResult())
+        
+        assert "r1" in result.confirmed_fact_ids
+        assert not result.conflicts
+        assert "t1" in result.matched_target_fact_ids
+
+    def test_directional_path_resolution_failure_mismatch(self):
+        """Valid directional path resolves to lounge 3, but telemetry has lily at lounge 4 (conflict)."""
+        # Telemetry: room 1 --NORTH--> room 2 --WEST--> lounge 3
+        # Lily is in lounge 4
+        tf = LocationFact(id="t1", entity=_named("lily"), location=_room("lounge 4"))
+        tl_conn1 = ConnectionFact(id="c1", location_a=_room("room 1"), location_b=_room("room 2"), direction=Direction.NORTH)
+        tl_conn2 = ConnectionFact(id="c2", location_a=_room("room 2"), location_b=_room("lounge 3"), direction=Direction.WEST)
+        telemetry = _kg(tf, tl_conn1, tl_conn2)
+
+        # Report: Lily is at north-then-west starting at room 1
+        rf = LocationFact(
+            id="r1",
+            entity=_named("lily"),
+            location=Location(type="directional", room="room 1", directions=[Direction.NORTH, Direction.WEST], mode="path")
+        )
+
+        result = align_facts(_kg(rf), telemetry, AlignmentResult())
+        
+        assert not result.confirmed_fact_ids
+        assert len(result.conflicts) == 1
+        assert result.conflicts[0].field_name == "location"
+
+    def test_directional_path_resolution_failure_incomplete(self):
+        """Directional path cannot be resolved due to missing connections (conflict)."""
+        # Telemetry: room 1 --NORTH--> room 2 (no connection WEST to lounge 3)
+        tf = LocationFact(id="t1", entity=_named("lily"), location=_room("lounge 3"))
+        tl_conn1 = ConnectionFact(id="c1", location_a=_room("room 1"), location_b=_room("room 2"), direction=Direction.NORTH)
+        telemetry = _kg(tf, tl_conn1)
+
+        # Report: Lily is at north-then-west starting at room 1
+        rf = LocationFact(
+            id="r1",
+            entity=_named("lily"),
+            location=Location(type="directional", room="room 1", directions=[Direction.NORTH, Direction.WEST], mode="path")
+        )
+
+        result = align_facts(_kg(rf), telemetry, AlignmentResult())
+        
+        assert not result.confirmed_fact_ids
+        assert len(result.conflicts) == 1
+        assert result.conflicts[0].field_name == "location"

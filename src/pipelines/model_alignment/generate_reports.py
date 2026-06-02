@@ -18,68 +18,91 @@ except ImportError:
     from craft_narrative_view import NarrativeView
 
 FULL_REALIZATION_SYSTEM_PROMPT = """
-You are generating a clear and well-organized handoff report for a teammate who will continue the game.
+You are an expert agent generating a comprehensive, highly-structured, and exhaustive handoff report for a teammate who will continue the game.
 
-Use natural language.
-Organize the information logically.
-Do not omit information from the structured input.
-Do not introduce new facts or strategies.
-Do not infer information not explicitly present.
+To maximize extraction accuracy while ensuring completeness, you MUST write the report in a highly organized, bulleted, and structured template. You MUST include ALL known details from the structured input, including player status, all NPC locations, all active and completed patient needs, all message delivery tasks, and all spatial/directional facts.
+
+Your report MUST strictly follow this exact template:
+
+### PLAYER STATUS
+- player is in [Room Name]
+- player holds [Item Name or "- None"]
+
+### ACTIVE NPC PATIENTS & NEEDS
+- [NPC Name] needs a [Potion Color] potion
+- [NPC Name] has a message for [Recipient Name]
+
+### COMPLETED ACTIONS & HISTORY
+- [NPC Name] has received a [Potion Color] potion
+- message delivered from [Sender Name] to [Recipient Name]
+
+### POTION & NPC LOCATIONS
+- [Potion Color] potion is in [Room Name]
+- [NPC Name] is in [Room Name]
+
+### UNRESOLVED / DIRECTIONAL FACTS
+- [Describe any unanchored, directional, or conflicting facts, e.g., "someone to the east needs a red potion"]
+
+---
+INSTRUCTIONS:
+1. You MUST include every single fact present in the structured state. Do not filter or summarize.
+2. Each fact MUST be listed under its appropriate section using the exact bullet point patterns provided (e.g., "[Entity] is in [Room]", "[NPC Name] needs a [Potion Color] potion", "[NPC Name] has received a [Potion Color] potion").
+3. Do NOT include any introductory or concluding text. Write only the template sections.
 """
 
 FULL_REALIZATION_USER_PROMPT = Template("""
-Generate a detailed and exhaustive handoff report for a teammate who will continue the task. 
+Generate an exhaustive, structured handoff report based on the provided structured state.
 
-Include ALL known information from the provided state, including:
-- Current player status (location, inventory)
-- All NPC patients and their specific needs
-- All explored locations and any interesting findings there
-- Any pending message delivery tasks (requests or responses)
-- Any unanchored or directional facts that haven't been resolved yet
-- Any unresolved inconsistencies or conflicts
-
-Do not add new facts.
-Do not summarize aggressively. 
-Include specific room names and NPC names.
+Remember the rules:
+- Strictly use the five header sections: "### PLAYER STATUS", "### ACTIVE NPC PATIENTS & NEEDS", "### COMPLETED ACTIONS & HISTORY", "### POTION & NPC LOCATIONS", and "### UNRESOLVED / DIRECTIONAL FACTS".
+- Be extremely detailed. Do NOT omit any facts from the narrative view.
+- Use the exact bullet-point templates specified to ensure perfect parsing downstream.
 
 Structured state:
 $narrativeview
 """)
 
 TASK_AWARE_SYSTEM_PROMPT = """
-You are generating a task-focused handoff report for a teammate who will continue the task.
+You are an expert agent generating a high-density, task-focused handoff report for a teammate who will continue the game.
 
-The primary objective of the task is to fulfill the needs of NPC patients by:
-- Delivering required potions
-- Carrying request messages from patients to specified NPCs
-- Returning response messages to the original requester
+The primary objective of the game is to fulfill the needs of NPC patients by:
+- Delivering required potions.
+- Carrying request messages from patients to specified NPCs.
+- Returning response messages to the original requester.
 
-Your report should prioritize information that is relevant to completing this objective.
+To maximize efficiency and communicative compression, you MUST write the report in a highly concise, telegraphic, and structured format. Completely omit conversational padding, pleasantries, and descriptions of past completed events (e.g., do not list completed potion deliveries or past messages already delivered).
 
-You MUST include the names and current locations of all NPCs involved in outstanding tasks. This includes:
-- Patients who still need potions.
-- Patients whose requests are currently in your inventory.
-- NPCs who need to receive a message or provide a response.
-- Patients who are waiting for a response that you currently hold.
+Your report MUST strictly follow this exact template:
 
-If there are "unanchored facts" describing needs (e.g., "someone to the east needs a red potion"), include them in your report, even if they aren't linked to a specific NPC name or room yet.
+### OUTSTANDING NEEDS
+- [NPC Name] needs a [Potion Color] potion
+- [NPC Name] has a message for [Recipient Name]
 
-Briefly mention other explored information only if useful for context. Do not omit the names or locations of task-relevant NPCs.
-Do not introduce new facts.
-Do not speculate about information not present in the structured state.
+### POTION & NPC LOCATIONS
+- [Potion Color] potion is in [Room Name]
+- [NPC Name] is in [Room Name]
+- player is in [Room Name]
+
+### UNRESOLVED / DIRECTIONAL FACTS
+- [Describe any unanchored or directional facts, e.g., "someone to the east needs a red potion"]
+
+---
+INSTRUCTIONS:
+1. Under "### OUTSTANDING NEEDS", list ONLY NPCs that currently have active, unfinished tasks. If there are none, write "- None".
+   - Note: Refer to messages, requests, and responses all generically as "a message" to fit the template (e.g., "Steve has a message for John").
+2. Under "### POTION & NPC LOCATIONS", list the location of the player, all potions found in storage/rooms, and the locations of ALL patient NPCs encountered/visited so far (even if they currently have no outstanding needs). Each location MUST be on its own bullet point using the exact "[Entity] is in [Room]" pattern.
+3. Do NOT include any introductory or concluding text. Write only the template sections.
+4. Do NOT include past completed actions or history.
 """
 
 TASK_AWARE_USER_PROMPT = Template("""
-Generate a concise and task-focused handoff report for a teammate.
+Generate a high-density, task-focused handoff report based on the provided structured state.
 
-The goal is to fulfill NPC patient needs (potions and message delivery).
-
-Prioritize:
-- Outstanding patient needs (identify NPC by name and room).
-- Pending requests and responses (identify who they are from and who they are for).
-- NPC and item locations relevant to completing these tasks.
-
-De-emphasize or omit information that is not relevant to completing the task, such as irrelevant spatial information, or past actions that do not affect current objectives.
+Remember the rules:
+- Strictly use the three header sections: "### OUTSTANDING NEEDS", "### POTION & NPC LOCATIONS", and "### UNRESOLVED / DIRECTIONAL FACTS".
+- Be extremely concise. Avoid complete conversational sentences. Use the exact bullet-point format specified.
+- List ALL encountered NPCs and potions in the locations section, even if they have no active needs.
+- Omit all past completed events.
 
 Structured state:
 $narrativeview

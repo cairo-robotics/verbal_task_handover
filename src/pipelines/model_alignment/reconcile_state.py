@@ -108,9 +108,12 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
     """
     Reconcile declarative relation facts in *graph*.
 
-    For each 'need' predicate (NEEDS_POTION, HAS_MESSAGE_FOR),
-    check whether a corresponding delivery fact exists for the same subject/target
-    pair.  If so, remove the need fact so the graph only retains outstanding needs.
+    For the 'need' predicate (HAS_MESSAGE_FOR), check whether a corresponding
+    delivery fact exists for the same subject/target pair. If so, remove the need
+    fact so the graph only retains outstanding needs.
+
+    Note: NEEDS_POTION relations are explicitly preserved and never removed or
+    omitted from the input graph, as patients might need potions multiple times.
 
     Also reconciles HAS_ITEM: if an item appears in both a HAS_ITEM fact and a
     POTION_DELIVERED fact (subject of HAS_ITEM matches object of delivery),
@@ -123,6 +126,9 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
 
     # --- Resolve needs against deliveries ---
     for need in rel_facts:
+        # Explicitly preserve NEEDS_POTION relations
+        if need.predicate == RelationPredicate.NEEDS_POTION:
+            continue
         delivery_predicate = _NEED_TO_DELIVERY.get(need.predicate)
         if delivery_predicate is None:
             continue
