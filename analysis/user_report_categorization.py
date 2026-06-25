@@ -17,12 +17,15 @@ label each one with a content category.
 
 S — State Transfer: A factual claim about the current game world 
 state at handover time. Could be verified true or false against a 
-game snapshot. Includes item/NPC locations, player inventory, task 
-completion, explicit negatives ("the chest is empty").
+game snapshot. Includes item/NPC locations, past player actions or events, player inventory, task 
+completion, explicit negatives ("the room to the west is empty"). 
+When a directive's primary informational content is a recoverable (even if vague) state fact
+("look into where the potions are, one on the right and one to the north"), 
+label it S and note the mixed framing in the justification.
 
 K — Knowledge Transfer: Something the player learned or believes 
 from experience that a fresh agent with full state visibility 
-wouldn't automatically know. Includes strategy, priorities, causal 
+wouldn't automatically know. Includes strategy, advice, priorities, causal 
 knowledge ("you need X to do Y"), dead ends already ruled out, 
 warnings, predictions.
 
@@ -52,49 +55,6 @@ the task framework, and filler.
       "text": "<clause text>",
       "label": "<S|K|A|M>",
       "justification": "<one sentence>"
-    }
-  ]
-}
-
-## Examples
-
-Report: "The blue potion is in the room to the north. Focus on the 
-west side first — I already cleared the east rooms and there's 
-nothing left there. I didn't have time to finish everything."
-
-Output:
-{
-  "clauses": [
-    {
-      "text": "The blue potion is in the room to the north.",
-      "label": "S",
-      "justification": "Direct location claim verifiable against 
-        game state."
-    },
-    {
-      "text": "Focus on the west side first.",
-      "label": "K",
-      "justification": "Strategic priority based on player experience, not a state fact."
-    },
-    {
-      "text": "I already cleared the east rooms and there's 
-        nothing left there.",
-      "label": "K",
-      "justification": "Dead-end ruling-out based on player 
-        experience; the current emptiness is a state fact but 
-        the 'already cleared' framing encodes experiential 
-        knowledge."
-    },
-    {
-      "text": "I didn't have time to finish everything.",
-      "label": "M",
-      "justification": "Comment about the player's experience, 
-        not a task-relevant claim."
-    },
-    {
-      "text": "Tutorial is basic.",
-      "label": "M",
-      "justification": "Comment about the task framework (not a claim about strategy or the state of the game)"
     }
   ]
 }

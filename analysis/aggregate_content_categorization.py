@@ -6,7 +6,7 @@ import csv
 
 from token_count import TokenCount
 
-DEFAULT_DIR = "/analysis/content_categorization/"
+DEFAULT_DIR = "/media/kaleb/T7/handover_project/participant_data/analysis/content_categorization/"
 
 def parse_filename(filename, suffix):
     """

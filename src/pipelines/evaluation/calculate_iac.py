@@ -841,6 +841,7 @@ def compute_iac(
 
     # 4. Check each predicted fact to see if it is misinformation (untrue location or need fact)
     global_misinformation_cost = 0.0
+    global_misinformation_count = 0
     for f in pred_facts:
         if isinstance(f, ConnectionFact):
             continue
@@ -848,6 +849,7 @@ def compute_iac(
         # Check location/spatial fact or relation/need fact
         if _is_location_fact_misinfo(f, true_state, map_graph, entity_rooms) or _is_need_fact_misinfo(f, true_state, map_graph, entity_rooms):
             global_misinformation_cost += _get_misinfo_fact_cost(f)
+            global_misinformation_count += 1
 
     # Distraction calculation is disabled/removed per user request, always 0.0
     distraction_cost = 0.0
@@ -856,7 +858,8 @@ def compute_iac(
         entity_scores=entity_scores,
         misinformation_multiplier=cost_config.misinformation_multiplier,
         distraction_cost=distraction_cost,
-        misinformation_cost=global_misinformation_cost
+        misinformation_cost=global_misinformation_cost,
+        misinformation_count=global_misinformation_count
     )
 
 def main():

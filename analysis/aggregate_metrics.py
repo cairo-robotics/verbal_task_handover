@@ -35,6 +35,10 @@ def process_iac(file_path):
         "iac_omission_cost": data.get("omission_cost", 0),
         "iac_misinformation_cost": data.get("misinformation_cost", 0),
         "iac_combined_cost": data.get("combined_cost", 0),
+        "soft_precision": data.get("soft_precision", 0.0),
+        "soft_recall": data.get("soft_recall", 0.0),
+        "soft_f1": data.get("soft_f1", 0.0),
+        "misinformation_count": data.get("misinformation_count", 0),
     }
 
     # Aggregate categorical savings
@@ -195,6 +199,7 @@ def main():
     # 4. Define column order
     cols = [
         "participant_id", "condition", "token_count", "precision", "recall", "f1", "tp", "fp", "fn",
+        "soft_precision", "soft_recall", "soft_f1", "misinformation_count",
         "iac_cost_saved", "iac_omission_cost", "iac_misinformation_cost", "iac_combined_cost",
         "iac_location_savings", "iac_need_savings", "iac_resource_savings",
         # "raw_iac_cost_saved", "raw_iac_omission_cost", "raw_iac_misinformation_cost", "raw_iac_combined_cost",
