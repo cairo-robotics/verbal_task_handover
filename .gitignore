@@ -1,6 +1,8 @@
 api_config.sh
 evaluation/treasure_hunt_py/treasure_hunt/assets/unused
 participant_data/
+agents.md
+claude.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
