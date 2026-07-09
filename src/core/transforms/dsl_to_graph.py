@@ -251,7 +251,7 @@ def _parse_directional_location(dir_text: str) -> Optional[Location]:
     ("west-then-north", "north-and-east").
     """
     dir_text = dir_text.strip().lower()
-    dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
+    dir_text = dir_text.replace(" and then ", "-then-").replace(" then ", "-then-").replace(" and ", "-and-")
     if "-then-" in dir_text:
         parts = [p.strip() for p in dir_text.split("-then-")]
         dirs = [_parse_direction(p) for p in parts]
@@ -366,7 +366,7 @@ def _clean_directional_room(text: str) -> Optional[Location]:
     s = s.strip()
     
     # Normalize spaces/hyphens for compound directions
-    s = s.replace(" then ", "-then-").replace(" and ", "-and-")
+    s = s.replace(" and then ", "-then-").replace(" then ", "-then-").replace(" and ", "-and-")
     s = re.sub(r"\s+", "-", s) # e.g. "north west" -> "north-west"
     
     # Try parsing as a directional location
@@ -644,7 +644,7 @@ def _parse_line(line: str):
     if m:
         entity = _parse_entity(m.group(1))
         dir_text = m.group(2).strip().lower()
-        dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
+        dir_text = dir_text.replace(" and then ", "-then-").replace(" then ", "-then-").replace(" and ", "-and-")
         if "-then-" in dir_text or "-and-" in dir_text:
             loc = _parse_directional_location(dir_text)
             if loc is None:

@@ -17,212 +17,115 @@ try:
 except ImportError:
     pass
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4.1-mini"
 
 PROMPT = """
 You are an information extraction system.
 
-Your task is to extract structured facts from a handoff report about a game task. Extract ALL facts that are explicitly stated in the text, including both outstanding needs and completed past events.
+Your task is to extract structured facts from a handoff report about a game task. Extract ONLY concrete state facts that are explicitly stated in the text (outstanding needs, locations, messaging, and completed past events).
 
 Return the facts using a controlled language with STRICT formatting rules. Each fact should be on a new line.
 Do not include information that cannot fit in this format.
 
 ---
 
-OUTPUT FORMAT RULES:
+STRICT OUTPUT RULES:
 
-- Use ONLY the exact templates shown below
-- Use ONLY lowercase letters
-- Do NOT include punctuation
-- Do NOT include extra words
-- Do NOT paraphrase templates
-- Do NOT infer unstated facts
-- Do NOT include duplicate facts
-- IMPORTANT: If a sentence mentions both an NPC's location and their need/status/history inline (e.g., 'Lily in room 1 needs a gold potion', 'Oliver (room 2) needs a blue potion', or 'Lily in room 1 has received a gold potion'), you MUST extract both facts separately. For example, extract both '<npc> needs a <potion_color> potion' AND '<npc> is in <room>', or both '<npc> has received <potion_color> potion' AND '<npc> is in <room>'.
+1. **Exact Templates and Verbs Only**: Every line of the output MUST be an exact instantiation of one of the defined templates below. Do NOT use custom verbs (like 'requires', 'wanted', 'contains', 'located'). You MUST map them to the allowed template verbs.
+   - Map 'requires', 'wants', 'wanted', 'demands', 'requests' -> **'needs'**
+   - Map 'contains', 'has', 'holds', 'placed in', 'located in' -> **'is in'** (for storage) or **'is to the'** (for directions)
+2. **Room Type Disambiguation**:
+   - Rooms named 'room 1', 'room 2', 'room 3', 'room 4', 'room 5' are patient rooms. A listing like 'room 1 (gold)' means: **'room 1 needs a gold potion'** (do NOT use 'is in').
+   - Rooms named 'storage 1', 'storage room 2', 'lounge 1', etc., are storage/lounge areas. A listing like 'storage room 1 (red, gold)' means: **'red potion is in storage room 1'** and **'gold potion is in storage room 1'**.
+3. **Ignore Gameplay Strategy/Advice**: Ignore advice, gameplay instructions, or general strategies (e.g. 'reduced trips', 'remember potion color', 'deliver then get message'). ONLY extract concrete state facts (e.g., locations, needs, message history).
+4. **No Plural Subjects or Objects**: Do NOT output plurals like 'npcs', 'potions', 'patients', or 'people'. You must map them to singular existential terms:
+   - 'npcs', 'people', or 'patients' -> 'someone' (e.g., 'someone is to the north')
+   - 'potions' -> 'a potion' or 'some potion' (e.g., 'a potion is to the south')
+5. **Separation of Inline Facts**: If a sentence mentions both location and need/history inline, you MUST extract them on separate lines.
+6. **No Punctuation**: Do NOT include punctuation, capital letters, or extra words.
 
 ---
-ENTITY TYPES include npcs, locations, and items (potions, requests or messages, responses).
-- npcs: <npc name>
-- location: <location name>
-- item: <potion_color> potion, message/request/response
-- (note: messages, requests and responses are the same thing, and should all be referred to as "message")
-
-If the entity agent is unspecified (e.g., "someone", "a patient", "a potion"), use <unknown>:
-- npcs: someone
-- items: a potion
-- locations: somewhere
-Otherwise, use only the name (e.g. "nick", not "patient nick")
+ENTITY TYPES:
+- npcs: <npc name> (lily, oliver, nick, marie, guy, steve, john, eliza, lola, donna, brittany) or "someone"
+- locations: <location name> (room 1, hallway 3, storage 1, lounge 2, etc.) or "somewhere"
+- items: <potion_color> potion, "message", "a potion", "some potion"
 
 FACT TEMPLATES:
 
-# Potions
+# Potions and Inventory
 <npc> needs a <potion_color or unknown> potion
 <potion_color or unknown> potion delivered to <npc>
+<potion_color or unknown> potion is in <room>
+player has <item>
 
-# Messaging (includes requests, messages, and responses)
+# Messaging
 <npc> has a message for <npc>
 message delivered from <npc> to <npc>
 
-# Locations and spatial relationships
+# Locations and Spatial Relationships
 player is in <room>
 <entity> is in <room>
 <entity> is to the <direction>
 <entity> is to the <direction> of <reference>
+<room> is connected to <room>
 
-# Inventory
-player has <item> (for items in player inventory)
-
-# Past events
+# Past/Completed Events
 <npc> has received <item>
 <npc> was delivered a message from <npc>
 
-If the agent is unspecified (e.g., "someone", "a patient"), use:
-
-someone to the <direction> needs a <potion_color> potion
-someone needs a <potion_color> potion
-someone has a message for <npc or someone>
-<item> is to the <direction>
-<entity> is in <location>
-
-Do not infer specific agents, locations, or objects.
-
 ---
 
-EXAMPLE 1:
-
+EXAMPLE 1: Structured Report (Needs, Messaging, Locations)
 INPUT:
-"**Outstanding Patient Needs:**
-1. **Guy** - Location: **Room 5**  
-   - Needs: Orange potion
-2. **Marie** - Location: **Room 4**  
-   - Outstanding request
-   - already received blue potion
-
-**Vague or Directional Needs:**
-1. Someone to the east needs a red potion.
-2. Someone to the east needs a green potion.
-3. Teal potion is to the south."
-
-OUTPUT:
-guy needs a orange potion
-guy is in room 5
-marie has a message for someone
-marie is in room 4
-marie has received a blue potion
-someone to the east needs a red potion
-someone to the east needs a green potion
-teal potion is to the south
-
----
-
-EXAMPLE 2:
-
-INPUT:
-"Northwest Room (Room 1) needs the gold potion
-Southwest Room (Room 2) needs the blue potion
-Northeast Room (Room 3) needs the red potion
-Southeast Room (Room 4) needs the green potion
-
-There is a fifth room that I did not get around to (NPC named GUY), there is also someone there who wants a potion, I did not get around to it.
-
-The NPCs won't give you medals just for giving them a potion, you will also have to actually deliver messages for them. Make sure you explore all rooms, and names of people in the rooms. Usually helps to make exploration a side taks when fetching items or delivering messages."
-
-OUTPUT:
-room 1 is to the northwest
-room 1 needs a gold potion
-room 2 is to the southwest
-room 2 needs a blue potion
-room 3 is to the northeast
-room 3 needs a red potion
-room 4 is to the southeast
-room 4 needs a green potion
-guy is in room 5
-room 5 needs a potion
-
----
-
-EXAMPLE 3:
-
-INPUT:
-"You have to assist with delivering potions and messages from certain people. I have done some of it. These are the things you need to finish for me and there are some more that I do not remember.
-1. Lily (in West and then North) requires another Gold potion.
-2. Some people require red and green potions in the East wing.
-3. I think a person wanted an orange potion in the South wing.
-4. Steve has a message for John.
-5. I also saw teal and pale blue potion, along with dark purple in the South wing. 
-6. There were some other potions in the north and then east wing. 
-7. There were people with messages on the West wing that I could not attend to."
-
-OUTPUT:
-lily is to the west-then-north
-someone to the east needs a red potion
-someone to the east needs a green potion
-someone to the south needs an orange potion
-steve has a message for john
-teal potion is to the south
-pale blue potion is to the south
-dark purple potion is to the south
-some potion is to the north-then-east
-someone to the west has a message for someone
-
----
-
-EXAMPLE 4:
-
-INPUT:
-"Handoff Report:
-
-1. Player Status:
-- Current Location: hallway 5
-- Inventory: empty
-
-2. NPC Patients and Their Status:
-- Lily (room 1): Has received a gold potion and messages from Eliza and Lola. No outstanding needs.
-- Oliver (room 2): Has received a blue potion and a message from John. No outstanding needs.
-- Nick (room 3): Has received a red potion and a message from Donna. No outstanding needs.
-- Marie (room 4): Present but no interactions or requirements noted.
-- Guy (room 5): Has received an orange potion. No outstanding needs.
-- Steve (lounge 1): Present but no interactions noted.
-- Eliza (lounge 1): Received a message from an unspecified sender. Sent a message to Lily.
-- John (lounge 2): Received a message from an unspecified sender. Sent a message to Oliver.
-- Lola (lounge 2): Received a message from an unspecified sender. Sent a message to Lily.
-- Donna (lounge 3): Received a message from an unspecified sender. Sent a message to Nick.
-- Brittany (lounge 3): Present but no interactions noted.
-
-3. Pending Message Delivery Tasks:
-- None. All known messages have been delivered.
-
-5. Unanchored or Directional Facts:
-- A potion is located somewhere to the north.
-- A potion is located somewhere to the south."
+"Player Status: Currently in hallway 5.
+Lily (room 1): Has received a gold potion and message from Eliza.
+Oliver (room 2): Needs blue potion, has message for John.
+Steve (lounge 1): Present."
 
 OUTPUT:
 player is in hallway 5
 lily is in room 1
-oliver is in room 2
-nick is in room 3
-marie is in room 4
-guy is in room 5
-steve is in lounge 1
-eliza is in lounge 1
-john is in lounge 2
-lola is in lounge 2
-donna is in lounge 3
-brittany is in lounge 3
-lily has received the gold potion
-oliver has received the blue potion
-nick has received the red potion
-guy has received the orange potion
-eliza was delivered a message from someone
-john was delivered a message from someone
-lola was delivered a message from someone
-donna was delivered a message from someone
+lily has received gold potion
 lily was delivered a message from eliza
-lily was delivered a message from lola
-oliver was delivered a message from john
-nick was delivered a message from donna
+oliver is in room 2
+oliver needs a blue potion
+oliver has a message for john
+steve is in lounge 1
+
+---
+
+EXAMPLE 2: Vague/Directional Needs, Plurals, and Strategies
+INPUT:
+"N and S sides have NPCs to send and receive msgs. Potions are also N and S.
+Advised to go ask both rooms on W (or remember their potion colour from the start).
+Then get one potion -> deliver, take the msg -> Give the msg -> take the response."
+
+OUTPUT:
+someone to the north has a message for someone
+someone to the south has a message for someone
 a potion is to the north
 a potion is to the south
+
+---
+
+EXAMPLE 3: Patient vs. Storage Rooms and Verb Mapping
+INPUT:
+"room 1 (gold potion)
+storage room 1: north of hallway 3 (red, gold).
+storage room 2 contains blue and green potions.
+some people requires a red potion in the east wing.
+a person wanted an orange potion in the south wing."
+
+OUTPUT:
+room 1 needs a gold potion
+red potion is in storage room 1
+gold potion is in storage room 1
+storage room 1 is to the north of hallway 3
+blue potion is in storage room 2
+green potion is in storage room 2
+someone to the east needs a red potion
+someone to the south needs an orange potion
+
 ---
 
 Now extract facts from the following text:
