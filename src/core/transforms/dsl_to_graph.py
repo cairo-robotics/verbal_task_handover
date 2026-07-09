@@ -1,8 +1,9 @@
-import re
-import os
-import sys
+import argparse
 import json
-from typing import Optional, List, Tuple
+import os
+import re
+import sys
+from typing import List, Optional, Tuple
 
 try:
     from src.core.representations.pydantic_schema import (
@@ -10,11 +11,21 @@ try:
         Argument, Location, Direction, RelationPredicate, SpatialRelationType,
     )
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from pydantic_schema import (
         KnowledgeGraph, RelationFact, LocationFact, SpatialFact, ConnectionFact,
         Argument, Location, Direction, RelationPredicate, SpatialRelationType,
     )
 
+import dotenv
+
+try:
+    from src.core.utils.normalization import standardize_room_name
+except ImportError:
+    # pyrefly: ignore [missing-import]
+    from normalization import standardize_room_name
+
+dotenv.load_dotenv()
 
 # for reference when implementing the parser
 # DSL_CONVERSION_PROMPT = """
@@ -45,9 +56,9 @@ except ImportError:
 # <npc> needs a <potion_color or unknown> potion
 # <potion_color or unknown> potion delivered to <npc>
 
-# # Messaging
-# <npc> has a message/response for <npc>
-# message/response delivered from <npc> to <npc>
+# # Messaging (includes requests, messages, and responses)
+# <npc> has a message for <npc>
+# message delivered from <npc> to <npc>
 
 # # Locations and spatial relationships
 # player is in <room>
@@ -188,14 +199,49 @@ DIRECTION_MAP = {
     "northwest": Direction.NORTHWEST,
     "southeast": Direction.SOUTHEAST,
     "southwest": Direction.SOUTHWEST,
+    
+    # top/bottom/left/right aliases
+    "top": Direction.NORTH,
+    "bottom": Direction.SOUTH,
+    "left": Direction.WEST,
+    "right": Direction.EAST,
+    "topleft": Direction.NORTHWEST,
+    "topright": Direction.NORTHEAST,
+    "bottomleft": Direction.SOUTHWEST,
+    "bottomright": Direction.SOUTHEAST,
 }
 
 # Regex fragment matching any single direction keyword
-_DIR_RE = r"(?:north(?:east|west)?|south(?:east|west)?|east|west)"
+_DIR_RE = r"(?:north[- ]?(?:east|west)?|south[- ]?(?:east|west)?|east|west|top[- ]?(?:left|right)?|bottom[- ]?(?:left|right)?|left|right)"
 
 
 def _parse_direction(text: str) -> Optional[Direction]:
-    return DIRECTION_MAP.get(text.strip().lower())
+    t = text.strip().lower().replace("-", "").replace(" ", "")
+    return DIRECTION_MAP.get(t)
+
+
+def _is_location(text: str) -> bool:
+    text = text.lower().strip()
+    return any(
+        text.startswith(prefix)
+        for prefix in ["room", "hallway", "storage", "lounge"]
+    )
+
+
+_DIRECTION_INVERSES = {
+    Direction.NORTH: Direction.SOUTH,
+    Direction.SOUTH: Direction.NORTH,
+    Direction.EAST: Direction.WEST,
+    Direction.WEST: Direction.EAST,
+    Direction.NORTHEAST: Direction.SOUTHWEST,
+    Direction.SOUTHWEST: Direction.NORTHEAST,
+    Direction.NORTHWEST: Direction.SOUTHEAST,
+    Direction.SOUTHEAST: Direction.NORTHWEST,
+}
+
+
+def _invert_direction(direction: Direction) -> Direction:
+    return _DIRECTION_INVERSES[direction]
 
 
 def _parse_directional_location(dir_text: str) -> Optional[Location]:
@@ -205,6 +251,7 @@ def _parse_directional_location(dir_text: str) -> Optional[Location]:
     ("west-then-north", "north-and-east").
     """
     dir_text = dir_text.strip().lower()
+    dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
     if "-then-" in dir_text:
         parts = [p.strip() for p in dir_text.split("-then-")]
         dirs = [_parse_direction(p) for p in parts]
@@ -224,37 +271,77 @@ def _parse_directional_location(dir_text: str) -> Optional[Location]:
 
 # ---- Argument helpers ----
 
+def _is_generic_person(text: str) -> bool:
+    v = text.lower().strip()
+    if v in ["someone", "somebody", "anyone", "anybody", "some body", "any body"]:
+        return True
+    if "person" in v or "people" in v or "patient" in v or "npc" in v:
+        specific_names = ["lily", "oliver", "nick", "marie", "guy", "steve", "john", "eliza", "lola", "donna", "brittany"]
+        return not any(name in v for name in specific_names)
+    return False
+
+
+def _is_generic_potion(text: str) -> bool:
+    v = text.lower().strip()
+    # Strip common articles/pronouns
+    v = re.sub(r'^(?:an?|the|some) +', '', v)
+    if v == "potion" or v == "somepotion" or v == "some potion":
+        return True
+    if "potion" in v:
+        specific_colors = ["gold", "red", "blue", "green", "orange", "purple", "teal", "pale", "pink", "black", "white", "silver", "yellow"]
+        return not any(color in v for color in specific_colors)
+    return False
+
+
 def _parse_subject(text: str) -> Argument:
     """Parse a subject, handling 'someone', 'someone to the <dir>', and named entities."""
     text = text.strip()
-    m = re.match(r'^someone to the (.+)$', text, re.IGNORECASE)
-    if m:
-        loc = _parse_directional_location(m.group(1).strip())
+    
+    # Handle "someone/some NPC/somebody to the <dir>"
+    m = re.match(r'^(.+?)\s+to the\s+(.+)$', text, re.IGNORECASE)
+    if m and _is_generic_person(m.group(1)):
+        loc = _parse_directional_location(m.group(2).strip())
+        return Argument(type="existential", value="someone", location=loc)
+        
+    # Handle "someone in [the] <room>"
+    m_room = re.match(r'^(.+?)\s+in\s+(?:the\s+)?(.+)$', text, re.IGNORECASE)
+    if m_room and _is_generic_person(m_room.group(1)):
+        room_name = m_room.group(2).strip()
+        loc = Location(type="room", room=standardize_room_name(room_name))
+        return Argument(type="existential", value="someone", location=loc)
+
+    # Handle if the subject itself is a location (e.g., "room 1")
+    if _is_location(text):
+        loc = Location(type="room", room=standardize_room_name(text))
         return Argument(type="existential", location=loc)
-    if text.lower() == "someone":
-        return Argument(type="existential")
-    return Argument(type="named", value=text)
+
+    if _is_generic_person(text):
+        return Argument(type="existential", value="someone")
+        
+    return Argument(type="named", value=standardize_room_name(text))
 
 
 def _parse_entity(text: str) -> Argument:
     """Parse a plain entity reference (no location constraint expected)."""
     text = text.strip()
-    if text.lower() == "someone":
-        return Argument(type="existential")
-    return Argument(type="named", value=text)
+    if _is_generic_person(text):
+        return Argument(type="existential", value="someone")
+    if _is_generic_potion(text):
+        return Argument(type="existential", value="potion")
+    return Argument(type="named", value=standardize_room_name(text))
 
 
 def _parse_potion_arg(text: str) -> Argument:
-    """Parse a potion description like 'a gold potion', 'an orange potion', 'a potion'.
+    """Parse a potion description like 'a gold potion', 'an orange potion', 'a potion', 'the potion'.
 
     Strips any leading article and trailing ' potion'.  Returns existential if
     no colour is specified.
     """
     text = text.strip().lower()
-    # Strip leading article
-    text = re.sub(r'^an? +', '', text)
-    if text == "potion":
-        return Argument(type="existential")
+    if _is_generic_potion(text):
+        return Argument(type="existential", value="potion")
+    # Strip leading article (a/an/the)
+    text = re.sub(r'^(?:an?|the) +', '', text)
     if text.endswith(" potion"):
         color = text[: -len(" potion")].strip()
         return Argument(type="named", value=color + " potion")
@@ -263,13 +350,86 @@ def _parse_potion_arg(text: str) -> Argument:
     return Argument(type="named", value=text + " potion")
 
 
+def _clean_directional_room(text: str) -> Optional[Location]:
+    """
+    If the text describes a room directionally (e.g. 'the north room', 'northwest room', 
+    'a room up in the north west'), parse and return it as a directional Location.
+    Otherwise, return None.
+    """
+    s = text.lower().strip()
+    # Remove common prefix/suffix words
+    s = re.sub(r"^(?:a|an|the)\b\s*", "", s)
+    s = re.sub(r"\brooms?\b", "", s)
+    s = re.sub(r"\bup\b", "", s)
+    s = re.sub(r"\bin\b", "", s)
+    s = re.sub(r"\bto the\b", "", s)
+    s = s.strip()
+    
+    # Normalize spaces/hyphens for compound directions
+    s = s.replace(" then ", "-then-").replace(" and ", "-and-")
+    s = re.sub(r"\s+", "-", s) # e.g. "north west" -> "north-west"
+    
+    # Try parsing as a directional location
+    # If the cleaned text can be parsed as a directional location, return it!
+    norm_dir = s.replace("-", "")
+    if norm_dir in DIRECTION_MAP:
+        return Location(type="directional", directions=[DIRECTION_MAP[norm_dir]])
+        
+    # Also handle compound path/set like "west-then-north" or "north-and-east"
+    if "-then-" in s or "-and-" in s:
+        return _parse_directional_location(s)
+        
+    return None
+
+
+def _parse_contains_entities(entities_text: str) -> List[str]:
+    # E.g. "gold and red potions" or "orange blue and green potions" or "donna and brittany"
+    text = entities_text.strip().lower()
+    
+    # Check if the whole list refers to potions
+    is_potion_list = False
+    if text.endswith("potions"):
+        is_potion_list = True
+        text = text[:-7].strip()
+    elif text.endswith("potion"):
+        is_potion_list = True
+        text = text[:-6].strip()
+        
+    # Split text by commas and the word "and"
+    text = text.replace(" and ", ", ")
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    
+    # Re-assemble the entities
+    entities = []
+    for part in parts:
+        subparts = []
+        if is_potion_list:
+            for sp in part.split():
+                sp = sp.strip()
+                if sp:
+                    subparts.append(sp)
+        else:
+            subparts.append(part)
+            
+        for sp in subparts:
+            if is_potion_list:
+                if not sp.endswith("potion"):
+                    entities.append(f"{sp} potion")
+                else:
+                    entities.append(sp)
+            else:
+                entities.append(sp)
+                
+    return entities
+
+
 def _parse_room_location(text: str) -> Location:
-    return Location(type="room", room=text.strip())
+    return Location(type="room", room=standardize_room_name(text))
 
 
 # ---- Line parser ----
 
-def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
+def _parse_line(line: str):
     """Parse a single DSL line into a Fact.
 
     Returns None for blank lines and comment lines (starting with '#').
@@ -284,7 +444,7 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
     # ------------------------------------------------------------------
 
     # "<subject> needs [a|an] [<color>] potion"
-    m = re.match(r'^(.+?) needs (.+)$', line, re.IGNORECASE)
+    m = re.match(r'^(.+?)(?:\s+might)?\s+needs?\s+(.+)$', line, re.IGNORECASE)
     if m:
         rest = m.group(2).strip()
         if re.match(r'^(?:an? +)?(?:.+ +)?potion$', rest, re.IGNORECASE):
@@ -314,8 +474,8 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "<subject> has a message for <target>"
-    m = re.match(r'^(.+?) has a message for (.+)$', line, re.IGNORECASE)
+    # "<subject> has a [message|response] for <target>"
+    m = re.match(r'^(.+?) has a (?:message|response) for (.+)$', line, re.IGNORECASE)
     if m:
         subject = _parse_subject(m.group(1))
         target = _parse_subject(m.group(2))
@@ -327,21 +487,8 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "<subject> has a response for <target>"
-    m = re.match(r'^(.+?) has a response for (.+)$', line, re.IGNORECASE)
-    if m:
-        subject = _parse_subject(m.group(1))
-        target = _parse_subject(m.group(2))
-        return RelationFact(
-            predicate=RelationPredicate.HAS_RESPONSE_FOR,
-            subject=subject,
-            target=target,
-            is_partial=subject.type == "existential" or target.type == "existential",
-            provenance=line,
-        )
-
-    # "message delivered from <sender> to <recipient>"
-    m = re.match(r'^message delivered from (.+?) to (.+)$', line, re.IGNORECASE)
+    # "[message|response] delivered from <sender> to <recipient>"
+    m = re.match(r'^(?:message|response) delivered from (.+?) to (.+)$', line, re.IGNORECASE)
     if m:
         sender = _parse_entity(m.group(1))
         recipient = _parse_entity(m.group(2))
@@ -353,13 +500,28 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "response delivered from <sender> to <recipient>"
-    m = re.match(r'^response delivered from (.+?) to (.+)$', line, re.IGNORECASE)
+    # "<npc> has received [a/the] <item>"
+    m = re.match(r'^(.+?) has received (?:an?|the)?\s*(.+)$', line, re.IGNORECASE)
     if m:
-        sender = _parse_entity(m.group(1))
-        recipient = _parse_entity(m.group(2))
+        npc = _parse_subject(m.group(1))
+        item_text = m.group(2).strip()
+        obj = _parse_potion_arg(item_text)
+        is_partial = npc.type == "existential" or obj.type == "existential"
         return RelationFact(
-            predicate=RelationPredicate.RESPONSE_DELIVERED,
+            predicate=RelationPredicate.POTION_DELIVERED,
+            subject=npc,
+            object=obj,
+            is_partial=is_partial,
+            provenance=line,
+        )
+
+    # "<npc> was delivered a message from <npc>"
+    m = re.match(r'^(.+?) was delivered (?:an?|the)?\s*(?:message|response) from (.+)$', line, re.IGNORECASE)
+    if m:
+        recipient = _parse_subject(m.group(1))
+        sender = _parse_subject(m.group(2))
+        return RelationFact(
+            predicate=RelationPredicate.MESSAGE_DELIVERED,
             subject=sender,
             target=recipient,
             is_partial=sender.type == "existential" or recipient.type == "existential",
@@ -382,15 +544,97 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
     # Location / spatial facts
     # ------------------------------------------------------------------
 
-    # "<entity> is in <room>"  (also covers "player is in <room>")
-    m = re.match(r'^(.+?) is in (.+)$', line, re.IGNORECASE)
+    # "<entity> is in <room>"  (also covers "player is in <room>", and plural "are in")
+    m = re.match(r'^(.+?) (?:is|are) in (.+)$', line, re.IGNORECASE)
     if m:
-        entity = _parse_entity(m.group(1))
-        location = _parse_room_location(m.group(2))
+        entity_text = m.group(1).strip()
+        location_text = m.group(2).strip()
+
+        # Handle "X is in inventory" as a RelationFact (HAS_ITEM) instead of LocationFact
+        if location_text.lower() == "inventory":
+            entity = _parse_entity(entity_text)
+            return RelationFact(
+                predicate=RelationPredicate.HAS_ITEM,
+                subject=Argument(type="named", value="player"),
+                object=entity,
+                is_partial=entity.type == "existential",
+                provenance=line,
+            )
+
+        entity = _parse_entity(entity_text)
+        dir_loc = _clean_directional_room(location_text)
+        if dir_loc is not None:
+            location = dir_loc
+        else:
+            location = _parse_room_location(location_text)
+            
         return LocationFact(
             entity=entity,
             location=location,
             is_partial=entity.type == "existential",
+            provenance=line,
+        )
+
+    # "<location> contains <entities>"
+    m = re.match(r'^(.+?) contains (?:an?|the)?\s*(.+)$', line, re.IGNORECASE)
+    if m:
+        location_text = m.group(1).strip()
+        entities_text = m.group(2).strip()
+
+        location = _clean_directional_room(location_text)
+        if location is None:
+            location = _parse_room_location(location_text)
+
+        parsed_entities = _parse_contains_entities(entities_text)
+        facts = []
+        for ent in parsed_entities:
+            entity_arg = _parse_entity(ent)
+            facts.append(
+                LocationFact(
+                    entity=entity_arg,
+                    location=location,
+                    is_partial=entity_arg.type == "existential",
+                    provenance=line,
+                )
+            )
+        return facts
+
+    # "<entity> is [to the ]<direction> of <reference>"
+    m = re.match(r"^(.+?) is (?:to the )?(" + _DIR_RE + r") of (.+)$", line, re.IGNORECASE)
+    if m:
+        entity_text = m.group(1).strip()
+        direction_text = m.group(2).strip()
+        reference_text = m.group(3).strip()
+
+        entity = _parse_entity(entity_text)
+        direction = _parse_direction(direction_text)
+        reference = _parse_entity(reference_text)
+
+        if _is_location(entity_text) and _is_location(reference_text):
+            loc_a = _parse_room_location(reference_text)
+            loc_b = _parse_room_location(entity_text)
+            dir_enum = direction
+
+            # Normalize: sort by room name
+            if loc_a.room > loc_b.room:
+                loc_a, loc_b = loc_b, loc_a
+                if dir_enum:
+                    dir_enum = _invert_direction(dir_enum)
+
+            return ConnectionFact(
+                location_a=loc_a,
+                location_b=loc_b,
+                direction=dir_enum,
+                is_partial=False,
+                provenance=line,
+            )
+
+        return SpatialFact(
+            type=SpatialRelationType.RELATIVE,
+            subject=entity,
+            direction=direction,
+            reference=reference,
+            is_partial=entity.type == "existential" or reference.type == "existential",
             provenance=line,
         )
 
@@ -400,6 +644,7 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
     if m:
         entity = _parse_entity(m.group(1))
         dir_text = m.group(2).strip().lower()
+        dir_text = dir_text.replace(" then ", "-then-").replace(" and ", "-and-")
         if "-then-" in dir_text or "-and-" in dir_text:
             loc = _parse_directional_location(dir_text)
             if loc is None:
@@ -414,7 +659,9 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             )
         d = _parse_direction(dir_text)
         if d is None:
-            raise ValueError(f"Unknown direction {dir_text!r}")
+            # raise ValueError(f"Unknown direction {dir_text!r}")
+            print(f"Unknown direction {dir_text!r}")
+            return None
         return SpatialFact(
             type=SpatialRelationType.ABSOLUTE,
             subject=entity,
@@ -423,32 +670,26 @@ def _parse_line(line: str) -> Optional["Fact"]:  # noqa: F821
             provenance=line,
         )
 
-    # "<entity> is <direction> of <reference>"
-    m = re.match(r'^(.+?) is (' + _DIR_RE + r') of (.+)$', line, re.IGNORECASE)
-    if m:
-        entity = _parse_entity(m.group(1))
-        direction = _parse_direction(m.group(2))
-        reference = _parse_entity(m.group(3))
-        return SpatialFact(
-            type=SpatialRelationType.RELATIVE,
-            subject=entity,
-            direction=direction,
-            reference=reference,
-            is_partial=entity.type == "existential" or reference.type == "existential",
-            provenance=line,
-        )
-
     # "<location> is connected to <location>"
-    m = re.match(r'^(.+?) is connected to (.+)$', line, re.IGNORECASE)
+    m = re.match(r"^(.+?) is connected to (.+)$", line, re.IGNORECASE)
     if m:
+        loc_a = _parse_room_location(m.group(1))
+        loc_b = _parse_room_location(m.group(2))
+
+        # Normalize: sort by room name
+        if loc_a.room > loc_b.room:
+            loc_a, loc_b = loc_b, loc_a
+
         return ConnectionFact(
-            location_a=_parse_room_location(m.group(1)),
-            location_b=_parse_room_location(m.group(2)),
+            location_a=loc_a,
+            location_b=loc_b,
             is_partial=False,
             provenance=line,
         )
 
-    raise ValueError(f"Line could not be matched to any DSL template: {line!r}")
+    # raise ValueError(f"Line could not be matched to any DSL template: {line!r}")
+    print(f"Line could not be matched to any DSL template: {line!r}")
+    return None
 
 
 # ---- Public API ----
@@ -465,7 +706,10 @@ def dsl_to_graph(text_filename: str, output_filename: str) -> None:
         except ValueError as exc:
             raise ValueError(f"Parse error on line {lineno}: {exc}") from exc
         if fact is not None:
-            facts.append(fact)
+            if isinstance(fact, list):
+                facts.extend(fact)
+            else:
+                facts.append(fact)
 
     kg = KnowledgeGraph(facts=facts)
 
@@ -474,10 +718,45 @@ def dsl_to_graph(text_filename: str, output_filename: str) -> None:
         json.dump(kg.model_dump(), f, indent=2)
 
 
-if __name__ == "__main__":
-    data_dir = os.environ.get("DATA_DIR")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Parse a DSL text file into a KnowledgeGraph and write it as JSON."
+    )
+    parser.add_argument(
+        "dsl_file",
+        help="Path to the DSL text file (relative to DATA_DIR if DATA_DIR is set)."
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Path to the output JSON file. If not provided, a default path is used."
+    )
+    args = parser.parse_args()
 
-    # text_filename = os.path.join(data_dir, "reports", sys.argv[1] + "_user_report.txt")
-    text_filename = os.path.join(data_dir, "analysis", sys.argv[1] + "_report_dsl_output.txt")
-    output_filename = os.path.join(data_dir, "processed_output", sys.argv[1] + "_dsl_to_kg_output.json")
+    data_dir = os.environ.get("DATA_DIR")
+    if data_dir:
+        text_filename = os.path.join(data_dir, args.dsl_file)
+    else:
+        text_filename = args.dsl_file
+
+    if not os.path.isfile(text_filename):
+        print(f"Error: DSL file not found: {text_filename}", file=sys.stderr)
+        sys.exit(1)
+
+    if args.output:
+        output_filename = args.output
+    elif data_dir:
+        # Standardize output naming: [pid]_dsl_to_kg.json under processed_output/kg
+        stem = os.path.basename(args.dsl_file).split(".")[0]
+        if stem.endswith("_dsl"):
+            stem = stem[:-4]
+        output_filename = os.path.join(data_dir, "processed_output", "kg", f"{stem}_dsl_to_kg.json")
+    else:
+        stem = os.path.basename(args.dsl_file).split(".")[0]
+        output_filename = f"{stem}_dsl_to_kg.json"
+
     dsl_to_graph(text_filename, output_filename)
+
+
+if __name__ == "__main__":
+    main()

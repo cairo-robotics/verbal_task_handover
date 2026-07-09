@@ -24,6 +24,7 @@ To support this, we use:
 - `src/core/` : fundamental data models (Pydantic schemas) and transformation logic (telemetry/report to graph).
 - `src/experiments/` : high-level scripts for running the full task-handover pipeline and ablation studies.
 - `src/pipelines/` : multi-stage workflows for report generation (model alignment) and evaluation (metrics).
+- `visualisation/` : tools for visualizing knowledge graphs and evaluation metrics (IAC).
 - `scripts/` : helper scripts for working with participant telemetry/report files.
 
 ## Tech Stack (dev/run-time)
@@ -151,26 +152,21 @@ Key scripts:
   - `report_to_dsl.py` uses the OpenAI API to convert a user report text file to an intermediate DSL.
   - `dsl_to_graph.py` parses the DSL into the `KnowledgeGraphExtraction` schema.
   - Output: `<id>_dsl_to_kg_output.json`
-3. `src/pipelines/model_alignment/compare_graphs.py`
-  - Aligns entity IDs across graphs (uses an LLM for ambiguous entity matching).
-  - Computes a diff/conflict summary:
-    - events: already-present vs novel vs conflicts vs uncertain
-    - state relations and spatial relations: already-present vs novel vs conflicts vs uncertain
-  - Output: `<id>_compare_graphs_output.json`
-4. `src/pipelines/model_alignment/merge_graphs.py`
-  - Applies the diff to the base graph:
-    - adds novel facts directly
-    - adds `ConflictRecord` entries for contradictions
-    - backfills missing entities referenced by events/relations
+3. `src/pipelines/model_alignment/merge_graphs.py`
+  - Aligns graphs and merges them into a single representation.
+  - Internally uses `entity_alignment.py` (LLM-based entity matching) and `fact_alignment.py` (matching events/relations).
+  - Identifies:
+    - Novel facts (added to the merged graph).
+    - Conflicting facts (preserved in `Conflict` records).
   - Output: `<id>_merge_graphs_output.json`
-5. `src/pipelines/model_alignment/reconcile_state.py`
+4. `src/pipelines/model_alignment/reconcile_state.py`
   - Replays event-driven state effects (e.g. OBTAIN/DELIVER/GIVE events) on `state_relations` of the merged graph, ensuring inventory state is consistent with the event log.
   - Output: `<id>_reconcile_state_output.json`
-6. `src/pipelines/model_alignment/craft_narrative_view.py`
+5. `src/pipelines/model_alignment/craft_narrative_view.py`
   - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
   - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character's `requirements`, or the player's inventory.
   - Output: `<id>_narrative_view_output.json`
-7. `src/pipelines/model_alignment/generate_reports.py`
+6. `src/pipelines/model_alignment/generate_reports.py`
   - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
   - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
   - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
@@ -200,10 +196,9 @@ export DATA_DIR=/path/to/DATA_DIR
 
 python src/core/transforms/telemetry_to_graph.py 302
 python src/core/transforms/report_to_dsl.py 302
-python src/core/transforms/dsl_to_graph.py 302
-python src/pipelines/model_alignment/compare_graphs.py 302
+python src/core/transforms/dsl_to_graph.py 302_user
 python src/pipelines/model_alignment/merge_graphs.py 302
-python src/core/transforms/reconcile_state.py 302
+python src/pipelines/model_alignment/reconcile_state.py 302
 python src/pipelines/model_alignment/craft_narrative_view.py 302
 python src/pipelines/model_alignment/generate_reports.py 302
 # Optional: task-focused report, or both prompt styles (two API calls)
@@ -231,22 +226,15 @@ Useful options:
 
 Environment variables used by the pipeline:
 
-- `OPENAI_API_KEY` : required for `src/core/transforms/report_to_dsl.py`, `src/pipelines/model_alignment/compare_graphs.py`, and `src/pipelines/model_alignment/generate_reports.py`
+- `OPENAI_API_KEY` : required for `src/core/transforms/report_to_dsl.py`, `src/pipelines/model_alignment/merge_graphs.py` (for entity alignment), and `src/pipelines/model_alignment/generate_reports.py`
 - `DATA_DIR` : base directory for inputs/outputs as described above
 
-## Extraction metrics pipeline: `src/pipelines/evaluation/`
+## Evaluation pipeline: `src/pipelines/evaluation/`
 
-The `src/pipelines/evaluation/` pipeline evaluates report quality by extracting structured facts from reports and comparing them against a ground truth derived from the `NarrativeView`. Uses a two-stage extraction approach (report → DSL → JSON) designed to support inter-rater reliability checks.
+The `src/pipelines/evaluation/` pipeline evaluates report quality using several metrics:
 
-### Shared schema: `src/core/representations/state_ontology.py`
-
-Defines the Pydantic fact types used throughout the extraction pipeline:
-
-- `PatientNeedsPotion`, `PotionDelivered`
-- `MessageRequest`, `MessageDelivered`, `MessageResponse`, `ResponseDelivered`
-- `NpcLocation`, `PotionLocation`
-- `PlayerLocation`, `PlayerHasItem`
-- `FactExtraction` : `{ facts: List[Fact] }`
+1. **Extraction Accuracy**: Extracting structured facts from reports and comparing them against a ground truth.
+2. **Information Access Cost (IAC)**: Quantifying the "cost" (search time) for a subsequent agent to find required entities based on the information provided in the report.
 
 ### Data layout
 
@@ -257,24 +245,30 @@ Scripts read and write under `DATA_DIR`:
 - `$DATA_DIR/analysis/<stem>_dsl_output.txt` — stage 1 DSL output
 - `$DATA_DIR/analysis/<stem>_fact_extraction_output.json` — stage 2 / direct fact extraction output
 - `$DATA_DIR/analysis/<stem>_nv_fact_extraction_output.json` — NarrativeView-derived ground truth facts
+- `$DATA_DIR/analysis/<stem>_iac.json` — IAC calculation results
 
-### Extraction scripts
+### Key evaluation scripts
 
-1. `src/core/transforms/report_to_dsl.py` (stage 1)
-  - Extracts line-based DSL facts from a report text file via OpenAI (e.g., `emily needs red potion`, `lily is in room1`).
-  - Intended to be run by both an LLM and a human annotator (~20% of reports) to verify inter-rater reliability via Cohen's Kappa.
-  - Output: `$DATA_DIR/analysis/<stem>_dsl_output.txt`
-2. `src/core/transforms/dsl_to_graph.py` (stage 2)
-  - Converts the line-based DSL output from stage 1 into structured `FactExtraction` JSON via OpenAI.
-  - Can accept a DSL filename, a `reports/` path (resolves the corresponding stage-1 artifact), or an `analysis/` path.
-  - Output: `$DATA_DIR/analysis/<stem>_fact_extraction_output.json`
-3. `src/pipelines/evaluation/precision_recall.py`
+1. `src/pipelines/evaluation/precision_recall.py`
   - Computes precision, recall, F1, and an error breakdown (false positives / false negatives) by comparing two `FactExtraction` JSON files.
   - Usage: `python src/pipelines/evaluation/precision_recall.py <pred.json> <gt.json>`
-  - Paths can be absolute, relative, or bare filenames resolved under `$DATA_DIR/analysis/`.
   - Output: `$DATA_DIR/analysis/<pred_stem>_pr.json`
+2. `src/pipelines/evaluation/calculate_iac.py`
+  - Calculates Information Access Cost (IAC) for a report.
+  - It assesses three components per patient: `location_score` (cost to find the patient), `need_score` (identifying the need), and `resource_score` (cost to find the required potion/NPC).
+  - Usage: `python src/pipelines/evaluation/calculate_iac.py --kg-file <pred_kg.json> --pid <pid> --map-graph <map_graph.json> --output-file <output.json>`
+3. `src/experiments/run_evaluation_pipeline.py`
+  - Orchestrates the full evaluation for a list of PIDs, running extraction and metric calculations.
 
-`src/core/utils/extraction_paths.py` provides shared path-resolution helpers used by the extraction scripts.
+## Visualization: `visualisation/`
+
+We provide several tools to visualize the output of our pipeline:
+
+- `visualisation/vizkg.py`: A terminal-based visualizer for Knowledge Graph JSON files. Supports side-by-side comparison of two graphs.
+  - Usage: `python visualisation/vizkg.py <file1.json> [<file2.json>]`
+- `visualisation/viziac.py`: A terminal-based visualizer for IAC result JSON files, providing a clear breakdown of scores and costs.
+  - Usage: `python visualisation/viziac.py <iac_result.json>`
+- `visualisation/dash_graph_vis.py`: An interactive, web-based visualization tool using Dash and Plotly for exploring complex knowledge graphs.
 
 ## Current focus
 

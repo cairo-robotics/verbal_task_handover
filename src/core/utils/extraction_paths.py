@@ -3,8 +3,8 @@ Shared path and filename contract for two-stage report → DSL → FactExtractio
 
 Naming (under ``DATA_DIR``):
   - Report input: ``reports/<any/relative/path>.txt``
-  - Stage 1 output: ``analysis/<report_stem>_dsl_output.txt``
-  - Stage 2 output: ``analysis/<report_stem>_fact_extraction_output.json``
+  - Stage 1 output: ``processed_output/dsl/<report_stem>_dsl.txt``
+  - Stage 2 output: ``processed_output/kg/<report_stem>_dsl_to_kg.json``
 
 ``<report_stem>`` is ``Path(relative_report_path).stem`` after stripping an optional
 ``reports/`` prefix from CLI arguments.
@@ -36,30 +36,32 @@ def reports_file(data_dir: str, filename: str) -> Path:
 
 
 def analysis_file(data_dir: str, filename: str) -> Path:
-    """Resolve ``DATA_DIR/analysis/<filename>`` and reject path traversal."""
-    base = (Path(data_dir) / "analysis").resolve()
+    """Resolve ``DATA_DIR/processed_output/dsl/<filename>`` and reject path traversal."""
+    base = (Path(data_dir) / "processed_output" / "dsl").resolve()
     candidate = (base / filename).resolve()
     try:
         candidate.relative_to(base)
     except ValueError as exc:
-        raise ValueError(f"Analysis path must stay under {base}") from exc
+        raise ValueError(f"DSL path must stay under {base}") from exc
     return candidate
 
 
 def dsl_output_path_for_report_arg(data_dir: str, report_arg: str) -> Path:
-    """Stage 1 artifact: ``analysis/<stem>_dsl_output.txt`` matching stage 2 resolution."""
+    """Stage 1 artifact: ``processed_output/dsl/<stem>_dsl.txt`` matching stage 2 resolution."""
     rel = normalize_report_arg(report_arg)
     stem = Path(rel).stem
-    return analysis_file(data_dir, f"{stem}_dsl_output.txt")
+    return analysis_file(data_dir, f"{stem}_dsl.txt")
 
 
 def fact_extraction_json_path_for_dsl_path(dsl_path: Path) -> Path:
-    """Stage 2 JSON next to the DSL file; strip ``_dsl_output`` from the stem when present."""
+    """Stage 2 JSON in kg/ folder; strip ``_dsl`` from the stem when present."""
     stem = dsl_path.stem
-    suffix = "_dsl_output"
+    suffix = "_dsl"
     if stem.endswith(suffix):
         stem = stem[: -len(suffix)]
-    return dsl_path.parent / f"{stem}_fact_extraction_output.json"
+    
+    # Go up from processed_output/dsl to processed_output, then into kg/
+    return dsl_path.parent.parent / "kg" / f"{stem}_dsl_to_kg.json"
 
 
 def resolve_dsl_input_path(data_dir: str, dsl_or_report: str) -> Path:
@@ -88,7 +90,7 @@ def resolve_dsl_input_path(data_dir: str, dsl_or_report: str) -> Path:
         rel = normalize_report_arg(raw)
         stem = Path(rel).stem
         try:
-            p = analysis_file(data_dir, f"{stem}_dsl_output.txt")
+            p = analysis_file(data_dir, f"{stem}_dsl.txt")
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
         if not p.is_file():
@@ -113,7 +115,7 @@ def resolve_dsl_input_path(data_dir: str, dsl_or_report: str) -> Path:
     if report_candidate is not None and report_candidate.is_file():
         stem = Path(report_rel).stem
         try:
-            p = analysis_file(data_dir, f"{stem}_dsl_output.txt")
+            p = analysis_file(data_dir, f"{stem}_dsl.txt")
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
         if not p.is_file():
