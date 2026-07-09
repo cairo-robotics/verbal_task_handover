@@ -1,9 +1,0 @@
-2025-03-27 14:41:27 - Room entered: WEST to room7
-2025-03-27 14:41:32 - Tried locked door: door_10
-2025-03-27 14:41:37 - Room entered: EAST to room0
-2025-03-27 14:41:42 - Room entered: WEST to room8
-2025-03-27 14:41:47 - Room entered: WEST to room2
-2025-03-27 14:41:50 - Item obtained: gold key
-2025-03-27 14:41:55 - Room entered: EAST to room8
-2025-03-27 14:42:00 - Room entered: EAST to room0
-2025-03-27 14:42:04 - NPC interact: guy

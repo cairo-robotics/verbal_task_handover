@@ -1,9 +1,0 @@
-There's a computer in the room north of the first room that you spawn in, with a diagram of colored wires. There are instructions about what to do with these wires in the room off the westmost door on the south side of the first room, and a serial number that goes with it in the room off the eastward door on the south side of the first room. 
-
-There's another computer in one of the rooms off the east wall of the first room, expecting a password; I don't think I've found anything to help with that yet.
-
-Keys found: silver, gold, blue
-Gems found: blue and green (I think)
-Banners used: red and green
-
-Have tried all the doors off the first room.

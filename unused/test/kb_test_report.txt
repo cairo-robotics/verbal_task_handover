@@ -1,3 +1,0 @@
-Lily is the patient in room 1. I need to bring her the response from Lola.
-The patient in room 2 asked that I bring his request to someone named John.
-The patient in room 3 needs a red potion. The red potion is in storage_1, along with the gold potion.
