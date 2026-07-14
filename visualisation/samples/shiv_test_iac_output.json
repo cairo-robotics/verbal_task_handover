@@ -1,0 +1,169 @@
+{
+    "entity_scores": {
+        "lily": {
+            "location_score": {
+                "credit_type": "FULL",
+                "max_cost": 83.2,
+                "partial_credit": 1.0,
+                "evaluated_fact": "LocationFact: lily in room 1",
+                "ground_truth_fact": "LocationFact: lily in room1",
+                "cost_saved": 83.2,
+                "omission_cost": 0,
+                "misinformation_cost": 0
+            },
+            "need_score": {
+                "credit_type": "NONE",
+                "max_cost": 5.0,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching need fact found)",
+                "ground_truth_fact": "RelationFact: lily RelationPredicate.NEEDS_POTION -> gold potion",
+                "cost_saved": 0,
+                "omission_cost": 5.0,
+                "misinformation_cost": 0
+            },
+            "resource_score": {
+                "credit_type": "NONE",
+                "max_cost": 41.5,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: gold potion in storage_1",
+                "cost_saved": 0,
+                "omission_cost": 41.5,
+                "misinformation_cost": 0
+            }
+        },
+        "oliver": {
+            "location_score": {
+                "credit_type": "FULL",
+                "max_cost": 83.2,
+                "partial_credit": 1.0,
+                "evaluated_fact": "LocationFact: oliver in room 2",
+                "ground_truth_fact": "LocationFact: oliver in room2",
+                "cost_saved": 83.2,
+                "omission_cost": 0,
+                "misinformation_cost": 0
+            },
+            "need_score": {
+                "credit_type": "PARTIAL",
+                "max_cost": 5.0,
+                "partial_credit": 0.5,
+                "evaluated_fact": "RelationFact: oliver RelationPredicate.HAS_MESSAGE_FOR -> ?(None)",
+                "ground_truth_fact": "RelationFact: oliver RelationPredicate.HAS_MESSAGE_FOR -> john",
+                "cost_saved": 2.5,
+                "omission_cost": 2.5,
+                "misinformation_cost": 0
+            },
+            "resource_score": {
+                "credit_type": "NONE",
+                "max_cost": 45.67,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: john in lounge_2",
+                "cost_saved": 0,
+                "omission_cost": 45.67,
+                "misinformation_cost": 0
+            }
+        },
+        "nick": {
+            "location_score": {
+                "credit_type": "NONE",
+                "max_cost": 83.2,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: nick in room3",
+                "cost_saved": 0,
+                "omission_cost": 83.2,
+                "misinformation_cost": 0
+            },
+            "need_score": {
+                "credit_type": "NONE",
+                "max_cost": 5.0,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching need fact found)",
+                "ground_truth_fact": "RelationFact: nick RelationPredicate.NEEDS_POTION -> red potion",
+                "cost_saved": 0,
+                "omission_cost": 5.0,
+                "misinformation_cost": 0
+            },
+            "resource_score": {
+                "credit_type": "NONE",
+                "max_cost": 41.5,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: red potion in storage_1",
+                "cost_saved": 0,
+                "omission_cost": 41.5,
+                "misinformation_cost": 0
+            }
+        },
+        "marie": {
+            "location_score": {
+                "credit_type": "NONE",
+                "max_cost": 83.2,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: marie in room4",
+                "cost_saved": 0,
+                "omission_cost": 83.2,
+                "misinformation_cost": 0
+            },
+            "need_score": {
+                "credit_type": "NONE",
+                "max_cost": 5.0,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching need fact found)",
+                "ground_truth_fact": "RelationFact: marie RelationPredicate.NEEDS_POTION -> green potion",
+                "cost_saved": 0,
+                "omission_cost": 5.0,
+                "misinformation_cost": 0
+            },
+            "resource_score": {
+                "credit_type": "NONE",
+                "max_cost": 41.5,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: green potion in storage_2",
+                "cost_saved": 0,
+                "omission_cost": 41.5,
+                "misinformation_cost": 0
+            }
+        },
+        "guy": {
+            "location_score": {
+                "credit_type": "FULL",
+                "max_cost": 83.2,
+                "partial_credit": 1.0,
+                "evaluated_fact": "LocationFact: guy in room 5",
+                "ground_truth_fact": "LocationFact: guy in room5",
+                "cost_saved": 83.2,
+                "omission_cost": 0,
+                "misinformation_cost": 0
+            },
+            "need_score": {
+                "credit_type": "NONE",
+                "max_cost": 5.0,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching need fact found)",
+                "ground_truth_fact": "RelationFact: guy RelationPredicate.NEEDS_POTION -> orange potion",
+                "cost_saved": 0,
+                "omission_cost": 5.0,
+                "misinformation_cost": 0
+            },
+            "resource_score": {
+                "credit_type": "NONE",
+                "max_cost": 41.5,
+                "partial_credit": 0.0,
+                "evaluated_fact": "(no matching location fact found)",
+                "ground_truth_fact": "LocationFact: orange potion in storage_2",
+                "cost_saved": 0,
+                "omission_cost": 41.5,
+                "misinformation_cost": 0
+            }
+        }
+    },
+    "misinformation_multiplier": 2.0,
+    "total_cost_saved": 252.10000000000002,
+    "omission_cost": 400.57,
+    "misinformation_cost": 0,
+    "combined_cost": 400.57
+}

@@ -11,8 +11,8 @@ This project asks:
 
 To support this, we use:
 
-- Handover reports written by humans and by LLMs for equivalent simulated task states (in a game environment that is loosely based on a hospital floor task).
-- Annotations of these reports to convert them to a consistent structured format (via the extraction metrics pipeline — WIP).
+- Handover reports written by humans and by LLMs for equivalent simulated task states (in a pygame-based multi-room task environment).
+- Annotations of these reports to convert them to a consistent structured format (via the extraction metrics pipeline).
 - A pipeline that converts (a) telemetry from the simulated task and (b) user-written reports into a shared structured representation ("knowledge graph").
 - Diffing/merging logic to identify what the report adds, contradicts, or misses, and to produce an LLM-friendly "narrative view" for final report generation.
 
@@ -24,94 +24,23 @@ To support this, we use:
 - `src/core/` : fundamental data models (Pydantic schemas) and transformation logic (telemetry/report to graph).
 - `src/experiments/` : high-level scripts for running the full task-handover pipeline and ablation studies.
 - `src/pipelines/` : multi-stage workflows for report generation (model alignment) and evaluation (metrics).
+- `analysis/` : post-experiment statistics, metrics aggregation, notebooks, and agreement scripts.
 - `visualisation/` : tools for visualizing knowledge graphs and evaluation metrics (IAC).
 - `scripts/` : helper scripts for working with participant telemetry/report files.
 
 ## Tech Stack (dev/run-time)
 
 - Python: Python 3.11+ (see `requirements.txt`)
-- Key dependencies: OpenAI API (`openai`), Pydantic (`pydantic`)
+- Key dependencies: OpenAI API (`openai`), Pydantic (`pydantic`), pandas, scipy, scikit-learn
 - Pygame task environment: `pygame`
 
-## Evaluation: `evaluation/treasure_hunt_py/`
+## Evaluation Task: `evaluation/treasure_hunt_py/`
 
-`evaluation/treasure_hunt_py` contains a self-contained python package (`treasure_hunt`) implementing the simulated multi-room "treasure hunt / hospital-floor" task.
+The evaluation task uses a pygame-based simulated multi-room "treasure hunt / hospital-floor" environment (`treasure_hunt`).
 
-### What the game does
+For details on the task, its architecture, and instructions on how to install and run the game, see the package [README](evaluation/treasure_hunt_py/README.md).
 
-Participants navigate a grid-based floor, interact with NPCs, collect items (e.g., "potions", "keys", "gems"), unlock/pass through doors, and may encounter small in-game "modules" (minigames / dialogue / input panels).
-
-The game logs participant actions as *telemetry events* to a text file, which is later consumed by `src/core/transforms/telemetry_to_graph.py`.
-
-### Key components
-
-Inside `evaluation/treasure_hunt_py/treasure_hunt/`:
-
-- `src/core.py`
-  - `GameMap`: loads room layout (`*.txt`), texture maps (optional), and room transition rules (`transitions.json`).
-  - Movement/transition checks: `is_valid_move(...)`, `check_transition(...)`.
-- `src/game_mdp.py`
-  - `GameState`: current state of the game (player, objects/NPCs, room name, score, on-screen text queue, module state).
-  - `Player`: position + direction + held item + flags (used for conditional dialogues).
-  - `NPC`: NPC interaction logic (dialogue flows, conditional interactions, held-item interactions).
-  - `start_state(...)` / `update_start_state(...)`: initializes and updates room objects from `objects.json` files.
-- `src/modules.py`
-  - Defines interactive "modules" used in the task (for example wire/password modules and dialogue-like interactive UI).
-  - These modules are rendered in `visualization/` and updated through `GameState`.
-- `src/telemetry.py`
-  - `Telemetry.log_event(event_type, details)`: appends lines in the format:
-    - `<timestamp> - <event_type>: <details>`
-
-### Task data (maps, assets, saves)
-
-The task uses package data files under:
-
-- `maps/`
-  - `room*.txt` : grid layouts for rooms.
-  - `objects.json` : objects/NPC definitions per map.
-  - `transitions.json` : how to move between rooms via door/transition tiles.
-  - `texture_maps/` : optional texture configuration per room.
-- `assets/`
-  - sprite/graphics configuration loaded by the renderer.
-- `saves/`
-  - serialized game saves (used for resuming rounds).
-
-### Running the game (main telemetry task)
-
-1. Install the package:
-  ```bash
-   pip install -e evaluation/treasure_hunt_py
-  ```
-2. Set `SAVE_DIR` (where saves + telemetry logs will be written):
-  ```bash
-   export SAVE_DIR=/path/to/where/to/write/saves
-  ```
-3. Run from the repo root:
-  ```bash
-   python -m treasure_hunt.scripts.main --save 302
-  ```
-
-Useful options (as defined in `evaluation/treasure_hunt_py/treasure_hunt/scripts/main.py`):
-
-- `--save <name>`: base filename for the `.pkl` save and corresponding telemetry text file.
-- `--load <name>`: resume from an existing save.
-- `--is_player2`: switch player identity / initialize player2-specific NPC interactions.
-- `--use-distractor`: runs an optional distractor task while the main task is paused.
-- `--timeout <minutes>`: ends the task after the given time.
-
-Telemetry output is written under:
-
-- `"$SAVE_DIR/telemetry/<save_name>.txt"`
-
-### Optional distractor task
-
-`--use-distractor` starts `scripts/distractor.py`, which uses Selenium + Firefox to play a memory-match game on the web.
-
-This requires a working local Selenium environment (Firefox + `geckodriver` path in the script).
-
-### Tutorial script
-
-`evaluation/treasure_hunt_py/treasure_hunt/scripts/tutorial.py` runs a simplified tutorial map (`maps/tutorial_v2/`) and can log telemetry when `--telemetry` is enabled.
+---
 
 ## Report generation pipeline: `src/pipelines/model_alignment/`
 
@@ -120,56 +49,54 @@ The `src/pipelines/model_alignment/` pipeline (supported by `src/core/transforms
 - telemetry logs from the game (`evaluation/treasure_hunt_py`)
 - and user-written handover reports
 
-into a shared `KnowledgeGraphExtraction` representation, then computes diffs/conflicts and prepares a "narrative view" for report generation.
+into a shared knowledge graph representation, then computes diffs/conflicts and prepares a "narrative view" for report generation.
 
 ### Shared schema: `src/core/representations/pydantic_schema.py`
 
 Defines the Pydantic models and enums used throughout the pipeline:
 
-- `KnowledgeGraphExtraction` : `{ entities, events, state_relations, spatial_relations, conflicts }`
-- `NarrativeView` : `{ player_state, world_state (rooms + implicit locations + unplaced agents), unresolved_conflicts }`
+- `KnowledgeGraph` : `{ facts: List[Fact], conflicts: List[Conflict] }`
+- `NarrativeView` (defined in `src/pipelines/model_alignment/craft_narrative_view.py`) : `{ player_state, world_state (rooms + items + present character views), unresolved_conflicts, unanchored_facts }`
 
 ### Pipeline steps
 
 The scripts assume a `DATA_DIR` environment variable and a directory layout like:
 
-- `$DATA_DIR/telemetry/<id>.txt`
-- `$DATA_DIR/reports/<id>.txt`
-- `$DATA_DIR/processed_output/` (output JSON files)
+- `$DATA_DIR/telemetry/<id>.txt` (input telemetry log)
+- `$DATA_DIR/reports/<id>_user_report.txt` (input user-written report)
+- `$DATA_DIR/processed_output/dsl/` (intermediate DSL output)
+- `$DATA_DIR/processed_output/kg/` (output Knowledge Graph JSON files)
 
 Key scripts:
 
 1. `src/core/transforms/telemetry_to_graph.py`
-  - Deterministic conversion from telemetry text to `KnowledgeGraphExtraction`.
+  - Deterministic conversion from telemetry text to `KnowledgeGraph`.
   - Current parsing focuses on patterns like:
     - `room entered: <direction> to <location>`
     - `item obtained: <item>`
     - `npc interact: <npc>` and `npc interact: <npc> about <topic>`
     - `gave item to npc: <item> <npc>`
-  - Output: `<id>_telemetry_to_kg_output.json`
+  - Output: `processed_output/kg/<id>_telemetry_to_kg.json`
 2. `src/core/transforms/report_to_dsl.py` & `src/core/transforms/dsl_to_graph.py`
-  - Replaces old `text_to_graph.py`.
-  - `report_to_dsl.py` uses the OpenAI API to convert a user report text file to an intermediate DSL.
-  - `dsl_to_graph.py` parses the DSL into the `KnowledgeGraphExtraction` schema.
-  - Output: `<id>_dsl_to_kg_output.json`
+  - `report_to_dsl.py` uses the OpenAI API (`gpt-4o-mini`) to convert a user report text file to an intermediate DSL.
+  - `dsl_to_graph.py` parses the DSL into the `KnowledgeGraph` schema.
+  - Output: `processed_output/dsl/<id>_user_report_dsl.txt` and `processed_output/kg/<id>_dsl_to_kg.json`
 3. `src/pipelines/model_alignment/merge_graphs.py`
   - Aligns graphs and merges them into a single representation.
   - Internally uses `entity_alignment.py` (LLM-based entity matching) and `fact_alignment.py` (matching events/relations).
   - Identifies:
     - Novel facts (added to the merged graph).
     - Conflicting facts (preserved in `Conflict` records).
-  - Output: `<id>_merge_graphs_output.json`
+  - Output: `processed_output/kg/<id>_merged_kg.json`
 4. `src/pipelines/model_alignment/reconcile_state.py`
-  - Replays event-driven state effects (e.g. OBTAIN/DELIVER/GIVE events) on `state_relations` of the merged graph, ensuring inventory state is consistent with the event log.
-  - Output: `<id>_reconcile_state_output.json`
+  - Replays event-driven state effects (e.g. delivered potions/messages) on the merged graph, ensuring inventory/needs state is consistent with the event log.
+  - Output: `processed_output/kg/<id>_reconciled_kg.json`
 5. `src/pipelines/model_alignment/craft_narrative_view.py`
-  - Converts the merged knowledge graph into `NarrativeView` (player inventory + per-room layout including room-level `requires`, items with requirements, non-item entities in rooms, implicit rooms from `located_in`, agents without placement, a per-entity state-relation index, full spatial relation copy, and conflict summaries).
-  - Each room and each character present in a room also lists `miscellaneous_state_relations`: human-readable state edges involving that id that are not already represented by who is in the room, that character's `requirements`, or the player's inventory.
-  - Output: `<id>_narrative_view_output.json`
+  - Converts the reconciled knowledge graph into `NarrativeView` (player inventory/location + per-room layout including characters, items, requirements, and conflict summaries).
+  - Output: `processed_output/kg/<id>_narrative_view.json`
 6. `src/pipelines/model_alignment/generate_reports.py`
-  - Loads `<id>_narrative_view_output.json` (or any path to a `NarrativeView` JSON file) and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce handover report text.
-  - **Input:** With `DATA_DIR` set, the positional argument is a base id (e.g. `302`); the script reads `$DATA_DIR/processed_output/<id>_narrative_view_output.json`. Without `DATA_DIR`, the argument must be the full path to a narrative-view JSON file.
-  - **Prompts:** Two built-in system/user prompt pairs are defined in the script:
+  - Loads `<id>_narrative_view.json` and calls the OpenAI Chat Completions API (`gpt-4o-mini`, temperature 0) to produce final handover report text.
+  - **Prompts:** Two built-in system/user prompt pairs are defined:
     - `full_realization` — structured, exhaustive coverage of the narrative state.
     - `task_aware` — emphasizes patient needs, message delivery, and task-relevant inventory/location.
   - **`--prompt-set`:** Choose `full_realization`, `task_aware`, or `both`. With `both`, the model is called twice (full realization first, then task-aware); the two replies are output to separate files.
@@ -182,30 +109,38 @@ An ablation variant of `generate_reports.py` that bypasses the NarrativeView/gra
 - **Output:** `DATA_DIR/reports/<id>_{full_realization,task_aware}_raw_ablation_report.txt`
 - **`--prompt-set`:** `full_realization`, `task_aware`, or `both` (default: `full_realization`).
 
-### Example end-to-end run (participant `302`)
+### Example end-to-end run (participant `501`)
 
 Assuming:
 
-- Telemetry file: `$DATA_DIR/telemetry/302.txt`
-- User report file: `$DATA_DIR/reports/302_user_report.txt`
+- Telemetry file: `$DATA_DIR/telemetry/501.txt`
+- User report file: `$DATA_DIR/reports/501_user_report.txt`
 
 Run:
 
 ```bash
 export DATA_DIR=/path/to/DATA_DIR
 
-python src/core/transforms/telemetry_to_graph.py 302
-python src/core/transforms/report_to_dsl.py 302
-python src/core/transforms/dsl_to_graph.py 302_user
-python src/pipelines/model_alignment/merge_graphs.py 302
-python src/pipelines/model_alignment/reconcile_state.py 302
-python src/pipelines/model_alignment/craft_narrative_view.py 302
-python src/pipelines/model_alignment/generate_reports.py 302
-# Optional: task-focused report, or both prompt styles (two API calls)
-python src/pipelines/model_alignment/generate_reports.py 302 --prompt-set task_aware
-python src/pipelines/model_alignment/generate_reports.py 302 --prompt-set both
-# Without DATA_DIR, pass the narrative view path explicitly:
-# python src/pipelines/model_alignment/generate_reports.py /path/to/302_narrative_view_output.json
+# 1. Telemetry parsing
+python src/core/transforms/telemetry_to_graph.py 501
+
+# 2. Report translation to DSL
+python src/core/transforms/report_to_dsl.py 501_user_report.txt
+
+# 3. Parse report DSL to KG (explicit output path for alignment merging)
+python src/core/transforms/dsl_to_graph.py processed_output/dsl/501_user_report_dsl.txt --output processed_output/kg/501_dsl_to_kg.json
+
+# 4. Merge telemetry and report graphs
+python src/pipelines/model_alignment/merge_graphs.py 501
+
+# 5. Temporal state reconciliation
+python src/pipelines/model_alignment/reconcile_state.py 501
+
+# 6. Craft NarrativeView format
+python src/pipelines/model_alignment/craft_narrative_view.py 501
+
+# 7. Generate reports
+python src/pipelines/model_alignment/generate_reports.py 501 --prompt-set both
 ```
 
 Run the full pipeline for one or more participant IDs using:
@@ -219,8 +154,8 @@ Useful options:
 - `--pids-file <FILE>`: text file with one pid per line (`#` comments and blank lines ignored); combined with positional pids.
 - `--data-dir <DIR>`: override the `DATA_DIR` environment variable for this run.
 - `--prompt-set`: forwarded to `generate_reports.py`; choices are `full_realization`, `task_aware`, or `both` (default: `both`).
-- `--continue-on-error`: process remaining pids after a failure; exits non-zero if any pid failed.
-- `--dry-run`: print steps only without executing subprocesses.
+- `--use-human-dsl`: runs pipeline using human-annotated gold DSL from `$DATA_DIR/annotations/dsl/kb_annotated_<pid>_user_report.txt` instead of calling `report_to_dsl.py`.
+- `--no-user-report`: ablation variant that reconciles and generates reports directly from telemetry.
 
 ### Configuration
 
@@ -228,6 +163,8 @@ Environment variables used by the pipeline:
 
 - `OPENAI_API_KEY` : required for `src/core/transforms/report_to_dsl.py`, `src/pipelines/model_alignment/merge_graphs.py` (for entity alignment), and `src/pipelines/model_alignment/generate_reports.py`
 - `DATA_DIR` : base directory for inputs/outputs as described above
+
+---
 
 ## Evaluation pipeline: `src/pipelines/evaluation/`
 
@@ -241,24 +178,45 @@ The `src/pipelines/evaluation/` pipeline evaluates report quality using several 
 Scripts read and write under `DATA_DIR`:
 
 - `$DATA_DIR/reports/<report>.txt` — input report files
-- `$DATA_DIR/processed_output/<id>_narrative_view_output.json` — NarrativeView input for ground truth
-- `$DATA_DIR/analysis/<stem>_dsl_output.txt` — stage 1 DSL output
-- `$DATA_DIR/analysis/<stem>_fact_extraction_output.json` — stage 2 / direct fact extraction output
-- `$DATA_DIR/analysis/<stem>_nv_fact_extraction_output.json` — NarrativeView-derived ground truth facts
-- `$DATA_DIR/analysis/<stem>_iac.json` — IAC calculation results
+- `$DATA_DIR/processed_output/kg/<id>_narrative_view.json` — NarrativeView input for ground truth
+- `$DATA_DIR/processed_output/dsl/<stem>_dsl.txt` — stage 1 DSL output
+- `$DATA_DIR/processed_output/kg/<stem>_dsl_to_kg.json` — stage 2 / direct fact extraction output
+- `$DATA_DIR/analysis/metrics_output/precision_recall/<stem>_pr.json` — PR calculation results
+- `$DATA_DIR/analysis/metrics_output/iac/<stem>_iac.json` — IAC calculation results
 
 ### Key evaluation scripts
 
 1. `src/pipelines/evaluation/precision_recall.py`
-  - Computes precision, recall, F1, and an error breakdown (false positives / false negatives) by comparing two `FactExtraction` JSON files.
+  - Computes precision, recall, F1, and an error breakdown (false positives / false negatives) by comparing two `KnowledgeGraph` JSON files.
   - Usage: `python src/pipelines/evaluation/precision_recall.py <pred.json> <gt.json>`
-  - Output: `$DATA_DIR/analysis/<pred_stem>_pr.json`
 2. `src/pipelines/evaluation/calculate_iac.py`
   - Calculates Information Access Cost (IAC) for a report.
   - It assesses three components per patient: `location_score` (cost to find the patient), `need_score` (identifying the need), and `resource_score` (cost to find the required potion/NPC).
+  - Uses `costs.py` for config/patient metadata, `search_costs.py` to model expected search traversals, and `map_graph.py` for room connections/distances.
   - Usage: `python src/pipelines/evaluation/calculate_iac.py --kg-file <pred_kg.json> --pid <pid> --map-graph <map_graph.json> --output-file <output.json>`
 3. `src/experiments/run_evaluation_pipeline.py`
-  - Orchestrates the full evaluation for a list of PIDs, running extraction and metric calculations.
+  - Orchestrates the full evaluation for a list of PIDs, running extraction and metric calculations across report conditions (`user_report`, `task_aware`, `no_user_report`, or `raw_ablation`).
+
+---
+
+## Post-Experiment Analysis & Notebooks: `analysis/`
+
+The `analysis/` directory contains tools to run full-scale experimental runs, aggregate metrics, evaluate agreement, and run statistical tests:
+
+1. `analysis/run_full_experiment.py`
+  - Runs the pipeline (`run_full_pipeline_for_pids.py`) and evaluation (`run_evaluation_pipeline.py`) across all participant IDs (501 to 513) for both standard and no-report conditions, aggregates all metrics, and runs Wilcoxon signed-rank significance tests.
+  - Usage: `python analysis/run_full_experiment.py`
+2. `analysis/run_fast_experiment.py`
+  - Fast variant of the full experiment assuming intermediate pipeline files are already generated.
+3. `analysis/aggregate_metrics.py`
+  - Aggregates IAC and Precision-Recall outputs into a master CSV (`aggregated_metrics.csv`) and computes report token counts.
+4. `analysis/calculate_dsl_agreement.py`
+  - Calculates Cohen's Kappa agreement metrics and slot-filling accuracy between human annotations and model-generated extraction DSL.
+  - Usage: `python analysis/calculate_dsl_agreement.py`
+5. `analysis/statistical_analysis.ipynb`
+  - Jupyter notebook performing statistical reporting (mean, median, range, std dev), Wilcoxon signed-rank test statistics, rank-biserial correlations, and producing paper figures.
+
+---
 
 ## Visualization: `visualisation/`
 
@@ -269,13 +227,3 @@ We provide several tools to visualize the output of our pipeline:
 - `visualisation/viziac.py`: A terminal-based visualizer for IAC result JSON files, providing a clear breakdown of scores and costs.
   - Usage: `python visualisation/viziac.py <iac_result.json>`
 - `visualisation/dash_graph_vis.py`: An interactive, web-based visualization tool using Dash and Plotly for exploring complex knowledge graphs.
-
-## Current focus
-
-- Creating an evaluation pipeline to compare report creation methods (moving to metrics).
-
-## Notes / Current Limitations
-
-- Telemetry parsing in `src/core/transforms/telemetry_to_graph.py` only covers a subset of possible in-game events (movement, some interactions, and item/npc give patterns). If you add new telemetry event types, you may need to extend the regex handling.
-- LLM report quality in `src/pipelines/model_alignment/generate_reports.py` depends on the chosen `--prompt-set` and on edits to the in-script prompts if you need different behavior.
-- `distractor.py` requires local Selenium/Firefox setup when enabled.

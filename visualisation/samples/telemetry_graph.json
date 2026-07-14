@@ -1,0 +1,146 @@
+{
+  "facts": [
+    {
+      "id": "5d32994f-deee-461d-bacd-5f8560d3cde1",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "f6389dc8-0e01-405e-a78c-8e77cb3e6196",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "red_key",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_c",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "34c6f0ea-6ba6-413b-a1cb-69a94891a018",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "29a47fcf-6905-4fdd-9c67-61dca1e9b17a",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "predicate": "needs_potion",
+      "subject": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "object": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "target": null
+    },
+    {
+      "id": "cd9ffcf0-7fec-4e92-9eec-ab09b3987e46",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "predicate": "has_message_for",
+      "subject": {
+        "type": "named",
+        "value": "marcus",
+        "location": null
+      },
+      "object": null,
+      "target": {
+        "type": "named",
+        "value": "player",
+        "location": null
+      }
+    },
+    {
+      "id": "05273741-80f6-47b4-afa1-dd037a98db71",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "marcus",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_a",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "4b041fd8-ce00-4157-8003-2aee50ff2552",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "type": "relative",
+      "subject": {
+        "type": "named",
+        "value": "room_c",
+        "location": null
+      },
+      "direction": "north",
+      "reference": {
+        "type": "named",
+        "value": "room_b",
+        "location": null
+      }
+    },
+    {
+      "id": "74f3df84-6823-4959-a465-ec139ae95378",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "location_a": {
+        "type": "room",
+        "room": "room_a",
+        "directions": null,
+        "mode": null
+      },
+      "location_b": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      },
+      "direction": "east"
+    }
+  ],
+  "conflicts": []
+}

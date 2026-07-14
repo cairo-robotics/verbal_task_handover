@@ -1,0 +1,94 @@
+{
+  "facts": [
+    {
+      "id": "10a344e9-4a82-4970-ae8c-a32263512d8d",
+      "is_partial": false,
+      "provenance": "lily is somewhere nearby",
+      "source": "new",
+      "entity": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "10d61005-c827-41f9-b8f1-6a6b90cdaad1",
+      "is_partial": true,
+      "provenance": "I think the key was somewhere to the north",
+      "source": "new",
+      "entity": {
+        "type": "named",
+        "value": "red_key",
+        "location": null
+      },
+      "location": {
+        "type": "directional",
+        "room": null,
+        "directions": [
+          "north"
+        ],
+        "mode": "path"
+      }
+    },
+    {
+      "id": "1a58cd3c-eabc-4f06-9e20-576b8fc1dcb0",
+      "is_partial": false,
+      "provenance": "picked up the blue potion",
+      "source": "new",
+      "entity": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "d446ec0c-d7f6-4fc5-8a45-9f619d51f9b3",
+      "is_partial": false,
+      "provenance": "lily needs it",
+      "source": "new",
+      "predicate": "needs_potion",
+      "subject": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "object": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "target": null
+    },
+    {
+      "id": "1bdd55bf-b065-469b-b510-5480a20fbe5f",
+      "is_partial": true,
+      "provenance": "someone had a message for me I think",
+      "source": "new",
+      "predicate": "has_message_for",
+      "subject": {
+        "type": "existential",
+        "value": null,
+        "location": null
+      },
+      "object": null,
+      "target": {
+        "type": "named",
+        "value": "player",
+        "location": null
+      }
+    }
+  ],
+  "conflicts": []
+}

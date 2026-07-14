@@ -1,0 +1,199 @@
+{
+  "facts": [
+    {
+      "id": "60571251-9cf5-4770-b81f-f2814328e942",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "05059805-0c8b-4b36-a4cb-e643f7bca8aa",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "efd1c3c4-e9e3-45c1-83e2-66e29a56d9be",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "predicate": "needs_potion",
+      "subject": {
+        "type": "named",
+        "value": "lily",
+        "location": null
+      },
+      "object": {
+        "type": "named",
+        "value": "blue_potion",
+        "location": null
+      },
+      "target": null
+    },
+    {
+      "id": "21f8ad3e-03cc-4e92-bea4-d3b289a6f96f",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "predicate": "has_message_for",
+      "subject": {
+        "type": "named",
+        "value": "marcus",
+        "location": null
+      },
+      "object": null,
+      "target": {
+        "type": "named",
+        "value": "player",
+        "location": null
+      }
+    },
+    {
+      "id": "2f959f43-1d6a-4f21-b113-f3552827d525",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "marcus",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_a",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "fact-redkey-base",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "entity": {
+        "type": "named",
+        "value": "red_key",
+        "location": null
+      },
+      "location": {
+        "type": "room",
+        "room": "room_c",
+        "directions": null,
+        "mode": null
+      }
+    },
+    {
+      "id": "a66f1043-bc0b-42dd-b91f-3c4abe7c6c95",
+      "is_partial": false,
+      "provenance": "Room B has stuff I didn't check",
+      "source": "new",
+      "predicate": "has_item",
+      "subject": {
+        "type": "named",
+        "value": "room_b",
+        "location": null
+      },
+      "object": {
+        "type": "existential",
+        "value": null,
+        "location": null
+      },
+      "target": null
+    },
+    {
+      "id": "9fea1215-809c-4cf5-b1da-9644042b9182",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "type": "relative",
+      "subject": {
+        "type": "named",
+        "value": "room_c",
+        "location": null
+      },
+      "direction": "north",
+      "reference": {
+        "type": "named",
+        "value": "room_b",
+        "location": null
+      }
+    },
+    {
+      "id": "4b35212c-04e8-49e4-8045-51acf15606bb",
+      "is_partial": false,
+      "provenance": null,
+      "source": "base",
+      "location_a": {
+        "type": "room",
+        "room": "room_a",
+        "directions": null,
+        "mode": null
+      },
+      "location_b": {
+        "type": "room",
+        "room": "room_b",
+        "directions": null,
+        "mode": null
+      },
+      "direction": "east"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "767f3cba-7288-480b-afa9-1f7b40ade445",
+      "base_fact_id": "fact-redkey-base",
+      "new_fact": {
+        "id": "4f9a0de1-3293-4cd0-8417-c19685c445b7",
+        "is_partial": true,
+        "provenance": "I think the key was somewhere to the north",
+        "source": "new",
+        "entity": {
+          "type": "named",
+          "value": "red_key",
+          "location": null
+        },
+        "location": {
+          "type": "directional",
+          "room": null,
+          "directions": [
+            "north"
+          ],
+          "mode": "path"
+        }
+      },
+      "field_name": "location",
+      "base_value": {
+        "type": "room",
+        "room": "room_c"
+      },
+      "new_value": {
+        "type": "directional",
+        "directions": [
+          "north"
+        ]
+      }
+    }
+  ]
+}
