@@ -13,16 +13,29 @@ CONDITIONS = ["no_report_full_realization", "no_report_task_aware", "full_realiz
 
 def parse_filename(filename, suffix):
     """
-    Parses pid and condition from filename.
-    Expected format: [pid]_[condition][suffix]
-    Example: 501_full_realization_iac.json
+    Parses pid, condition, and optional model from filename.
+    Expected formats:
+      [pid]_[condition]_[model][suffix]
+      [pid]_[condition][suffix]
+    Examples:
+      501_full_realization_gpt_iac.json
+      501_full_realization_iac.json
     """
     name = filename.replace(suffix, "")
+    
+    # Check for model suffix
+    model = None
+    for m in ["gpt", "claude", "gemini"]:
+        if name.endswith(f"_{m}"):
+            model = m
+            name = name[:-(len(m) + 1)]
+            break
+            
     for cond in CONDITIONS:
         if name.endswith(cond):
             pid = name[:-(len(cond) + 1)]
-            return pid, cond
-    return None, None
+            return pid, cond, model
+    return None, None, None
 
 
 def process_iac(file_path):
@@ -119,15 +132,16 @@ def main():
             print(f"[{base_dir}] Found {len(iac_files)} IAC files.")
             for fpath in iac_files:
                 fname = os.path.basename(fpath)
-                pid, cond = parse_filename(fname, "_iac.json")
+                pid, cond, model = parse_filename(fname, "_iac.json")
                 if not pid:
                     print(f"  Warning: Could not parse PID/Condition from {fname}")
                     continue
 
+                model = model or ("human" if cond == "user_report" else "gpt")
                 metrics = process_iac(fpath)
-                key = (pid, cond)
+                key = (pid, cond, model)
                 if key not in rows:
-                    rows[key] = {"participant_id": pid, "condition": cond}
+                    rows[key] = {"participant_id": pid, "condition": cond, "model": model}
                 rows[key].update(metrics)
         else:
             print(f"  IAC directory not found: {iac_dir}")
@@ -138,18 +152,19 @@ def main():
             print(f"[{base_dir}] Found {len(pr_files)} Precision-Recall files.")
             for fpath in pr_files:
                 fname = os.path.basename(fpath)
-                pid, cond = parse_filename(fname, "_pr.json")
+                pid, cond, model = parse_filename(fname, "_pr.json")
                 if not pid:
                     # Try fallback parsing if suffix is missing
-                    pid, cond = parse_filename(fname, ".json")
+                    pid, cond, model = parse_filename(fname, ".json")
                     if not pid:
                         print(f"  Warning: Could not parse PID/Condition from {fname}")
                         continue
 
+                model = model or ("human" if cond == "user_report" else "gpt")
                 metrics = process_pr(fpath)
-                key = (pid, cond)
+                key = (pid, cond, model)
                 if key not in rows:
-                    rows[key] = {"participant_id": pid, "condition": cond}
+                    rows[key] = {"participant_id": pid, "condition": cond, "model": model}
                 rows[key].update(metrics)
         else:
             print(f"  Precision-Recall directory not found: {pr_dir}")
@@ -194,11 +209,11 @@ def main():
         #         break
 
     # 3. Sort data
-    all_data = sorted(rows.values(), key=lambda x: (x["participant_id"], x["condition"]))
+    all_data = sorted(rows.values(), key=lambda x: (x["participant_id"], x["condition"], x.get("model", "")))
 
     # 4. Define column order
     cols = [
-        "participant_id", "condition", "token_count", "precision", "recall", "f1", "tp", "fp", "fn",
+        "participant_id", "condition", "model", "token_count", "precision", "recall", "f1", "tp", "fp", "fn",
         "soft_precision", "soft_recall", "soft_f1", "misinformation_count",
         "iac_cost_saved", "iac_omission_cost", "iac_misinformation_cost", "iac_combined_cost",
         "iac_location_savings", "iac_need_savings", "iac_resource_savings",

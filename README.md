@@ -31,7 +31,7 @@ To support this, we use:
 ## Tech Stack (dev/run-time)
 
 - Python: Python 3.11+ (see `requirements.txt`)
-- Key dependencies: OpenAI API (`openai`), Pydantic (`pydantic`), pandas, scipy, scikit-learn
+- Key dependencies: OpenAI API (`openai`), Anthropic API (`anthropic`), Google Generative AI (`google-generativeai`), Pydantic (`pydantic`), pandas, scipy, scikit-learn
 - Pygame task environment: `pygame`
 
 ## Evaluation Task: `evaluation/treasure_hunt_py/`
@@ -78,9 +78,9 @@ Key scripts:
     - `gave item to npc: <item> <npc>`
   - Output: `processed_output/kg/<id>_telemetry_to_kg.json`
 2. `src/core/transforms/report_to_dsl.py` & `src/core/transforms/dsl_to_graph.py`
-  - `report_to_dsl.py` uses the OpenAI API (`gpt-4o-mini`) to convert a user report text file to an intermediate DSL.
+  - `report_to_dsl.py` uses LLMs to convert a user report text file to an intermediate DSL. Supports GPT (`gpt-4.1-mini`), Claude (`claude-3-5-sonnet-20241022`), and Gemini (`gemini-1.5-pro`) models via the `--model-provider` and `--model` CLI arguments. Falls back to offline heuristic mock placeholders if keys are not present.
   - `dsl_to_graph.py` parses the DSL into the `KnowledgeGraph` schema.
-  - Output: `processed_output/dsl/<id>_user_report_dsl.txt` and `processed_output/kg/<id>_dsl_to_kg.json`
+  - Output: `processed_output/dsl/<id>_user_report_<model>_dsl.txt` and `processed_output/kg/<id>_<model>_dsl_to_kg.json`
 3. `src/pipelines/model_alignment/merge_graphs.py`
   - Aligns graphs and merges them into a single representation.
   - Internally uses `entity_alignment.py` (LLM-based entity matching) and `fact_alignment.py` (matching events/relations).
@@ -103,7 +103,7 @@ Key scripts:
 
 ### Ablation: `src/experiments/generate_reports_raw_ablation.py`
 
-An ablation variant of `generate_reports.py` that bypasses the NarrativeView/graph pipeline entirely. It sends the raw telemetry log and the participant-written report directly to `gpt-4o-mini` and uses equivalent `full_realization` and `task_aware` prompt pairs. Useful for comparing LLM report quality with and without the structured pipeline.
+An ablation variant of `generate_reports.py` that bypasses the NarrativeView/graph pipeline entirely. It sends the raw telemetry log and the participant-written report directly to `gpt-4.1-mini` and uses equivalent `full_realization` and `task_aware` prompt pairs. Useful for comparing LLM report quality with and without the structured pipeline.
 
 - **Input:** `DATA_DIR/telemetry/<id>.txt` and `DATA_DIR/reports/<id>_user_report.txt` (overridable via `--telemetry` / `--user-report`).
 - **Output:** `DATA_DIR/reports/<id>_{full_realization,task_aware}_raw_ablation_report.txt`
@@ -196,6 +196,7 @@ Scripts read and write under `DATA_DIR`:
   - Usage: `python src/pipelines/evaluation/calculate_iac.py --kg-file <pred_kg.json> --pid <pid> --map-graph <map_graph.json> --output-file <output.json>`
 3. `src/experiments/run_evaluation_pipeline.py`
   - Orchestrates the full evaluation for a list of PIDs, running extraction and metric calculations across report conditions (`user_report`, `task_aware`, `no_user_report`, or `raw_ablation`).
+  - Supports `--models` argument (choices: `gpt`, `claude`, `gemini`, `all`) to evaluate multiple LLMs side-by-side. Output files append model suffixes (e.g. `_gpt`, `_claude`, `_gemini`) when run through the evaluation pipeline to prevent collisions.
 
 ---
 
@@ -209,7 +210,7 @@ The `analysis/` directory contains tools to run full-scale experimental runs, ag
 2. `analysis/run_fast_experiment.py`
   - Fast variant of the full experiment assuming intermediate pipeline files are already generated.
 3. `analysis/aggregate_metrics.py`
-  - Aggregates IAC and Precision-Recall outputs into a master CSV (`aggregated_metrics.csv`) and computes report token counts.
+  - Aggregates IAC and Precision-Recall outputs into a master CSV (`aggregated_metrics.csv`), parses model identifiers, and compiles token counts and metrics side-by-side.
 4. `analysis/calculate_dsl_agreement.py`
   - Calculates Cohen's Kappa agreement metrics and slot-filling accuracy between human annotations and model-generated extraction DSL.
   - Usage: `python analysis/calculate_dsl_agreement.py`

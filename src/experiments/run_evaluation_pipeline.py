@@ -46,6 +46,7 @@ def run_evaluation_for_pid(
     *,
     data_dir: str,
     python_exe: str,
+    models: list[str],
     use_human_dsl: bool = False,
     no_user_report: bool = False,
     raw_ablation: bool = False,
@@ -82,22 +83,15 @@ def run_evaluation_for_pid(
     for r_type in report_types:
         print(f"\n  --- Report Type: {r_type} ---")
         
-        # 1. Identify/Generate KG
-        if r_type == "user_report":
-            # user_report might be named {pid}_dsl_to_kg.json or {pid}_user_report_dsl_to_kg.json
-            kg_candidates = [
-                Path(data_dir) / "processed_output" / "kg" / f"{pid}_dsl_to_kg.json",
-                Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
-            ]
-            kg_path = None
-            for cand in kg_candidates:
-                if cand.exists():
-                    kg_path = cand
-                    break
+        # If use_human_dsl is True, we only evaluate the human annotations once
+        current_models = [None] if (r_type == "user_report" and use_human_dsl) else models
+        
+        for model in current_models:
+            model_str = f" ({model})" if model else ""
+            print(f"    --- Model: {model if model else 'human'} ---")
             
-            if not kg_path:
-                print(f"    Warning: No KG found for user_report. Attempting to generate...")
-                
+            # 1. Identify/Generate KG
+            if r_type == "user_report":
                 if use_human_dsl:
                     dsl_path = Path(data_dir) / "annotations" / "dsl" / f"kb_annotated_{pid}_user_report.txt"
                     if not dsl_path.exists():
@@ -114,71 +108,74 @@ def run_evaluation_for_pid(
                         continue
                     
                     # Generate DSL
-                    _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
-                    # Generate KG (using extraction_paths default)
-                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_dsl.txt"
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
+                    _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", 
+                              [report_file, "--model-provider", model], env)
+                    # Generate KG
+                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_{model}_dsl.txt"
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_{model}_dsl_to_kg.json"
                     _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
                               [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
-        else:
-            # AI reports: full_realization, task_aware
-            if no_user_report:
-                report_file = f"{pid}_no_report_{r_type}_report.txt"
-            elif raw_ablation:
-                report_file = f"{pid}_{r_type}_raw_ablation_report.txt"
             else:
-                report_file = f"{pid}_{r_type}_report.txt"
+                # AI reports: full_realization, task_aware
+                if no_user_report:
+                    report_file = f"{pid}_no_report_{r_type}_report.txt"
+                elif raw_ablation:
+                    report_file = f"{pid}_{r_type}_raw_ablation_report.txt"
+                else:
+                    report_file = f"{pid}_{r_type}_report.txt"
 
-            if not (Path(data_dir) / "reports" / report_file).exists():
-                print(f"    Warning: {report_file} not found. Skipping {r_type}.")
-                continue
-            
-            # Generate DSL
-            _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", [report_file], env)
-            
-            # Generate KG
+                if not (Path(data_dir) / "reports" / report_file).exists():
+                    print(f"    Warning: {report_file} not found. Skipping {r_type}.")
+                    continue
+                
+                # Generate DSL
+                _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", 
+                          [report_file, "--model-provider", model], env)
+                
+                # Generate KG
+                if no_user_report:
+                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_no_report_{r_type}_report_{model}_dsl.txt"
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_{r_type}_report_{model}_dsl_to_kg.json"
+                elif raw_ablation:
+                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_raw_ablation_report_{model}_dsl.txt"
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_raw_ablation_report_{model}_dsl_to_kg.json"
+                else:
+                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_report_{model}_dsl.txt"
+                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_report_{model}_dsl_to_kg.json"
+
+                _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
+                          [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
+
+            # 2. Run Precision/Recall
+            suffix = f"_{model}" if model else ""
             if no_user_report:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_no_report_{r_type}_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_{r_type}_report_dsl_to_kg.json"
+                pr_output = pr_dir / f"{pid}_no_report_{r_type}{suffix}_pr.json"
             elif raw_ablation:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_raw_ablation_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_raw_ablation_report_dsl_to_kg.json"
+                pr_output = pr_dir / f"{pid}_{r_type}_raw_ablation{suffix}_pr.json"
             else:
-                dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_report_dsl.txt"
-                kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_report_dsl_to_kg.json"
+                pr_output = pr_dir / f"{pid}_{r_type}{suffix}_pr.json"
+            
+            # Ground Truth for P/R: 
+            # - User report is compared against telemetry (reporting accuracy)
+            # - AI reports are compared against reconciled graph (information survival)
+            gt_kg = telemetry_kg if r_type == "user_report" else reconciled_kg
+            
+            if not gt_kg.exists():
+                print(f"    Error: Ground truth KG {gt_kg} missing. Skipping P/R for {r_type}{model_str}.")
+            else:
+                _run_step(python_exe, repo_root / "src/pipelines/evaluation/precision_recall.py", 
+                          [str(kg_path), str(gt_kg), "--output-path", str(pr_output)], env)
+            
+            # 3. Run IAC
+            if no_user_report:
+                iac_output = iac_dir / f"{pid}_no_report_{r_type}{suffix}_iac.json"
+            elif raw_ablation:
+                iac_output = iac_dir / f"{pid}_{r_type}_raw_ablation{suffix}_iac.json"
+            else:
+                iac_output = iac_dir / f"{pid}_{r_type}{suffix}_iac.json"
 
-            _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
-                      [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
-
-        # 2. Run Precision/Recall
-        if no_user_report:
-            pr_output = pr_dir / f"{pid}_no_report_{r_type}_pr.json"
-        elif raw_ablation:
-            pr_output = pr_dir / f"{pid}_{r_type}_raw_ablation_pr.json"
-        else:
-            pr_output = pr_dir / f"{pid}_{r_type}_pr.json"
-        
-        # Ground Truth for P/R: 
-        # - User report is compared against telemetry (reporting accuracy)
-        # - AI reports are compared against reconciled graph (information survival)
-        gt_kg = telemetry_kg if r_type == "user_report" else reconciled_kg
-        
-        if not gt_kg.exists():
-            print(f"    Error: Ground truth KG {gt_kg} missing. Skipping P/R for {r_type}.")
-        else:
-            _run_step(python_exe, repo_root / "src/pipelines/evaluation/precision_recall.py", 
-                      [str(kg_path), str(gt_kg), "--output-path", str(pr_output)], env)
-        
-        # 3. Run IAC
-        if no_user_report:
-            iac_output = iac_dir / f"{pid}_no_report_{r_type}_iac.json"
-        elif raw_ablation:
-            iac_output = iac_dir / f"{pid}_{r_type}_raw_ablation_iac.json"
-        else:
-            iac_output = iac_dir / f"{pid}_{r_type}_iac.json"
-
-        _run_step(python_exe, repo_root / "src/pipelines/evaluation/calculate_iac.py", 
-                  ["--kg-file", str(kg_path), "--pid", pid, "--output-file", str(iac_output), "--map-graph", str(telemetry_kg)], env)
+            _run_step(python_exe, repo_root / "src/pipelines/evaluation/calculate_iac.py", 
+                      ["--kg-file", str(kg_path), "--pid", pid, "--output-file", str(iac_output), "--map-graph", str(telemetry_kg)], env)
 
 
 def main() -> None:
@@ -200,6 +197,13 @@ def main() -> None:
         "--data-dir",
         metavar="DIR",
         help="Override DATA_DIR for this run (otherwise uses env DATA_DIR).",
+    )
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        choices=["gpt", "claude", "gemini", "all"],
+        default=["gpt"],
+        help="Models to evaluate (choices: gpt, claude, gemini, all. Default: gpt).",
     )
     parser.add_argument(
         "--continue-on-error",
@@ -233,6 +237,10 @@ def main() -> None:
     pids = _collect_pids(args)
     python_exe = sys.executable
 
+    models = args.models
+    if "all" in models:
+        models = ["gpt", "claude", "gemini"]
+
     failed: list[tuple[str, BaseException]] = []
     for pid in pids:
         print(f"\n=== Evaluation Pipeline: {pid} ===", flush=True)
@@ -241,6 +249,7 @@ def main() -> None:
                 pid,
                 data_dir=data_dir,
                 python_exe=python_exe,
+                models=models,
                 use_human_dsl=args.use_human_dsl,
                 no_user_report=args.no_user_report,
                 raw_ablation=args.raw_ablation,

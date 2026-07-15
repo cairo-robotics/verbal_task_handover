@@ -46,10 +46,12 @@ def analysis_file(data_dir: str, filename: str) -> Path:
     return candidate
 
 
-def dsl_output_path_for_report_arg(data_dir: str, report_arg: str) -> Path:
+def dsl_output_path_for_report_arg(data_dir: str, report_arg: str, model: str = None) -> Path:
     """Stage 1 artifact: ``processed_output/dsl/<stem>_dsl.txt`` matching stage 2 resolution."""
     rel = normalize_report_arg(report_arg)
     stem = Path(rel).stem
+    if model:
+        return analysis_file(data_dir, f"{stem}_{model}_dsl.txt")
     return analysis_file(data_dir, f"{stem}_dsl.txt")
 
 
