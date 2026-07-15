@@ -32,7 +32,7 @@ class CharacterView(BaseModel):
 
 class RoomView(BaseModel):
     name: str
-    # connected_to: List[RoomConnection]
+    connected_to: List[RoomConnection] = Field(default_factory=list)
     characters_present: List[CharacterView]
     items_present: List[str]
     miscellaneous_state_relations: List[str] = Field(default_factory=list)
@@ -423,6 +423,7 @@ def craft_narrative_view(
         room_views.append(
             RoomView(
                 name=room_id,
+                connected_to=connections_by_room.get(room_id, []),
                 characters_present=characters_present,
                 items_present=items_present,
                 miscellaneous_state_relations=_miscellaneous_state_relations_for_room(

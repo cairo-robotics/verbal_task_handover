@@ -239,15 +239,11 @@ class TestNamedAlignment:
 # ---------------------------------------------------------------------------
 
 def _make_llm_response(outcome: str, resolved_value: str | None = None, candidates: list[str] | None = None):
-    """Build a minimal mock that looks like an openai chat completion response."""
+    """Build a minimal mock that looks like an openai responses response."""
     import json
     payload = {"outcome": outcome, "resolved_value": resolved_value, "candidate_values": candidates or []}
-    msg = MagicMock()
-    msg.content = json.dumps(payload)
-    choice = MagicMock()
-    choice.message = msg
     resp = MagicMock()
-    resp.choices = [choice]
+    resp.output_text = json.dumps(payload)
     return resp
 
 
@@ -273,7 +269,7 @@ class TestExistentialResolution:
     def test_resolved_outcome(self):
         """LLM returns 'resolved' → resolution has outcome='resolved'."""
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response(
+        client.responses.create.return_value = _make_llm_response(
             "resolved", resolved_value="lily"
         )
         result = align_entities(
@@ -290,7 +286,7 @@ class TestExistentialResolution:
     def test_ambiguous_outcome(self):
         """LLM returns 'ambiguous' → resolution has outcome='ambiguous' with candidates."""
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response(
+        client.responses.create.return_value = _make_llm_response(
             "ambiguous", candidates=["lily", "rose"]
         )
         result = align_entities(
@@ -306,7 +302,7 @@ class TestExistentialResolution:
     def test_unresolvable_outcome(self):
         """LLM returns 'unresolvable' → resolution has outcome='unresolvable'."""
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response("unresolvable")
+        client.responses.create.return_value = _make_llm_response("unresolvable")
         result = align_entities(
             self._report_with_existential(),
             self._telem_with_npcs(),
@@ -320,7 +316,7 @@ class TestExistentialResolution:
     def test_resolved_value_not_in_candidates_becomes_unresolvable(self):
         """Guard: LLM returns a resolved_value that isn't in our candidate list → unresolvable."""
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response(
+        client.responses.create.return_value = _make_llm_response(
             "resolved", resolved_value="ghost_npc_not_in_telem"
         )
         result = align_entities(
@@ -356,12 +352,12 @@ class TestExistentialResolution:
         )
         res = result.existential_resolutions[0]
         assert res.outcome == "unresolvable"
-        client.chat.completions.create.assert_not_called()
+        client.responses.create.assert_not_called()
 
     def test_llm_exception_returns_unresolvable(self):
         """If the LLM call raises, the existential is marked unresolvable."""
         client = MagicMock()
-        client.chat.completions.create.side_effect = RuntimeError("API down")
+        client.responses.create.side_effect = RuntimeError("API down")
         result = align_entities(
             self._report_with_existential(),
             self._telem_with_npcs(),
@@ -378,7 +374,7 @@ class TestExistentialResolution:
         )
         graph = KnowledgeGraph(facts=[fact])
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response(
+        client.responses.create.return_value = _make_llm_response(
             "resolved", resolved_value="lily"
         )
         result = align_entities(graph, self._telem_with_npcs(), openai_client=client)
@@ -387,7 +383,7 @@ class TestExistentialResolution:
     def test_entity_type_filter_recorded(self):
         """entity_type_filter reflects the heuristic used to scope candidates."""
         client = MagicMock()
-        client.chat.completions.create.return_value = _make_llm_response(
+        client.responses.create.return_value = _make_llm_response(
             "resolved", resolved_value="lily"
         )
         result = align_entities(

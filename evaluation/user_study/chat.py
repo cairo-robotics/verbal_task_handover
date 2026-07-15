@@ -70,11 +70,15 @@ class ChatBot():
         return GENERAL_PROMPT.substitute(graph=self._paste_graph_as_text(), user_report=self.report_text)
 
     def _gpt_response(self, messages):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature
-        )
+        kwargs = {
+            "model": self.model,
+            "input": messages,
+        }
+        if "sol" in self.model or "gpt-5" in self.model or "o1" in self.model or "o3" in self.model:
+            kwargs["reasoning"] = {"effort": "medium"}
+        else:
+            kwargs["temperature"] = self.temperature
+        response = self.client.responses.create(**kwargs)
         return response
     
     def clear_history(self):
@@ -84,39 +88,39 @@ class ChatBot():
         self.report_text = text
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\t[USER REPORT UPDATED]\t{text}\n")
-
+ 
         print(f"DEBUG: Report updated: {text}")
-
+ 
     def update_graph(self, graph):
         self.graph = graph
         print(self.graph)
-
+ 
     def check_graph_consistency_with_report(self):
         prompt = self.system_role_message
         messages = [
             {"role": "system", "content": prompt},
             {"role": "user", "content": self.report_text}
         ]
-
-        reply = self._gpt_response(messages).choices[0].message.content.strip()
+ 
+        reply = self._gpt_response(messages).output_text.strip()
         # reply = "This is a test reply from check_graph_consistency."
-
+ 
         # log this prompt and initial reply
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\tsystem\t{prompt}\n")
             file.write(f"{datetime.now().isoformat()}\tassistant\t{reply}\n")
-
+ 
         return reply
-
+ 
     def update_graph_from_msg(self, response):
         # prompt = "Given the following existing networkx directed graph:\n" + str(self.graph) + "\nIsolate and return only the updated networkx graph, in the format of the existing graph, from the last message."
         # prompt = self.system_role_message
-
+ 
         # messages = [
         #     {"role": "system", "content": prompt},
         #     {"role": "user", "content": text}
         # ]
-
+ 
         # import pdb; pdb.set_trace()
         # response = self._gpt_response(messages).choices[0].message.content.strip()
         match = re.search(r'```(?:python\s+)?([\S\s]*?)```', response, re.DOTALL)
@@ -135,7 +139,7 @@ class ChatBot():
             except Exception as e:
                 print(f"Error parsing graph data: {e}")
                 return None
-
+ 
     def _paste_graph_as_text(self):
         return str(self.graph)
     
@@ -146,21 +150,21 @@ class ChatBot():
         print("System prompt:", messages[0]["content"])
         self.append_to_chat({"role": "user", "content": user_message})
         messages.extend(list(self.history.queue))
-
-        reply = self._gpt_response(messages).choices[0].message.content.strip()
+ 
+        reply = self._gpt_response(messages).output_text.strip()
         pprint(messages)
-
+ 
         # write to chat log file
         with open(self.chat_file, "a") as file:
             file.write(f"{datetime.now().isoformat()}\tuser\t{user_message}\n")
             file.write(f"{datetime.now().isoformat()}\tassistant\t{reply}\n")
-
+ 
             if "Update graph" in reply:
                 # new_graph = self.isolate_graph_data(reply)
                 # self.update_graph(new_graph)
                 # reply = "I have updated my knowledge base accordingly."
                 file.write(f"{datetime.now().isoformat()}\tsystem\t[GRAPH UPDATED]\n")
-  
+   
         self.append_to_chat({"role": "assistant", "content": reply})
         return reply
 

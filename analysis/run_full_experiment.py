@@ -47,7 +47,7 @@ df = pd.read_csv(csv_path)
 df["communicative_compression"] = df["iac_cost_saved"] / df["token_count"]
 
 target_conditions = ["task_aware", "no_report_task_aware"]
-filtered_df = df[df["condition"].isin(target_conditions)]
+filtered_df = df[(df["condition"].isin(target_conditions)) & (df["model"] == "gpt")]
 pivoted = filtered_df.pivot(index="participant_id", columns="condition", values=["iac_cost_saved", "token_count", "communicative_compression"])
 pivoted = pivoted.dropna()
 

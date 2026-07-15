@@ -60,16 +60,20 @@ def _collect_pids(args: argparse.Namespace) -> list[str]:
 def call_chatgpt(system_prompt: str, user_prompt: Template, telemetry: str, user_report: str) -> str:
     client = OpenAI()
     user_content = user_prompt.substitute(telemetry=telemetry, user_report=user_report)
-    response = client.chat.completions.create(
-        # model="gpt-4o-mini",
-        model="gpt-4.1-mini",
-        temperature=0,
-        messages=[
+    model = os.environ.get("GPT_MODEL", "gpt-4.1-mini")
+    kwargs = {
+        "model": model,
+        "input": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content},
         ],
-    )
-    return response.choices[0].message.content or ""
+    }
+    if "sol" in model or "gpt-5" in model or "o1" in model or "o3" in model:
+        kwargs["reasoning"] = {"effort": "medium"}
+    else:
+        kwargs["temperature"] = 0
+    response = client.responses.create(**kwargs)
+    return response.output_text
 
 
 def read_text(path: str) -> str:

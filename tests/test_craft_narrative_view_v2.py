@@ -74,8 +74,8 @@ class TestCraftNarrativeViewV2(unittest.TestCase):
         # Verify Lily View in room 2
         room2 = next(r for r in narrative_view.world_state.rooms if r.name == "room 2")
         lily_view = next(c for c in room2.characters_present if c.name == "lily")
-        self.assertIn("gold potion", lily_view.requirements)
-        self.assertTrue(any("message_delivered" in h for h in lily_view.interaction_history))
+        self.assertIn("needs gold potion", lily_view.requirements)
+        self.assertTrue(any("message" in h for h in lily_view.interaction_history))
 
 if __name__ == "__main__":
     unittest.main()

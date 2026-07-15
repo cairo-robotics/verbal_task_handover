@@ -264,16 +264,16 @@ def _resolve_existential(
     prompt = _build_existential_prompt(slot, candidates)
 
     try:
-        response = client.chat.completions.create(  # type: ignore[union-attr]
+        response = client.responses.create(  # type: ignore[union-attr]
             model="gpt-4o-mini",
             temperature=0,
-            response_format={"type": "json_object"},
-            messages=[
+            text={"format": {"type": "json_object"}},
+            input=[
                 {"role": "system", "content": _EXISTENTIAL_RESOLUTION_SYSTEM},
                 {"role": "user", "content": prompt},
             ],
         )
-        raw = response.choices[0].message.content or "{}"
+        raw = response.output_text or "{}"
         data: dict = json.loads(raw)
     except Exception as exc:
         log.warning(

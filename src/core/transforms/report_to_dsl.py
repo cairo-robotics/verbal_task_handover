@@ -17,7 +17,8 @@ try:
 except ImportError:
     pass
 
-DEFAULT_MODEL = "gpt-4.1-mini"
+import os
+DEFAULT_MODEL = os.environ.get("GPT_MODEL", "gpt-4.1-mini")
 
 PROMPT = """
 You are an information extraction system.
@@ -177,19 +178,23 @@ def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str =
             print("Warning: OPENAI_API_KEY not set. Using placeholder/mock for GPT.", file=sys.stderr)
             return generate_placeholder_dsl(user_prompt, model)
         client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        response = client.responses.create(
-            model=model,
-            input=[
+        kwargs = {
+            "model": model,
+            "input": [
                 {"role": "user", "content": PROMPT.replace("{INPUT_TEXT}", user_prompt)},
             ],
-            temperature=0,
-        )
+        }
+        if "sol" in model or "gpt-5" in model or "o1" in model or "o3" in model:
+            kwargs["reasoning"] = {"effort": "medium"}
+        else:
+            kwargs["temperature"] = 0
+        response = client.responses.create(**kwargs)
         text = response.output_text
         if not text or not text.strip():
-            raise RuntimeError(
-                "Model returned empty text output; "
-                f"refusal={getattr(response, 'refusal', None)!r}"
-            )
+            refusal = getattr(response, "refusal", None)
+            if refusal:
+                raise RuntimeError(f"Model refused request: {refusal}")
+            return "# No facts extracted"
         return _normalize_dsl_output(text)
 
     elif provider == "claude":

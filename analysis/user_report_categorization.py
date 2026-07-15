@@ -78,15 +78,15 @@ def call_chatgpt(report_text: str) -> CategorizationResult:
     client = OpenAI()
     user_content = CATEGORIZATION_PROMPT + report_text
     
-    response = client.beta.chat.completions.parse(
+    response = client.responses.parse(
         model="gpt-4o-mini",
         temperature=0,
-        messages=[
+        input=[
             {"role": "user", "content": user_content},
         ],
-        response_format=CategorizationResult,
+        text_format=CategorizationResult,
     )
-    return response.choices[0].message.parsed
+    return response.output_parsed
 
 def main() -> None:
     dotenv.load_dotenv()
