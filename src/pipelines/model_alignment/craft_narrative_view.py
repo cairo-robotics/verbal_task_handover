@@ -434,16 +434,33 @@ def craft_narrative_view(
 
     # Identify unanchored/directional facts to include globally
     unanchored_facts = []
+    location_rooms = {r for r, etype in entities.items() if etype == "location"}
+
     for fact in graph.facts:
         if isinstance(fact, RelationFact):
-            # If subject or target is directional/existential and not anchored to a room
-            subject_loc = fact.subject.location
             is_unanchored = False
-            if subject_loc and subject_loc.type == "directional":
-                is_unanchored = True
-            elif fact.subject.type == "existential" and not subject_loc:
-                is_unanchored = True
             
+            # Check subject
+            subj_loc = fact.subject.location
+            if subj_loc:
+                if subj_loc.type == "directional":
+                    is_unanchored = True
+                elif subj_loc.type == "room" and subj_loc.room not in location_rooms:
+                    is_unanchored = True
+            elif fact.subject.type == "existential":
+                is_unanchored = True
+                
+            # Check target (recipient of message)
+            if fact.target:
+                tgt_loc = fact.target.location
+                if tgt_loc:
+                    if tgt_loc.type == "directional":
+                        is_unanchored = True
+                    elif tgt_loc.type == "room" and tgt_loc.room not in location_rooms:
+                        is_unanchored = True
+                elif fact.target.type == "existential":
+                    is_unanchored = True
+
             if is_unanchored:
                 unanchored_facts.append(str(fact))
         elif isinstance(fact, SpatialFact):
@@ -474,12 +491,20 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit("usage: craft_narrative_view.py <pid>")
 
-    graph_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + "_reconciled_kg.json")
+    model_suffix = ""
+    try:
+        from src.core.utils.extraction_paths import get_current_model_suffix
+        if os.environ.get("GPT_MODEL") or os.environ.get("MODEL"):
+            model_suffix = f"_{get_current_model_suffix()}"
+    except ImportError:
+        pass
+
+    graph_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + f"_reconciled_kg{model_suffix}.json")
     with open(graph_filename, "r") as f:
         graph = KnowledgeGraph.model_validate_json(f.read())
     narrative_view = craft_narrative_view(graph)
     
-    output_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + "_narrative_view.json")
+    output_filename = os.path.join(data_dir, "processed_output", "kg", sys.argv[1] + f"_narrative_view{model_suffix}.json")
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     with open(output_filename, "w") as f:
         f.write(narrative_view.model_dump_json(indent=2))

@@ -33,10 +33,11 @@ def test_has_message():
     gs = MockGameState({"room 1": {"lily": lily}, "lounge_1": {"lola": lola, "eliza": eliza}})
     
     facts = get_patient_status_facts("lily", gs)
-    assert len(facts) == 1
-    assert facts[0].predicate == RelationPredicate.HAS_MESSAGE_FOR
-    assert facts[0].subject.value == "lily"
-    assert facts[0].target.value == "eliza"
+    assert len(facts) == 2
+    assert facts[0].predicate == RelationPredicate.NEEDS_POTION
+    assert facts[1].predicate == RelationPredicate.HAS_MESSAGE_FOR
+    assert facts[1].subject.value == "lily"
+    assert facts[1].target.value == "eliza"
 
 def test_expecting_response():
     # Lily got potion, Eliza got request, Lola hasn't.
@@ -48,11 +49,11 @@ def test_expecting_response():
     gs = MockGameState({"room 1": {"lily": lily}, "lounge_1": {"lola": lola, "eliza": eliza}})
     
     facts = get_patient_status_facts("lily", gs)
-    assert len(facts) == 1
-    
-    assert facts[0].predicate == RelationPredicate.HAS_MESSAGE_FOR
-    assert facts[0].subject.value == "eliza"
-    assert facts[0].target.value == "lily"
+    assert len(facts) == 2
+    assert facts[0].predicate == RelationPredicate.NEEDS_POTION
+    assert facts[1].predicate == RelationPredicate.HAS_MESSAGE_FOR
+    assert facts[1].subject.value == "eliza"
+    assert facts[1].target.value == "lily"
 
 def test_sequence_progression():
     # Lily got response from Eliza, now needs to talk to Lola.
@@ -63,9 +64,11 @@ def test_sequence_progression():
     gs = MockGameState({"room 1": {"lily": lily}, "lounge_1": {"lola": lola, "eliza": eliza}})
     
     facts = get_patient_status_facts("lily", gs)
-    assert len(facts) == 1
-    assert facts[0].subject.value == "lily"
-    assert facts[0].target.value == "lola"
+    assert len(facts) == 2
+    assert facts[0].predicate == RelationPredicate.NEEDS_POTION
+    assert facts[1].predicate == RelationPredicate.HAS_MESSAGE_FOR
+    assert facts[1].subject.value == "lily"
+    assert facts[1].target.value == "lola"
 
 def test_all_done():
     # Lily got potion, both Lola and Eliza got request, Lily got both responses.

@@ -307,7 +307,9 @@ def _parse_subject(text: str) -> Argument:
     m_room = re.match(r'^(.+?)\s+in\s+(?:the\s+)?(.+)$', text, re.IGNORECASE)
     if m_room and _is_generic_person(m_room.group(1)):
         room_name = m_room.group(2).strip()
-        loc = Location(type="room", room=standardize_room_name(room_name))
+        loc = _clean_directional_room(room_name)
+        if loc is None:
+            loc = Location(type="room", room=standardize_room_name(room_name))
         return Argument(type="existential", value="someone", location=loc)
 
     # Handle if the subject itself is a location (e.g., "room 1")
@@ -648,9 +650,8 @@ def _parse_line(line: str):
         if "-then-" in dir_text or "-and-" in dir_text:
             loc = _parse_directional_location(dir_text)
             if loc is None:
-                raise ValueError(
-                    f"Cannot parse compound direction {dir_text!r}"
-                )
+                print(f"Warning: Cannot parse compound direction {dir_text!r}")
+                return None
             return LocationFact(
                 entity=entity,
                 location=loc,

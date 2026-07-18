@@ -4,6 +4,13 @@ import csv
 import glob
 import argparse
 from token_count import TokenCount
+from src.core.utils.experiment_logging import log_message as _log_message, get_log_file
+
+def log_message(message: str) -> None:
+    if os.environ.get("EXPERIMENT_LOG_FILE"):
+        _log_message(message)
+    else:
+        print(message)
 
 # Default base directory (used when no arguments are supplied)
 DEFAULT_BASE_DIR = "/media/kaleb/T7/handover_project/participant_data/analysis/metrics_output/"
@@ -18,24 +25,55 @@ def parse_filename(filename, suffix):
       [pid]_[condition]_[model][suffix]
       [pid]_[condition][suffix]
     Examples:
-      501_full_realization_gpt_iac.json
+      501_full_realization_gpt5-6-terra_iac.json
       501_full_realization_iac.json
     """
     name = filename.replace(suffix, "")
     
-    # Check for model suffix
-    model = None
-    for m in ["gpt", "claude", "gemini"]:
-        if name.endswith(f"_{m}"):
-            model = m
-            name = name[:-(len(m) + 1)]
-            break
-            
-    for cond in CONDITIONS:
-        if name.endswith(cond):
-            pid = name[:-(len(cond) + 1)]
+    # Sort conditions by length descending to match longer conditions first (e.g. task_aware_raw_ablation before task_aware)
+    sorted_conditions = sorted(CONDITIONS, key=len, reverse=True)
+    for cond in sorted_conditions:
+        if f"_{cond}_" in name:
+            idx = name.index(f"_{cond}_")
+            pid = name[:idx]
+            model = name[idx + len(cond) + 2:]
             return pid, cond, model
+        elif name.endswith(f"_{cond}"):
+            pid = name[:-len(cond)-1]
+            return pid, cond, None
+            
     return None, None, None
+
+
+def filter_duplicate_files(file_paths, suffix):
+    """
+    Given a list of file paths, resolves duplicates where we have both a model-suffixed
+    file and a non-suffixed file for the same (pid, condition, resolved_model).
+    Prioritizes the model-suffixed file.
+    """
+    resolved = {}
+    for fpath in file_paths:
+        fname = os.path.basename(fpath)
+        pid, cond, model = parse_filename(fname, suffix)
+        if not pid and suffix == "_pr.json":
+            # fallback parsing
+            pid, cond, model = parse_filename(fname, ".json")
+        if not pid:
+            continue
+            
+        resolved_model = model or ("human" if cond == "user_report" else "gpt")
+        has_explicit_suffix = model is not None
+        
+        key = (pid, cond, resolved_model)
+        if key not in resolved:
+            resolved[key] = (has_explicit_suffix, fpath)
+        else:
+            prev_has_explicit, prev_fpath = resolved[key]
+            # Prioritize the one with explicit suffix
+            if has_explicit_suffix and not prev_has_explicit:
+                resolved[key] = (True, fpath)
+                
+    return [fpath for _, fpath in resolved.values()]
 
 
 def process_iac(file_path):
@@ -89,6 +127,9 @@ def process_pr(file_path):
 
 
 def main():
+    if os.environ.get("EXPERIMENT_LOG_FILE"):
+        get_log_file()
+    log_message("[SUB] Starting metrics aggregation...")
     parser = argparse.ArgumentParser(
         description=(
             "Aggregate IAC and Precision-Recall metrics from one or more "
@@ -128,8 +169,9 @@ def main():
 
         # 1. Process IAC files
         if os.path.exists(iac_dir):
-            iac_files = glob.glob(os.path.join(iac_dir, "*_iac.json"))
-            print(f"[{base_dir}] Found {len(iac_files)} IAC files.")
+            raw_iac_files = glob.glob(os.path.join(iac_dir, "*_iac.json"))
+            iac_files = filter_duplicate_files(raw_iac_files, "_iac.json")
+            print(f"[{base_dir}] Found {len(raw_iac_files)} IAC files (kept {len(iac_files)} after resolving duplicates).")
             for fpath in iac_files:
                 fname = os.path.basename(fpath)
                 pid, cond, model = parse_filename(fname, "_iac.json")
@@ -148,8 +190,9 @@ def main():
 
         # 2. Process PR files
         if os.path.exists(pr_dir):
-            pr_files = glob.glob(os.path.join(pr_dir, "*_pr.json"))
-            print(f"[{base_dir}] Found {len(pr_files)} Precision-Recall files.")
+            raw_pr_files = glob.glob(os.path.join(pr_dir, "*_pr.json"))
+            pr_files = filter_duplicate_files(raw_pr_files, "_pr.json")
+            print(f"[{base_dir}] Found {len(raw_pr_files)} Precision-Recall files (kept {len(pr_files)} after resolving duplicates).")
             for fpath in pr_files:
                 fname = os.path.basename(fpath)
                 pid, cond, model = parse_filename(fname, "_pr.json")
@@ -189,14 +232,29 @@ def main():
         
         # Token Count
         row_data["token_count"] = 0
-        report_filename = f"{pid}_{cond}.txt" if cond == "user_report" else f"{pid}_{cond}_report.txt"
+        model = row_data.get("model")
+        suffix = f"_{model}" if model and model != "human" else ""
         
+        report_candidates = []
+        if cond == "user_report":
+            report_candidates.append(f"{pid}_user_report.txt")
+        else:
+            report_candidates.extend([
+                f"{pid}_{cond}_report{suffix}.txt",
+                f"{pid}_{cond}_report.txt"
+            ])
+            
+        found_report = False
         for reports_dir in reports_dirs:
-            report_path = os.path.join(reports_dir, report_filename)
-            if os.path.exists(report_path):
-                with open(report_path, "r", encoding="utf-8") as rf:
-                    content = rf.read()
-                    row_data["token_count"] = tk.num_tokens_from_string(content)
+            for cand in report_candidates:
+                report_path = os.path.join(reports_dir, cand)
+                if os.path.exists(report_path):
+                    with open(report_path, "r", encoding="utf-8") as rf:
+                        content = rf.read()
+                        row_data["token_count"] = tk.num_tokens_from_string(content)
+                    found_report = True
+                    break
+            if found_report:
                 break
                 
         # Raw IAC
@@ -230,6 +288,7 @@ def main():
 
     print(f"\nSuccessfully aggregated metrics into {output_csv}")
     print(f"Total rows: {len(all_data)}")
+    log_message(f"[SUB] Successfully aggregated metrics into {output_csv} (Total rows: {len(all_data)})")
 
 
 if __name__ == "__main__":

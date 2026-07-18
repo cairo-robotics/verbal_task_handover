@@ -30,6 +30,9 @@ def _collect_pids(args: argparse.Namespace) -> list[str]:
     return combined
 
 
+from src.core.utils.experiment_logging import log_message, get_log_file
+
+
 def _run_step(
     python: str,
     script: Path,
@@ -37,8 +40,15 @@ def _run_step(
     env: dict[str, str],
 ) -> None:
     cmd = [python, str(script)] + args
-    print(f"  {' '.join(cmd)}", flush=True)
-    subprocess.run(cmd, check=True, env=env)
+    cmd_str = ' '.join(cmd)
+    print(f"  {cmd_str}", flush=True)
+    log_message(f"  [SUB] Running: {cmd_str}")
+    try:
+        subprocess.run(cmd, check=True, env=env)
+        log_message(f"  [SUB] Success: {cmd_str}")
+    except subprocess.CalledProcessError as e:
+        log_message(f"  [SUB] Failure: {cmd_str} (exit code: {e.returncode})")
+        raise e
 
 
 def run_evaluation_for_pid(
@@ -50,8 +60,17 @@ def run_evaluation_for_pid(
     use_human_dsl: bool = False,
     no_user_report: bool = False,
     raw_ablation: bool = False,
+    report_type: str = None,
+    eval_model: str = None,
     ) -> None:
-    env = {**os.environ, "DATA_DIR": data_dir}
+    from src.core.utils.extraction_paths import (
+        dsl_output_path_for_report_arg,
+        fact_extraction_json_path_for_dsl_path,
+        format_model_name,
+    )
+
+    os.environ["USE_EVALUATION_DIRS"] = "1"
+    env = {**os.environ, "DATA_DIR": data_dir, "USE_EVALUATION_DIRS": "1"}
     repo_root = Path(__file__).resolve().parent.parent.parent
     
     telemetry_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_telemetry_to_kg.json"
@@ -59,20 +78,12 @@ def run_evaluation_for_pid(
         print(f"Warning: Telemetry KG not found at {telemetry_kg}. Attempting to generate...")
         _run_step(python_exe, repo_root / "src/core/transforms/telemetry_to_graph.py", [pid], env)
     
-    if no_user_report:
-        reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_reconciled_kg.json"
-    else:
-        reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_reconciled_kg.json"
-
-    if not reconciled_kg.exists():
-        print(f"Warning: Reconciled KG not found at {reconciled_kg}. This is required for AI report P/R.")
-        # Note: We don't auto-generate this here as it requires the full alignment pipeline.
-    
-    if no_user_report or raw_ablation:
+    if report_type:
+        report_types = [report_type]
+    elif no_user_report or raw_ablation:
         report_types = ["task_aware"]
     else:
-        # report_types = ["user_report", "full_realization", "task_aware"]
-        report_types = ["user_report", "task_aware"]
+        report_types = ["user_report", "full_realization", "task_aware"]
     
     # Metrics output dirs
     pr_dir = Path(data_dir) / "analysis" / "metrics_output" / "precision_recall"
@@ -90,6 +101,12 @@ def run_evaluation_for_pid(
             model_str = f" ({model})" if model else ""
             print(f"    --- Model: {model if model else 'human'} ---")
             
+            suffix = f"_{model}" if model else ""
+            if no_user_report:
+                reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_reconciled_kg{suffix}.json"
+            else:
+                reconciled_kg = Path(data_dir) / "processed_output" / "kg" / f"{pid}_reconciled_kg{suffix}.json"
+
             # 1. Identify/Generate KG
             if r_type == "user_report":
                 if use_human_dsl:
@@ -98,7 +115,10 @@ def run_evaluation_for_pid(
                         print(f"    Error: {dsl_path} not found. Skipping user_report.")
                         continue
                     
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
+                    if os.environ.get("USE_EVALUATION_DIRS") == "1":
+                        kg_path = Path(data_dir) / "analysis" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
+                    else:
+                        kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_dsl_to_kg.json"
                     _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
                               [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
                 else:
@@ -107,47 +127,63 @@ def run_evaluation_for_pid(
                         print(f"    Error: {report_file} not found. Skipping user_report.")
                         continue
                     
+                    provider = "gpt"
+                    if model:
+                        if "claude" in model:
+                            provider = "claude"
+                        elif "gemini" in model:
+                            provider = "gemini"
+                    dsl_args = [report_file, "--model-provider", provider]
+                    if model:
+                        dsl_args.extend(["--model", model])
+                    if eval_model:
+                        dsl_args.extend(["--eval-model", eval_model])
+                    
                     # Generate DSL
                     _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", 
-                              [report_file, "--model-provider", model], env)
+                              dsl_args, env)
+                    
                     # Generate KG
-                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_user_report_{model}_dsl.txt"
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_user_report_{model}_dsl_to_kg.json"
+                    dsl_path = dsl_output_path_for_report_arg(data_dir, report_file, model=model)
+                    kg_path = fact_extraction_json_path_for_dsl_path(dsl_path)
                     _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
                               [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
             else:
                 # AI reports: full_realization, task_aware
                 if no_user_report:
-                    report_file = f"{pid}_no_report_{r_type}_report.txt"
+                    report_file = f"{pid}_no_report_{r_type}_report{suffix}.txt"
                 elif raw_ablation:
-                    report_file = f"{pid}_{r_type}_raw_ablation_report.txt"
+                    report_file = f"{pid}_{r_type}_raw_ablation_report{suffix}.txt"
                 else:
-                    report_file = f"{pid}_{r_type}_report.txt"
+                    report_file = f"{pid}_{r_type}_report{suffix}.txt"
 
                 if not (Path(data_dir) / "reports" / report_file).exists():
                     print(f"    Warning: {report_file} not found. Skipping {r_type}.")
                     continue
                 
                 # Generate DSL
+                provider = "gpt"
+                if model:
+                    if "claude" in model:
+                        provider = "claude"
+                    elif "gemini" in model:
+                        provider = "gemini"
+                dsl_args = [report_file, "--model-provider", provider]
+                if model:
+                    dsl_args.extend(["--model", model])
+                if eval_model:
+                    dsl_args.extend(["--eval-model", eval_model])
                 _run_step(python_exe, repo_root / "src/core/transforms/report_to_dsl.py", 
-                          [report_file, "--model-provider", model], env)
+                          dsl_args, env)
                 
-                # Generate KG
-                if no_user_report:
-                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_no_report_{r_type}_report_{model}_dsl.txt"
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_no_report_{r_type}_report_{model}_dsl_to_kg.json"
-                elif raw_ablation:
-                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_raw_ablation_report_{model}_dsl.txt"
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_raw_ablation_report_{model}_dsl_to_kg.json"
-                else:
-                    dsl_path = Path(data_dir) / "processed_output" / "dsl" / f"{pid}_{r_type}_report_{model}_dsl.txt"
-                    kg_path = Path(data_dir) / "processed_output" / "kg" / f"{pid}_{r_type}_report_{model}_dsl_to_kg.json"
+                # Generate KG using utility functions
+                dsl_path = dsl_output_path_for_report_arg(data_dir, report_file, model=model)
+                kg_path = fact_extraction_json_path_for_dsl_path(dsl_path)
 
                 _run_step(python_exe, repo_root / "src/core/transforms/dsl_to_graph.py", 
                           [str(dsl_path.relative_to(data_dir)), "--output", str(kg_path)], env)
 
             # 2. Run Precision/Recall
-            suffix = f"_{model}" if model else ""
             if no_user_report:
                 pr_output = pr_dir / f"{pid}_no_report_{r_type}{suffix}_pr.json"
             elif raw_ablation:
@@ -179,6 +215,7 @@ def run_evaluation_for_pid(
 
 
 def main() -> None:
+    get_log_file()
     parser = argparse.ArgumentParser(
         description="Run the full evaluation pipeline for each participant ID."
     )
@@ -201,14 +238,18 @@ def main() -> None:
     parser.add_argument(
         "--models",
         nargs="+",
-        choices=["gpt", "claude", "gemini", "all"],
         default=["gpt"],
-        help="Models to evaluate (choices: gpt, claude, gemini, all. Default: gpt).",
+        help="Models to evaluate (choices: gpt, claude, gemini, all, or specific model versions like gpt5-6-terra. Default: gpt).",
     )
     parser.add_argument(
         "--continue-on-error",
         action="store_true",
         help="Process remaining pids after a failure; exit non-zero if any pid failed.",
+    )
+    parser.add_argument(
+        "--eval-model",
+        default=None,
+        help="Model version to use for evaluation DSL extraction (e.g. gpt-4.1-mini).",
     )
     parser.add_argument(
         "--use-human-dsl",
@@ -225,6 +266,11 @@ def main() -> None:
         action="store_true",
         help="Run evaluations on only the raw_ablation reports.",
     )
+    parser.add_argument(
+        "--report-type",
+        choices=["user_report", "full_realization", "task_aware"],
+        help="Evaluate only a specific report type (default: evaluate all standard or ablation types depending on flags).",
+    )
     args = parser.parse_args()
 
     if args.no_user_report and args.use_human_dsl:
@@ -240,6 +286,14 @@ def main() -> None:
     models = args.models
     if "all" in models:
         models = ["gpt", "claude", "gemini"]
+    else:
+        from src.core.utils.extraction_paths import format_model_name
+        # If default ["gpt"] is used but environment has a specific model, use the environment model
+        if models == ["gpt"]:
+            env_model = os.environ.get("GPT_MODEL") or os.environ.get("MODEL")
+            if env_model:
+                models = [env_model]
+        models = [format_model_name(m) for m in models]
 
     failed: list[tuple[str, BaseException]] = []
     for pid in pids:
@@ -253,6 +307,8 @@ def main() -> None:
                 use_human_dsl=args.use_human_dsl,
                 no_user_report=args.no_user_report,
                 raw_ablation=args.raw_ablation,
+                report_type=args.report_type,
+                eval_model=args.eval_model,
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"Error for pid {pid}: {e}", file=sys.stderr, flush=True)

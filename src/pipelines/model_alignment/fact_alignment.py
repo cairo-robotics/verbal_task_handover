@@ -18,6 +18,7 @@ from src.core.representations.pydantic_schema import (
     ConnectionFact,
     Argument,
     Location,
+    SpatialRelationType,
 )
 from src.pipelines.model_alignment.entity_alignment import AlignmentResult, ExistentialResolution
 from src.core.utils.spatial_reasoning import get_entity_location, is_location_satisfying_constraint, resolve_directional_path
@@ -201,6 +202,19 @@ def align_facts(
                 is_resolution_match = True
                 break
         
+        if tf is None and isinstance(rf, SpatialFact):
+            # Try to align SpatialFact (report) to LocationFact (telemetry)
+            entity_name = _get_normalized_argument_value(rf.subject, rf.id, "subject", alignment_result)
+            if entity_name:
+                entity_norm = normalize_entity_name(entity_name)
+                # Find LocationFact in telemetry for this entity
+                for potential_tf in telemetry_graph.facts:
+                    if isinstance(potential_tf, LocationFact):
+                        if potential_tf.entity.type == "named" and normalize_entity_name(potential_tf.entity.value) == entity_norm:
+                            tf = potential_tf
+                            is_resolution_match = True
+                            break
+
         if tf is None:
             result.novel_fact_ids.append(rf.id)
             continue
@@ -271,6 +285,37 @@ def align_facts(
                     expected_value=tf.location_b.model_dump(),
                     actual_value=rf.location_b.model_dump()
                 ))
+
+        elif isinstance(rf, SpatialFact) and isinstance(tf, LocationFact):
+            # Check if tf's room satisfies the spatial constraint in rf
+            constraint_loc = Location(
+                type="directional",
+                directions=[rf.direction],
+                mode="path"
+            )
+            reference_room = "room 0"
+            if rf.type == SpatialRelationType.RELATIVE and rf.reference and rf.reference.type == "named":
+                ref_name = _get_normalized_argument_value(rf.reference, rf.id, "reference", alignment_result)
+                if ref_name:
+                    is_room_name = any(
+                        normalize_entity_name(ref_name).lower().strip().startswith(prefix)
+                        for prefix in ["room", "hallway", "storage", "lounge"]
+                    )
+                    if is_room_name:
+                        reference_room = ref_name
+                    else:
+                        reference_room = get_entity_location(telemetry_graph, ref_name) or "room 0"
+            
+            if tf.location.type == "room" and tf.location.room:
+                is_satisfied = is_location_satisfying_constraint(tf.location.room, constraint_loc, telemetry_graph, reference_room)
+                if not is_satisfied:
+                    conflicts.append(ConflictRecord(
+                        source_fact_id=rf.id,
+                        target_fact_id=tf.id,
+                        field_name="location",
+                        expected_value=tf.location.model_dump(),
+                        actual_value=rf.direction.value if rf.direction else None
+                    ))
 
         if conflicts:
             result.conflicts.extend(conflicts)

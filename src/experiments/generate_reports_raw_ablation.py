@@ -57,10 +57,12 @@ def _collect_pids(args: argparse.Namespace) -> list[str]:
         raise SystemExit("No participant IDs: pass pids as arguments and/or use --pids-file.")
     return combined
 
+from src.core.utils.experiment_logging import log_message, get_log_file, log_api_call
+
 def call_chatgpt(system_prompt: str, user_prompt: Template, telemetry: str, user_report: str) -> str:
-    client = OpenAI()
+    model = os.environ.get("GPT_MODEL", "gpt-5.6-sol")
     user_content = user_prompt.substitute(telemetry=telemetry, user_report=user_report)
-    model = os.environ.get("GPT_MODEL", "gpt-4.1-mini")
+
     kwargs = {
         "model": model,
         "input": [
@@ -72,6 +74,14 @@ def call_chatgpt(system_prompt: str, user_prompt: Template, telemetry: str, user
         kwargs["reasoning"] = {"effort": "medium"}
     else:
         kwargs["temperature"] = 0
+        
+    log_api_call("openai", model, kwargs)
+
+    if os.environ.get("DRY_RUN") == "1":
+        log_message("Mock API Call (DRY RUN) - generate_reports_raw_ablation.py")
+        return "### OUTSTANDING NEEDS\n- lily needs a gold potion\n\n### POTION & NPC LOCATIONS\n- lily is in room 1\n- player is in room 1\n\n### UNRESOLVED / DIRECTIONAL FACTS\n- None"
+        
+    client = OpenAI()
     response = client.responses.create(**kwargs)
     return response.output_text
 
@@ -82,8 +92,7 @@ def read_text(path: str) -> str:
 
 
 def main() -> None:
-
-
+    get_log_file()
     import dotenv
     dotenv.load_dotenv()
     parser = argparse.ArgumentParser(
@@ -139,10 +148,18 @@ def main() -> None:
         reports_dir = os.path.join(data_dir, "reports")
         os.makedirs(reports_dir, exist_ok=True)
 
+        model_suffix = ""
+        try:
+            from src.core.utils.extraction_paths import get_current_model_suffix
+            if os.environ.get("GPT_MODEL") or os.environ.get("MODEL"):
+                model_suffix = f"_{get_current_model_suffix()}"
+        except ImportError:
+            pass
+
         sys_p, user_p = PROMPT_SETS["task_aware"]
         report = call_chatgpt(sys_p, user_p, telemetry_text, user_report_text)
         suffix = "task_aware"
-        output_path = os.path.join(reports_dir, f"{pid}_{suffix}_raw_ablation_report.txt")
+        output_path = os.path.join(reports_dir, f"{pid}_{suffix}_raw_ablation_report{model_suffix}.txt")
         with open(output_path, "w", encoding="utf-8") as f:
                 f.write(report)
         print(f"Report saved to {output_path}")

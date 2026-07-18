@@ -74,18 +74,25 @@ class CategorizationResult(BaseModel):
     clauses: list[Clause]
 
 def call_chatgpt(report_text: str) -> CategorizationResult:
-    """Send the prompt and report to gpt-4o-mini and parse structured output."""
+    """Send the prompt and report to ChatGPT and parse structured output."""
     client = OpenAI()
     user_content = CATEGORIZATION_PROMPT + report_text
     
-    response = client.responses.parse(
-        model="gpt-4o-mini",
-        temperature=0,
-        input=[
+    model = os.environ.get("GPT_MODEL", "gpt-5.6-sol")
+
+    kwargs = {
+        "model": model,
+        "input": [
             {"role": "user", "content": user_content},
         ],
-        text_format=CategorizationResult,
-    )
+        "text_format": CategorizationResult,
+    }
+    if "sol" in model or "gpt-5" in model or "o1" in model or "o3" in model:
+        kwargs["reasoning"] = {"effort": "medium"}
+    else:
+        kwargs["temperature"] = 0
+
+    response = client.responses.parse(**kwargs)
     return response.output_parsed
 
 def main() -> None:

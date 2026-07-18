@@ -27,6 +27,7 @@ import dotenv
 from src.core.representations.pydantic_schema import (
     Argument,
     ConnectionFact,
+    Fact,
     KnowledgeGraph,
     LocationFact,
     RelationFact,
@@ -138,6 +139,7 @@ class _ArgSlot:
     fact_id: str
     argument_role: str
     argument: Argument
+    fact: Fact
 
 
 def _iter_arguments(graph: KnowledgeGraph) -> list[_ArgSlot]:
@@ -152,13 +154,13 @@ def _iter_arguments(graph: KnowledgeGraph) -> list[_ArgSlot]:
                 ("target", fact.target),
             ]:
                 if arg is not None:
-                    slots.append(_ArgSlot(fid, argument_role=role, argument=arg))
+                    slots.append(_ArgSlot(fid, argument_role=role, argument=arg, fact=fact))
         elif isinstance(fact, LocationFact):
-            slots.append(_ArgSlot(fid, argument_role="entity", argument=fact.entity))
+            slots.append(_ArgSlot(fid, argument_role="entity", argument=fact.entity, fact=fact))
         elif isinstance(fact, SpatialFact):
-            slots.append(_ArgSlot(fid, argument_role="subject", argument=fact.subject))
+            slots.append(_ArgSlot(fid, argument_role="subject", argument=fact.subject, fact=fact))
             if fact.reference is not None:
-                slots.append(_ArgSlot(fid, argument_role="reference", argument=fact.reference))
+                slots.append(_ArgSlot(fid, argument_role="reference", argument=fact.reference, fact=fact))
         elif isinstance(fact, ConnectionFact):
             pass  # ConnectionFact has no Argument slots, only Locations
     return slots
@@ -228,6 +230,7 @@ Rules:
 def _build_existential_prompt(
     slot: _ArgSlot,
     candidates: list[str],
+    telemetry_graph: KnowledgeGraph | None = None,
 ) -> str:
     arg = slot.argument
     lines = [
@@ -238,6 +241,41 @@ def _build_existential_prompt(
         lines.append(f"Partial surface form: \"{arg.value}\"")
     if arg.location:
         lines.append(f"Location constraint: {arg.location.model_dump_json()}")
+    if slot.fact:
+        lines.append(f"Fact context: {slot.fact.model_dump_json(exclude_none=True)}")
+
+    # Extract telemetry facts that mention any of the candidates, plus map connectivity
+    telemetry_context = []
+    spatial_context = []
+    if telemetry_graph is not None:
+        for fact in telemetry_graph.facts:
+            if isinstance(fact, (ConnectionFact, SpatialFact)):
+                spatial_context.append(fact.model_dump_json(exclude_none=True))
+                continue
+            
+            mentions_candidate = False
+            for attr in ["subject", "object", "target", "entity", "reference"]:
+                val = getattr(fact, attr, None)
+                if val is not None:
+                    if hasattr(val, "value") and val.value in candidates:
+                        mentions_candidate = True
+                    elif isinstance(val, str) and val in candidates:
+                        mentions_candidate = True
+            if mentions_candidate:
+                telemetry_context.append(fact.model_dump_json(exclude_none=True))
+
+    if spatial_context:
+        lines.append("")
+        lines.append("Map connections and spatial layout:")
+        for sc in spatial_context:
+            lines.append(f"  - {sc}")
+
+    if telemetry_context:
+        lines.append("")
+        lines.append("Telemetry context (facts about candidates):")
+        for tc in telemetry_context:
+            lines.append(f"  - {tc}")
+
     lines.append("")
     lines.append("Telemetry candidates:")
     for c in candidates:
@@ -249,6 +287,7 @@ def _resolve_existential(
     slot: _ArgSlot,
     candidates: list[str],
     client: object,  # openai.OpenAI
+    telemetry_graph: KnowledgeGraph | None = None,
 ) -> ExistentialResolution:
     """Call the LLM and parse its JSON response into an ExistentialResolution."""
     entity_type = _infer_entity_type(slot.argument.value or slot.argument_role)
@@ -261,18 +300,24 @@ def _resolve_existential(
             entity_type_filter=entity_type,
         )
 
-    prompt = _build_existential_prompt(slot, candidates)
+    prompt = _build_existential_prompt(slot, candidates, telemetry_graph)
+
+    model = os.environ.get("GPT_MODEL", "gpt-4o-mini")
+    kwargs = {
+        "model": model,
+        "text": {"format": {"type": "json_object"}},
+        "input": [
+            {"role": "system", "content": _EXISTENTIAL_RESOLUTION_SYSTEM},
+            {"role": "user", "content": prompt},
+        ],
+    }
+    if "sol" in model or "gpt-5" in model or "o1" in model or "o3" in model:
+        kwargs["reasoning"] = {"effort": "medium"}
+    else:
+        kwargs["temperature"] = 0
 
     try:
-        response = client.responses.create(  # type: ignore[union-attr]
-            model="gpt-4o-mini",
-            temperature=0,
-            text={"format": {"type": "json_object"}},
-            input=[
-                {"role": "system", "content": _EXISTENTIAL_RESOLUTION_SYSTEM},
-                {"role": "user", "content": prompt},
-            ],
-        )
+        response = client.responses.create(**kwargs)  # type: ignore[union-attr]
         raw = response.output_text or "{}"
         data: dict = json.loads(raw)
     except Exception as exc:
@@ -379,7 +424,7 @@ def _resolve_existentials(
         # Narrow by location constraint if present
         candidates = list(telem_by_type.get(etype, []))
 
-        resolution = _resolve_existential(slot, candidates, client)
+        resolution = _resolve_existential(slot, candidates, client, telemetry_graph)
         resolutions.append(resolution)
 
     return resolutions

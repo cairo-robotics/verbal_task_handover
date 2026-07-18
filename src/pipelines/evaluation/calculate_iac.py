@@ -205,6 +205,10 @@ def _calculate_location_score(target_name: str, fact_set: list[Fact], ground_tru
                 directions=[fact.direction],
                 mode="path"
             )
+            # For absolute SpatialFacts (no named reference), evaluate from all rooms
+            # the player has visited so the direction is as charitable as possible.
+            # Directional facts are naturally relative to the speaker's position, which
+            # may be any room traversed during the session, not just room 0.
             ref_room = "room 0"
             if fact.type == SpatialRelationType.RELATIVE and fact.reference and fact.reference.type == "named":
                 ref_room = fact.reference.value
@@ -330,54 +334,55 @@ def get_patient_status_facts(entity: str, ground_truth: GameState) -> list[Relat
     if not patient_npc:
         return []
 
-    # 3. Check potion need (Step 1)
-    if not patient_npc.held_item_interact_complete:
-        return [RelationFact(
-            predicate=RelationPredicate.NEEDS_POTION,
-            subject=Argument(type="named", value=entity),
-            object=Argument(type="named", value=f"{patient_info['potion']} potion")
-        )]
-    
-    # 4. Check targets (messages and responses - Steps 2 and 3)
-    targets = []
-    if "npc_target" in patient_info:
-        targets.append(patient_info["npc_target"])
-    if "npc_target_1" in patient_info:
-        targets.append(patient_info["npc_target_1"])
-    if "npc_target_2" in patient_info:
-        targets.append(patient_info["npc_target_2"])
-    
-    for target_name in targets:
-        target_npc = _find_npc(ground_truth, target_name)
-        if not target_npc:
-            continue
-            
-        # Check if the request message has been delivered to the target
-        # Request items are typically "request from room X"
-        request_item = f"request from {patient_info['location']}"
-        if target_npc.conditional_interact_counts.get(request_item, 0) == 0:
-            return [RelationFact(
-                predicate=RelationPredicate.HAS_MESSAGE_FOR,
-                subject=Argument(type="named", value=entity),
-                target=Argument(type="named", value=target_name)
-            )]
-        
-        # Target received request, check if patient received response
-        # Response items are typically "response from [TargetName]"
-        response_item = f"response from {target_name.capitalize()}"
-        if patient_npc.conditional_interact_counts.get(response_item, 0) == 0:
-            return [RelationFact(
-                predicate=RelationPredicate.HAS_MESSAGE_FOR,
-                subject=Argument(type="named", value=target_name),
-                target=Argument(type="named", value=entity)
-            )]
-            
-    # 5. When steps 1-3 are complete, it should always return the NEEDS_POTION fact
-    return [RelationFact(
+    facts = []
+
+    # Always include the underlying NEEDS_POTION fact for the patient,
+    # as the patient's core need for a potion is persistent/game-rules based.
+    potion_fact = RelationFact(
         predicate=RelationPredicate.NEEDS_POTION,
         subject=Argument(type="named", value=entity),
         object=Argument(type="named", value=f"{patient_info['potion']} potion")
-    )]
+    )
+    facts.append(potion_fact)
+
+    # In addition, check if target messages and responses (Steps 2 and 3) are active.
+    if patient_npc.held_item_interact_complete:
+        targets = []
+        if "npc_target" in patient_info:
+            targets.append(patient_info["npc_target"])
+        if "npc_target_1" in patient_info:
+            targets.append(patient_info["npc_target_1"])
+        if "npc_target_2" in patient_info:
+            targets.append(patient_info["npc_target_2"])
+        
+        for target_name in targets:
+            target_npc = _find_npc(ground_truth, target_name)
+            if not target_npc:
+                continue
+                
+            # Check if the request message has been delivered to the target
+            # Request items are typically "request from room X"
+            request_item = f"request from {patient_info['location']}"
+            if target_npc.conditional_interact_counts.get(request_item, 0) == 0:
+                facts.append(RelationFact(
+                    predicate=RelationPredicate.HAS_MESSAGE_FOR,
+                    subject=Argument(type="named", value=entity),
+                    target=Argument(type="named", value=target_name)
+                ))
+                break
+            
+            # Target received request, check if patient received response
+            # Response items are typically "response from [TargetName]"
+            response_item = f"response from {target_name.capitalize()}"
+            if patient_npc.conditional_interact_counts.get(response_item, 0) == 0:
+                facts.append(RelationFact(
+                    predicate=RelationPredicate.HAS_MESSAGE_FOR,
+                    subject=Argument(type="named", value=target_name),
+                    target=Argument(type="named", value=entity)
+                ))
+                break
+
+    return facts
 
 def _is_category_match(predicted_val: str, gold_val: str) -> bool:
     """Checks if a predicted value is a generic category for a specific gold value."""
@@ -403,10 +408,8 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
     """
     # 1. Get gold facts
     gold_facts = get_patient_status_facts(entity, ground_truth)
-    gold_fact = gold_facts[0] if gold_facts else None
 
     max_cost = DIAGNOSIS_COST
-    gt_fact_str = _describe_fact(gold_fact) if gold_fact else "(no outstanding need)"
 
     # 2. Pre-calculate entity rooms for existential resolution
     # Normalize underscore-named keys (e.g. "gold_potion") to also be accessible
@@ -421,6 +424,11 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
 
     all_patient_names = [p["name"] for p in PATIENT_DATA.values()]
 
+    # Option D: use the player's final room as the reference frame for directional
+    # constraints.  Reporters naturally give directions from where they are standing,
+    # so "west" means "west of where the player ended up", not "west of room 0".
+    player_room_ref = getattr(ground_truth, "current_room", None) or "room 0"
+
     def resolution_strength(arg, target_name):
         """
         Returns 'definite', 'possible', or 'none' indicating how strongly
@@ -434,29 +442,37 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
             target_room = entity_rooms.get(target_name) or entity_rooms.get(normalize_entity_name(target_name))
             if not target_room:
                 return "none"
-            if not is_location_satisfying_constraint(target_room, arg.location, map_graph, "room 0"):
-                return "none"
+
             def _get_room(name):
                 return entity_rooms.get(name) or entity_rooms.get(normalize_entity_name(name))
-            
+
+            # Option D: check against the player's current room first, then fall
+            # back to room 0 so we don't regress on already-working cases.
+            satisfied = is_location_satisfying_constraint(target_room, arg.location, map_graph, player_room_ref)
+            if not satisfied:
+                satisfied = is_location_satisfying_constraint(target_room, arg.location, map_graph, "room 0")
+            if not satisfied:
+                return "none"
+
+            # Option A: a directional existential that *exclusively* resolves to
+            # this entity (when checked from the player's room) is treated as
+            # 'definite', earning FULL rather than PARTIAL credit.
             others_satisfy = any(
                 p != target_name
                 and _get_room(p)
-                and is_location_satisfying_constraint(_get_room(p), arg.location, map_graph, "room 0")
+                and (
+                    is_location_satisfying_constraint(_get_room(p), arg.location, map_graph, player_room_ref)
+                    or is_location_satisfying_constraint(_get_room(p), arg.location, map_graph, "room 0")
+                )
                 for p in all_patient_names
             )
             return "possible" if others_satisfy else "definite"
         return "none"
 
-    def score_other_arg(f_other, g_other, f, is_definite):
+    def score_other_arg(f_other, g_other, f, is_definite, gt_fact_str):
         """
         Compare the 'other' argument (resource or message partner) of a candidate fact
         against the gold. Returns a ComponentScore or None (meaning: skip this candidate).
-
-        When is_definite=True, full scoring tiers apply (FULL / PARTIAL / CONTRADICTED).
-        When is_definite=False (subject is only 'possible'), only an exact resource match
-        earns PARTIAL credit; everything else returns None so it doesn't block better matches.
-        This prevents "someone needs the red potion" from being a contradiction for lily.
         """
         if not f_other or not g_other:
             if is_definite:
@@ -475,7 +491,6 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
                     evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
             elif _is_category_match(f_other.value, g_other.value):
                 # Generic category (e.g. "potion" for "gold potion") — only when subject is definite
-                # "someone needs_potion potion" is too vague on both axes to earn credit
                 if is_definite:
                     return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost,
                                           partial_credit=cost_config.partial_need_credit,
@@ -487,20 +502,23 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
                     return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                           partial_credit=0.0,
                                           evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-                return None  # Possible subject + wrong resource — can't call it a contradiction
+                return None  # Possible subject + wrong resource
 
         elif f_other.type == "existential":
             g_other_room = entity_rooms.get(g_other.value) or entity_rooms.get(normalize_entity_name(g_other.value)) if g_other.type == "named" else None
             is_satisfied = not f_other.location  # unconstrained existential always satisfies
             if not is_satisfied and g_other_room:
                 is_satisfied = is_location_satisfying_constraint(
-                    g_other_room, f_other.location, map_graph, "room 0")
+                    g_other_room, f_other.location, map_graph, player_room_ref)
+                if not is_satisfied:
+                    is_satisfied = is_location_satisfying_constraint(
+                        g_other_room, f_other.location, map_graph, "room 0")
             if is_satisfied:
                 if is_definite:
                     return ComponentScore(credit_type=CreditType.PARTIAL, max_cost=max_cost,
                                           partial_credit=cost_config.partial_need_credit,
                                           evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-                return None  # Possible subject + vague existential object → too ambiguous
+                return None  # Possible subject + vague existential object
             else:
                 if is_definite:
                     return ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
@@ -514,8 +532,9 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
                                       evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
             return None
 
-    # 3. No outstanding gold need
-    if not gold_fact:
+    # 3. No outstanding gold needs
+    if not gold_facts:
+        gt_fact_str = "(no outstanding need)"
         for f in fact_set:
             if not isinstance(f, RelationFact):
                 continue
@@ -542,80 +561,83 @@ def _score_need(entity: str, fact_set: list[Fact], ground_truth: GameState, map_
         if f.predicate not in [RelationPredicate.NEEDS_POTION, RelationPredicate.HAS_MESSAGE_FOR]:
             continue
 
-        current_score = None
+        for gold_fact in gold_facts:
+            gt_fact_str = _describe_fact(gold_fact)
+            current_score = None
 
-        if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
-            subj_str = resolution_strength(f.subject, entity)
-            tgt_str = resolution_strength(f.target, entity) if f.target else "none"
+            if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
+                subj_str = resolution_strength(f.subject, entity)
+                tgt_str = resolution_strength(f.target, entity) if f.target else "none"
 
-            if subj_str == "definite":
-                # Definite subject match
-                if f.predicate != gold_fact.predicate:
-                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
-                                                   partial_credit=0.0,
-                                                   evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-                else:
-                    current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=True)
-            elif tgt_str == "definite":
-                # Definite target match, but active gold need is NEEDS_POTION (different!)
-                current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
-                                               partial_credit=0.0,
-                                               evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-            elif subj_str == "possible":
-                # Possible subject match
-                if f.predicate == gold_fact.predicate:
-                    current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=False)
-
-        elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
-            subj_str = resolution_strength(f.subject, entity)
-            tgt_str = resolution_strength(f.target, entity) if f.target else "none"
-
-            if gold_fact.subject.value == entity:
-                # Entity is the expected sender
                 if subj_str == "definite":
+                    # Definite subject match
                     if f.predicate != gold_fact.predicate:
                         current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                        partial_credit=0.0,
                                                        evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
                     else:
-                        current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=True)
+                        current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=True, gt_fact_str=gt_fact_str)
                 elif tgt_str == "definite":
-                    # Role reversal: patient is the receiver in candidate but sender in gold need (different!)
+                    # Definite target match, but active gold need is NEEDS_POTION (different!)
                     current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                    partial_credit=0.0,
                                                    evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
                 elif subj_str == "possible":
+                    # Possible subject match
                     if f.predicate == gold_fact.predicate:
-                        current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=False)
-            else:
-                # Entity is the expected receiver
-                if tgt_str == "definite":
-                    if f.predicate != gold_fact.predicate:
+                        current_score = score_other_arg(f.object, gold_fact.object, f, is_definite=False, gt_fact_str=gt_fact_str)
+
+            elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
+                subj_str = resolution_strength(f.subject, entity)
+                tgt_str = resolution_strength(f.target, entity) if f.target else "none"
+
+                if gold_fact.subject.value == entity:
+                    # Entity is the expected sender
+                    if subj_str == "definite":
+                        if f.predicate != gold_fact.predicate:
+                            current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                           partial_credit=0.0,
+                                                           evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                        else:
+                            current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=True, gt_fact_str=gt_fact_str)
+                    elif tgt_str == "definite":
+                        # Role reversal
                         current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
                                                        partial_credit=0.0,
                                                        evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-                    else:
-                        current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=True)
-                elif subj_str == "definite":
-                    # Role reversal: patient is the sender in candidate but receiver in gold need (different!)
-                    current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
-                                                   partial_credit=0.0,
-                                                   evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
-                elif tgt_str == "possible":
-                    if f.predicate == gold_fact.predicate:
-                        current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=False)
+                    elif subj_str == "possible":
+                        if f.predicate == gold_fact.predicate:
+                            current_score = score_other_arg(f.target, gold_fact.target, f, is_definite=False, gt_fact_str=gt_fact_str)
+                else:
+                    # Entity is the expected receiver
+                    if tgt_str == "definite":
+                        if f.predicate != gold_fact.predicate:
+                            current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                           partial_credit=0.0,
+                                                           evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                        else:
+                            current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=True, gt_fact_str=gt_fact_str)
+                    elif subj_str == "definite":
+                        # Role reversal
+                        current_score = ComponentScore(credit_type=CreditType.CONTRADICTED, max_cost=max_cost,
+                                                       partial_credit=0.0,
+                                                       evaluated_fact=_describe_fact(f), ground_truth_fact=gt_fact_str)
+                    elif tgt_str == "possible":
+                        if f.predicate == gold_fact.predicate:
+                            current_score = score_other_arg(f.subject, gold_fact.subject, f, is_definite=False, gt_fact_str=gt_fact_str)
 
-        if current_score is not None:
-            if best_score is None or priority[current_score.credit_type] < priority[best_score.credit_type]:
-                best_score = current_score
+            if current_score is not None:
+                if best_score is None or priority[current_score.credit_type] < priority[best_score.credit_type]:
+                    best_score = current_score
 
     if best_score is not None:
         return best_score
 
-    # Nothing relevant found
+    # Use the first gold fact as representative of omission
+    representative_gt_str = _describe_fact(gold_facts[0])
     return ComponentScore(credit_type=CreditType.NONE, max_cost=max_cost, partial_credit=0.0,
                           evaluated_fact="(no matching need fact found)",
-                          ground_truth_fact=gt_fact_str)
+                          ground_truth_fact=representative_gt_str)
 
 def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> ComponentScore:
     """
@@ -629,27 +651,35 @@ def _score_resource(entity: str, fact_set: list[Fact], ground_truth: GameState, 
                               evaluated_fact="(no outstanding need — resource score not applicable)",
                               ground_truth_fact="(no outstanding need — resource score not applicable)")
     
-    # We take the first outstanding need as the priority resource
-    gold_fact = gold_facts[0]
-    resource_name = None
+    priority = {CreditType.FULL: 0, CreditType.PARTIAL: 1, CreditType.NONE: 2, CreditType.CONTRADICTED: 3}
+    best_score = None
     
-    if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
-        resource_name = gold_fact.object.value
-    elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
-        # Resource is the other NPC in the relation
-        if gold_fact.subject.value == entity:
-            resource_name = gold_fact.target.value
-        else:
-            resource_name = gold_fact.subject.value
-            
-    if not resource_name:
-        return ComponentScore(credit_type=CreditType.NONE, max_cost=0.0, partial_credit=0.0,
-                              evaluated_fact="(could not determine resource name)",
-                              ground_truth_fact="(could not determine resource name)")
+    for gold_fact in gold_facts:
+        resource_name = None
+        if gold_fact.predicate == RelationPredicate.NEEDS_POTION:
+            resource_name = gold_fact.object.value
+        elif gold_fact.predicate == RelationPredicate.HAS_MESSAGE_FOR:
+            # Resource is the other NPC in the relation
+            if gold_fact.subject.value == entity:
+                resource_name = gold_fact.target.value
+            else:
+                resource_name = gold_fact.subject.value
+                
+        if not resource_name:
+            continue
 
-    # 2. Score the location of THIS resource using the shared scoring logic
-    entity_type = "potions" if gold_fact.predicate == RelationPredicate.NEEDS_POTION else "npcs"
-    return _calculate_location_score(resource_name, fact_set, ground_truth, map_graph, cost_config, entity_type=entity_type)
+        # Score the location of THIS resource using the shared scoring logic
+        entity_type = "potions" if gold_fact.predicate == RelationPredicate.NEEDS_POTION else "npcs"
+        score = _calculate_location_score(resource_name, fact_set, ground_truth, map_graph, cost_config, entity_type=entity_type)
+        if best_score is None or priority[score.credit_type] < priority[best_score.credit_type]:
+            best_score = score
+
+    if best_score is not None:
+        return best_score
+        
+    return ComponentScore(credit_type=CreditType.NONE, max_cost=0.0, partial_credit=0.0,
+                          evaluated_fact="(could not determine resource name)",
+                          ground_truth_fact="(could not determine resource name)")
 
 def _score_entity(entity: str, fact_set: list[Fact], ground_truth: GameState, map_graph: KnowledgeGraph, cost_config: CostConfig) -> EntityScore:
     location_score = _score_location(entity, fact_set, ground_truth, map_graph, cost_config)
@@ -698,13 +728,19 @@ def _is_location_fact_misinfo(f: Fact, true_state: GameState, map_graph: Knowled
             true_room = entity_name
         else:
             true_room = entity_rooms.get(entity_name)
-            
+
         if true_room is None:
             return True
         is_satisfied = is_location_satisfying_constraint(true_room, constraint_loc, map_graph, reference_room)
+        # For absolute SpatialFacts, also charitably check from the player's current room,
+        # since a reporter naturally states directions from where they are standing.
+        if not is_satisfied and isinstance(f, SpatialFact) and f.type == SpatialRelationType.ABSOLUTE:
+            player_room = getattr(true_state, "current_room", None)
+            if player_room and player_room != reference_room:
+                is_satisfied = is_location_satisfying_constraint(true_room, constraint_loc, map_graph, player_room)
         return not is_satisfied
     elif entity_arg.type == "existential":
-        # Check if there is ANY entity in entity_rooms that satisfies the constraint and matches the type/category (if provided)
+        # Check if there is ANY entity in entity_rooms that satisfies the constraint
         candidates = []
         for name, room in entity_rooms.items():
             if entity_arg.value:
@@ -717,14 +753,22 @@ def _is_location_fact_misinfo(f: Fact, true_state: GameState, map_graph: Knowled
                     if is_potion_entity:
                         continue
             candidates.append(room)
-        
+
         if not candidates:
             return True
-            
+
         any_satisfied = any(
             is_location_satisfying_constraint(room, constraint_loc, map_graph, reference_room)
             for room in candidates
         )
+        # For absolute SpatialFacts, also charitably check from the player's current room.
+        if not any_satisfied and isinstance(f, SpatialFact) and f.type == SpatialRelationType.ABSOLUTE:
+            player_room = getattr(true_state, "current_room", None)
+            if player_room and player_room != reference_room:
+                any_satisfied = any(
+                    is_location_satisfying_constraint(room, constraint_loc, map_graph, player_room)
+                    for room in candidates
+                )
         return not any_satisfied
 
     return False
@@ -759,7 +803,17 @@ def _is_need_fact_misinfo(f: Fact, true_state: GameState, map_graph: KnowledgeGr
         elif f.subject.type == "existential":
             if f.subject.location:
                 gt_room = entity_rooms.get(normalize_entity_name(gt_fact.subject.value))
-                if not gt_room or not is_location_satisfying_constraint(gt_room, f.subject.location, map_graph, "room 0"):
+                if not gt_room:
+                    return False
+                # Option D: check from the player's room first (reporters give directions
+                # relative to where they are standing), then fall back to room 0.
+                player_room = getattr(true_state, "current_room", None)
+                satisfied = False
+                if player_room:
+                    satisfied = is_location_satisfying_constraint(gt_room, f.subject.location, map_graph, player_room)
+                if not satisfied:
+                    satisfied = is_location_satisfying_constraint(gt_room, f.subject.location, map_graph, "room 0")
+                if not satisfied:
                     return False
                     
         # Match object/target
@@ -777,19 +831,28 @@ def _is_need_fact_misinfo(f: Fact, true_state: GameState, map_graph: KnowledgeGr
                     if not gt_potion_room or not is_location_satisfying_constraint(gt_potion_room, f.object.location, map_graph, "room 0"):
                         return False
         elif f.predicate == RelationPredicate.HAS_MESSAGE_FOR:
-            if not f.target or not gt_fact.target:
-                return False
-            if f.target.type == "named":
+            # Allow None or unconstrained existential targets to pass —
+            # "someone to the west has a message for someone" is a valid partial fact.
+            if f.target is None:
+                pass  # unconstrained target — don't require a match on the receiver
+            elif f.target.type == "named":
+                if not gt_fact.target:
+                    return False
                 f_val = normalize_entity_name(f.target.value)
                 gt_val = normalize_entity_name(gt_fact.target.value)
                 if f_val != gt_val:
                     return False
             elif f.target.type == "existential":
-                if f.target.location:
+                if f.target.location and gt_fact.target:
                     gt_target_room = entity_rooms.get(normalize_entity_name(gt_fact.target.value))
                     if not gt_target_room or not is_location_satisfying_constraint(gt_target_room, f.target.location, map_graph, "room 0"):
-                        return False
-                        
+                        # Charitable player_room fallback for directional target constraints
+                        player_room = getattr(true_state, "current_room", None)
+                        if not player_room:
+                            return False
+                        if not is_location_satisfying_constraint(gt_target_room, f.target.location, map_graph, player_room):
+                            return False
+
         return True
 
     for gt in all_gt_needs:
@@ -809,6 +872,21 @@ def _get_misinfo_fact_cost(f: Fact) -> float:
         return DIAGNOSIS_COST # 30.0
     return 0.0
 
+def _get_player_final_room(map_graph: KnowledgeGraph, fallback: str = "room 0") -> str:
+    """
+    Returns the player's final room as recorded in the telemetry KG.
+    The GameState pickle captures the player's *starting* room, not their
+    final position, so we rely on the LocationFact for 'player' in the
+    telemetry graph instead.
+    """
+    for fact in map_graph.facts:
+        if isinstance(fact, LocationFact):
+            if fact.entity.type == "named" and normalize_entity_name(fact.entity.value) == "player":
+                if fact.location.type == "room" and fact.location.room:
+                    return fact.location.room
+    return fallback
+
+
 def compute_iac(
     pred_facts: list[Fact],
     true_state: GameState,
@@ -818,6 +896,12 @@ def compute_iac(
     """
     Computes the Information Access Cost (IAC) based on predicted facts and ground truth.
     """
+    # Resolve the player's *final* room from the telemetry KG.
+    # The GameState pickle records the starting room, not the end of session.
+    player_final_room = _get_player_final_room(map_graph, fallback=getattr(true_state, "current_room", "room 0"))
+    # Mutate in-place so all downstream helpers (which read true_state.current_room)
+    # pick up the correct value without needing signature changes.
+    true_state.current_room = player_final_room
     # 1. Identify patient entities
     patient_npcs = [p["name"] for p in PATIENT_DATA.values()]
     
@@ -845,7 +929,14 @@ def compute_iac(
     for f in pred_facts:
         if isinstance(f, ConnectionFact):
             continue
-        
+
+        # Option C: partial/existential facts are hedged statements (e.g. "someone to
+        # the west needs a blue potion"). They should not carry a misinformation penalty
+        # because their subject is not definitively asserted — only definite named-entity
+        # claims warrant the full misinformation multiplier.
+        if getattr(f, "is_partial", False):
+            continue
+
         # Check location/spatial fact or relation/need fact
         if _is_location_fact_misinfo(f, true_state, map_graph, entity_rooms) or _is_need_fact_misinfo(f, true_state, map_graph, entity_rooms):
             global_misinformation_cost += _get_misinfo_fact_cost(f)

@@ -120,11 +120,13 @@ def load_narrative_view(path: str) -> NarrativeView:
     return NarrativeView.model_validate(data)
 
 
+from src.core.utils.experiment_logging import log_message, get_log_file, log_api_call
+
 def call_chatgpt(prompt: str, user_prompt: Template, narrative_view: NarrativeView) -> str:
-    """Send the narrative view as user message to gpt-4o-mini and return the reply."""
-    client = OpenAI()
+    """Send the narrative view as user message and return the reply."""
+    model = os.environ.get("GPT_MODEL", "gpt-5.6-sol")
     user_content = user_prompt.substitute(narrativeview=narrative_view.model_dump_json(indent=2))
-    model = os.environ.get("GPT_MODEL", "gpt-4.1-mini")
+
     kwargs = {
         "model": model,
         "input": [
@@ -136,6 +138,14 @@ def call_chatgpt(prompt: str, user_prompt: Template, narrative_view: NarrativeVi
         kwargs["reasoning"] = {"effort": "medium"}
     else:
         kwargs["temperature"] = 0
+        
+    log_api_call("openai", model, kwargs)
+
+    if os.environ.get("DRY_RUN") == "1":
+        log_message("Mock API Call (DRY RUN) - generate_reports.py")
+        return "### PLAYER STATUS\n- player is in room 1\n- player holds - None\n\n### ACTIVE NPC PATIENTS & NEEDS\n- lily needs a gold potion\n\n### COMPLETED ACTIONS & HISTORY\n- None\n\n### POTION & NPC LOCATIONS\n- lily is in room 1\n- gold potion is in room 1\n\n### UNRESOLVED / DIRECTIONAL FACTS\n- None"
+        
+    client = OpenAI()
     response = client.responses.create(**kwargs)
     return response.output_text
 
@@ -143,6 +153,7 @@ def call_chatgpt(prompt: str, user_prompt: Template, narrative_view: NarrativeVi
 def main() -> None:
     import dotenv
     dotenv.load_dotenv()
+    get_log_file()
 
     parser = argparse.ArgumentParser(
         description="Send NarrativeView JSON to ChatGPT 4o-mini and get a report."
@@ -165,10 +176,18 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    model_suffix = ""
+    try:
+        from src.core.utils.extraction_paths import get_current_model_suffix
+        if os.environ.get("GPT_MODEL") or os.environ.get("MODEL"):
+            model_suffix = f"_{get_current_model_suffix()}"
+    except ImportError:
+        pass
+
     data_dir = os.environ.get("DATA_DIR")
     if data_dir:
         input_path = os.path.join(
-            data_dir, "processed_output", "kg", args.input + "_narrative_view.json"
+            data_dir, "processed_output", "kg", args.input + f"_narrative_view{model_suffix}.json"
         )
     else:
         input_path = args.input
@@ -184,18 +203,18 @@ def main() -> None:
         r1 = call_chatgpt(fr_sys, fr_user, narrative_view)
         r2 = call_chatgpt(ta_sys, ta_user, narrative_view)
 
-        output_path = os.path.join(data_dir, "reports", args.input + "_full_realization_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + f"_full_realization_report{model_suffix}.txt")
         with open(output_path, "w") as f:
             f.write(r1)
         print(f"Full realization report saved to {output_path}")
-        output_path = os.path.join(data_dir, "reports", args.input + "_task_aware_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + f"_task_aware_report{model_suffix}.txt")
         with open(output_path, "w") as f:
             f.write(r2)
         print(f"Task-aware report saved to {output_path}")
     else:
         sys_p, user_p = PROMPT_SETS[args.prompt_set]
         report = call_chatgpt(sys_p, user_p, narrative_view)
-        output_path = os.path.join(data_dir, "reports", args.input + "_" + args.prompt_set + "_report.txt")
+        output_path = os.path.join(data_dir, "reports", args.input + "_" + args.prompt_set + f"_report{model_suffix}.txt")
         with open(output_path, "w") as f:
             f.write(report)
         print(f"Report saved to {output_path}")

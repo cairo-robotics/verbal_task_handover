@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 
 import dotenv
@@ -149,7 +150,9 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
         ):
             facts_to_remove.add(fact.id)
 
-    # --- Resolve HAS_ITEM against MESSAGE_DELIVERED (responses) ---
+    # --- Resolve HAS_ITEM against MESSAGE_DELIVERED (responses & requests) ---
+    PATIENTS_BY_ROOM = ["lily", "oliver", "nick", "marie", "guy"]
+    
     delivered_senders = {
         f.subject.value
         for f in rel_facts
@@ -159,6 +162,16 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
             and f.subject.value
         )
     }
+    
+    delivered_rooms = set()
+    delivered_targets = set()
+    for f in rel_facts:
+        if f.predicate == RelationPredicate.MESSAGE_DELIVERED:
+            if f.subject and f.subject.location and f.subject.location.room:
+                delivered_rooms.add(f.subject.location.room.lower())
+            if f.target and f.target.value:
+                delivered_targets.add(f.target.value.lower())
+
     for fact in rel_facts:
         if (
             fact.predicate == RelationPredicate.HAS_ITEM
@@ -166,11 +179,29 @@ def reconcile_state(graph: KnowledgeGraph) -> KnowledgeGraph:
             and fact.object.value
         ):
             obj_val_lower = fact.object.value.lower()
+            
+            # Match standard responses (e.g. response from Z) or named requests (e.g. request from Z)
+            matched = False
             for sender in delivered_senders:
                 sender_lower = sender.lower()
                 if obj_val_lower in [f"response from {sender_lower}", f"request from {sender_lower}"]:
                     facts_to_remove.add(fact.id)
+                    matched = True
                     break
+            
+            if matched:
+                continue
+                
+            # Match room-based requests (e.g. request from room X)
+            room_match = re.match(r"request from room\s*([0-9]+)$", obj_val_lower)
+            if room_match:
+                room_num = int(room_match.group(1))
+                room_name = f"room {room_num}"
+                patient_name = PATIENTS_BY_ROOM[room_num - 1] if room_num <= len(PATIENTS_BY_ROOM) else None
+                
+                # Check if message from this room is delivered to lounge or response delivered to patient
+                if (room_name in delivered_rooms) or (patient_name and patient_name.lower() in delivered_targets):
+                    facts_to_remove.add(fact.id)
 
     reconciled_facts = [f for f in graph.facts if getattr(f, "id", None) not in facts_to_remove]
 
@@ -218,11 +249,20 @@ def main() -> None:
         data_dir = os.environ.get("DATA_DIR")
         if not data_dir:
             parser.error("Set DATA_DIR or pass both --input and --output.")
+        
+        model_suffix = ""
+        try:
+            from src.core.utils.extraction_paths import get_current_model_suffix
+            if os.environ.get("GPT_MODEL") or os.environ.get("MODEL"):
+                model_suffix = f"_{get_current_model_suffix()}"
+        except ImportError:
+            pass
+
         in_path = os.path.join(
-            data_dir, "processed_output", "kg", f"{args.pid}_merged_kg.json"
+            data_dir, "processed_output", "kg", f"{args.pid}_merged_kg{model_suffix}.json"
         )
         out_path = os.path.join(
-            data_dir, "processed_output", "kg", f"{args.pid}_reconciled_kg.json"
+            data_dir, "processed_output", "kg", f"{args.pid}_reconciled_kg{model_suffix}.json"
         )
     else:
         parser.error("Provide a participant PID or both --input and --output.")

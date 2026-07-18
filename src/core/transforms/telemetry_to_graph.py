@@ -398,7 +398,15 @@ def convert_telemetry_to_kg(file_path: str) -> KnowledgeGraph:
                 )
                 continue
 
-            if text_lower.startswith("gave wrong item to npc:"):
+            gave_wrong_match = re.match(
+                r"gave wrong item to npc:\s*([a-z0-9_]+)(?:\s+([a-z0-9_]+))?\s*$",
+                text_lower,
+            )
+            if gave_wrong_match:
+                item_raw, npc_raw = gave_wrong_match.groups()
+                npc_arg, inferred_partial = _resolve_give_target_npc(npc_raw, state)
+                if npc_arg.type == "named" and npc_arg.value is not None:
+                    builder.add_location(npc_arg, state.player_room, provenance=text)
                 continue
 
             if text_lower.startswith("treasure collected:"):

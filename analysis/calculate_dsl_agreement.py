@@ -287,8 +287,12 @@ def main():
     for pid in args.pids:
         # Paths
         telemetry_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_telemetry_to_kg.json")
-        llm_kg_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_user_report_dsl_to_kg.json")
+        llm_kg_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_user_report_gpt_dsl_to_kg.json")
         
+        # Fallback to f"{pid}_user_report_dsl_to_kg.json"
+        if not os.path.exists(llm_kg_path):
+            llm_kg_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_user_report_dsl_to_kg.json")
+            
         # Fallback to f"{pid}_dsl_to_kg.json"
         if not os.path.exists(llm_kg_path):
             llm_kg_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_dsl_to_kg.json")

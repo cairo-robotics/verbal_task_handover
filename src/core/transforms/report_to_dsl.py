@@ -5,10 +5,20 @@ import sys
 from openai import OpenAI
 
 try:
-    from src.core.utils.extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+    from src.core.utils.extraction_paths import (
+        dsl_output_path_for_report_arg,
+        normalize_report_arg,
+        reports_file,
+        format_model_name,
+    )
 except ImportError:
     # pyrefly: ignore [missing-import]
-    from extraction_paths import dsl_output_path_for_report_arg, normalize_report_arg, reports_file
+    from extraction_paths import (
+        dsl_output_path_for_report_arg,
+        normalize_report_arg,
+        reports_file,
+        format_model_name,
+    )
 
 try:
     import dotenv
@@ -18,6 +28,7 @@ except ImportError:
     pass
 
 import os
+# DEFAULT_MODEL = os.environ.get("GPT_MODEL", "gpt-5.6-sol")
 DEFAULT_MODEL = os.environ.get("GPT_MODEL", "gpt-4.1-mini")
 
 PROMPT = """
@@ -172,12 +183,11 @@ def generate_placeholder_dsl(user_prompt: str, model_name: str) -> str:
     return f"{comment}\n" + "\n".join(facts)
 
 
+from src.core.utils.experiment_logging import log_message, get_log_file, log_api_call
+
+
 def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str = "gpt") -> str:
     if provider == "gpt":
-        if not os.environ.get("OPENAI_API_KEY"):
-            print("Warning: OPENAI_API_KEY not set. Using placeholder/mock for GPT.", file=sys.stderr)
-            return generate_placeholder_dsl(user_prompt, model)
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         kwargs = {
             "model": model,
             "input": [
@@ -188,6 +198,16 @@ def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str =
             kwargs["reasoning"] = {"effort": "medium"}
         else:
             kwargs["temperature"] = 0
+        log_api_call("openai", model, kwargs)
+
+        if os.environ.get("DRY_RUN") == "1":
+            log_message(f"Mock API Call (DRY RUN) - report_to_dsl.py (provider: {provider})")
+            return generate_placeholder_dsl(user_prompt, model)
+            
+        if not os.environ.get("OPENAI_API_KEY"):
+            print("Warning: OPENAI_API_KEY not set. Using placeholder/mock for GPT.", file=sys.stderr)
+            return generate_placeholder_dsl(user_prompt, model)
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         response = client.responses.create(**kwargs)
         text = response.output_text
         if not text or not text.strip():
@@ -198,6 +218,20 @@ def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str =
         return _normalize_dsl_output(text)
 
     elif provider == "claude":
+        kwargs = {
+            "model": model,
+            "max_tokens": 1024,
+            "temperature": 0,
+            "messages": [
+                {"role": "user", "content": PROMPT.replace("{INPUT_TEXT}", user_prompt)}
+            ]
+        }
+        log_api_call("anthropic", model, kwargs)
+
+        if os.environ.get("DRY_RUN") == "1":
+            log_message(f"Mock API Call (DRY RUN) - report_to_dsl.py (provider: {provider})")
+            return generate_placeholder_dsl(user_prompt, model)
+
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key or api_key.startswith("placeholder") or os.environ.get("TESTING_MOCK_ALL") == "1":
             print(f"Using placeholder for Claude model ({model}) API call.")
@@ -211,17 +245,16 @@ def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str =
             sys.exit(1)
             
         client = anthropic.Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model=model,
-            max_tokens=1024,
-            temperature=0,
-            messages=[
-                {"role": "user", "content": PROMPT.replace("{INPUT_TEXT}", user_prompt)}
-            ]
-        )
+        message = client.messages.create(**kwargs)
         return _normalize_dsl_output(message.content[0].text)
 
     elif provider == "gemini":
+        log_api_call("google", model, {"prompt": "PROMPT.replace('{INPUT_TEXT}', user_prompt)", "generation_config": {"temperature": 0}})
+
+        if os.environ.get("DRY_RUN") == "1":
+            log_message(f"Mock API Call (DRY RUN) - report_to_dsl.py (provider: {provider})")
+            return generate_placeholder_dsl(user_prompt, model)
+
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key or api_key.startswith("placeholder") or os.environ.get("TESTING_MOCK_ALL") == "1":
             print(f"Using placeholder for Gemini model ({model}) API call.")
@@ -247,6 +280,7 @@ def extract_dsl(user_prompt: str, *, model: str = DEFAULT_MODEL, provider: str =
 
 
 def main() -> None:
+    get_log_file()
     parser = argparse.ArgumentParser(
         description="Extract line-based DSL facts from a report under DATA_DIR/reports via LLM providers."
     )
@@ -268,6 +302,11 @@ def main() -> None:
         default=None,
         help="Model name (defaults: gpt-4.1-mini, claude-3-5-sonnet-20241022, gemini-1.5-pro).",
     )
+    parser.add_argument(
+        "--eval-model",
+        default=None,
+        help="Override the LLM model used for the extraction, while preserving the filename from --model.",
+    )
     args = parser.parse_args()
 
     data_dir = os.environ.get("DATA_DIR")
@@ -285,7 +324,17 @@ def main() -> None:
         elif provider == "gemini":
             model = "gemini-1.5-pro"
 
-    if provider == "gpt" and not os.environ.get("OPENAI_API_KEY"):
+    eval_model = args.eval_model or model
+    eval_provider = provider
+    if args.eval_model:
+        if "claude" in args.eval_model.lower():
+            eval_provider = "claude"
+        elif "gemini" in args.eval_model.lower():
+            eval_provider = "gemini"
+        elif "gpt" in args.eval_model.lower():
+            eval_provider = "gpt"
+
+    if eval_provider == "gpt" and not os.environ.get("OPENAI_API_KEY"):
         print("Warning: OPENAI_API_KEY not set. GPT model will fall back to placeholder/mock.", file=sys.stderr)
 
     report_rel = normalize_report_arg(args.report_file)
@@ -302,12 +351,12 @@ def main() -> None:
     report_text = report_path.read_text(encoding="utf-8")
 
     try:
-        dsl_text = extract_dsl(report_text, model=model, provider=provider)
+        dsl_text = extract_dsl(report_text, model=eval_model, provider=eval_provider)
     except Exception as exc:
         print(f"Error: failed to extract DSL: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    output_path = dsl_output_path_for_report_arg(data_dir, args.report_file, model=provider)
+    output_path = dsl_output_path_for_report_arg(data_dir, args.report_file, model=format_model_name(model, provider))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(dsl_text + "\n", encoding="utf-8")
     print(f"DSL output written to {output_path}")

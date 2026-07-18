@@ -87,9 +87,33 @@ def main():
             print("Error: DATA_DIR environment variable must be set for PID-based merging.")
             sys.exit(1)
         pid = args.pid_or_base
+
+        model_suffix = ""
+        try:
+            from src.core.utils.extraction_paths import get_current_model_suffix
+            if os.environ.get("GPT_MODEL") or os.environ.get("MODEL"):
+                model_suffix = f"_{get_current_model_suffix()}"
+        except ImportError:
+            pass
+
         base_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_telemetry_to_kg.json")
-        new_path = os.path.join(data_dir, "processed_output", "kg", f"{pid}_dsl_to_kg.json")
-        output_path = args.output or os.path.join(data_dir, "processed_output", "kg", f"{pid}_merged_kg.json")
+        
+        candidates = [
+            os.path.join(data_dir, "processed_output", "kg", f"{pid}_user_report_dsl_to_kg{model_suffix}.json"),
+            os.path.join(data_dir, "processed_output", "kg", f"{pid}_dsl_to_kg{model_suffix}.json"),
+            os.path.join(data_dir, "processed_output", "kg", f"{pid}_dsl_to_kg.json"),
+            os.path.join(data_dir, "processed_output", "kg", f"{pid}_user_report_dsl_to_kg.json")
+        ]
+        
+        new_path = None
+        for cand in candidates:
+            if os.path.exists(cand):
+                new_path = cand
+                break
+        if new_path is None:
+            new_path = candidates[0]
+
+        output_path = args.output or os.path.join(data_dir, "processed_output", "kg", f"{pid}_merged_kg{model_suffix}.json")
     else:
         # Explicit path mode
         base_path = args.pid_or_base

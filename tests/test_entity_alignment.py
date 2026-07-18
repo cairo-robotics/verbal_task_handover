@@ -394,6 +394,44 @@ class TestExistentialResolution:
         res = result.existential_resolutions[0]
         assert res.entity_type_filter == "npc"
 
+    def test_build_existential_prompt_contains_fact_context(self):
+        """Verify that _build_existential_prompt includes the serialized fact context."""
+        from src.pipelines.model_alignment.entity_alignment import _build_existential_prompt, _ArgSlot
+        fact = RelationFact(
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(),
+            object=_named("blue potion"),
+        )
+        slot = _ArgSlot(fact_id=fact.id, argument_role="subject", argument=fact.subject, fact=fact)
+        prompt = _build_existential_prompt(slot, ["lily", "rose"])
+        assert "Fact context:" in prompt
+        assert "needs_potion" in prompt
+        assert "blue potion" in prompt
+
+    def test_build_existential_prompt_contains_telemetry_context(self):
+        """Verify that _build_existential_prompt includes telemetry facts about candidates."""
+        from src.pipelines.model_alignment.entity_alignment import _build_existential_prompt, _ArgSlot
+        fact = RelationFact(
+            predicate=RelationPredicate.NEEDS_POTION,
+            subject=_existential(),
+            object=_named("blue potion"),
+        )
+        slot = _ArgSlot(fact_id=fact.id, argument_role="subject", argument=fact.subject, fact=fact)
+
+        telemetry_graph = KnowledgeGraph(
+            facts=[
+                RelationFact(
+                    predicate=RelationPredicate.NEEDS_POTION,
+                    subject=_named("lily"),
+                    object=_named("red potion"),
+                )
+            ]
+        )
+        prompt = _build_existential_prompt(slot, ["lily", "rose"], telemetry_graph)
+        assert "Telemetry context (facts about candidates):" in prompt
+        assert "lily" in prompt
+        assert "red potion" in prompt
+
 
 # ---------------------------------------------------------------------------
 # Existential resolution — live API integration tests
