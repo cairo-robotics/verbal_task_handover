@@ -77,5 +77,39 @@ class TestCraftNarrativeViewV2(unittest.TestCase):
         self.assertIn("needs gold potion", lily_view.requirements)
         self.assertTrue(any("message" in h for h in lily_view.interaction_history))
 
+    def test_existential_need_in_room_preservation(self):
+        # Setup a sample KnowledgeGraph with an existential need constraint
+        # e.g., "someone in room 1 needs a gold potion"
+        existential_subj = Argument(
+            type="existential",
+            value=None,
+            location=Location(type="room", room="room 1")
+        )
+        potion_arg = Argument(type="named", value="gold potion")
+        
+        facts = [
+            # The existential need
+            RelationFact(
+                predicate=RelationPredicate.NEEDS_POTION,
+                subject=existential_subj,
+                object=potion_arg
+            ),
+            # Define room 1 as a valid location room in the graph
+            LocationFact(
+                entity=Argument(type="named", value="player"),
+                location=Location(type="room", room="room 1")
+            )
+        ]
+        
+        kg = KnowledgeGraph(facts=facts)
+        narrative_view = craft_narrative_view(kg)
+        
+        # Verify that the existential relation is NOT silently dropped
+        # and is preserved in unanchored_facts.
+        self.assertEqual(len(narrative_view.unanchored_facts), 1)
+        self.assertIn("needs_potion", narrative_view.unanchored_facts[0])
+        self.assertIn("gold potion", narrative_view.unanchored_facts[0])
+        self.assertIn("room 1", narrative_view.unanchored_facts[0])
+
 if __name__ == "__main__":
     unittest.main()

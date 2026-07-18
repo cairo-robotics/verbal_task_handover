@@ -442,24 +442,24 @@ def craft_narrative_view(
             
             # Check subject
             subj_loc = fact.subject.location
-            if subj_loc:
+            if fact.subject.type == "existential":
+                is_unanchored = True
+            elif subj_loc:
                 if subj_loc.type == "directional":
                     is_unanchored = True
                 elif subj_loc.type == "room" and subj_loc.room not in location_rooms:
                     is_unanchored = True
-            elif fact.subject.type == "existential":
-                is_unanchored = True
                 
             # Check target (recipient of message)
             if fact.target:
                 tgt_loc = fact.target.location
-                if tgt_loc:
+                if fact.target.type == "existential":
+                    is_unanchored = True
+                elif tgt_loc:
                     if tgt_loc.type == "directional":
                         is_unanchored = True
                     elif tgt_loc.type == "room" and tgt_loc.room not in location_rooms:
                         is_unanchored = True
-                elif fact.target.type == "existential":
-                    is_unanchored = True
 
             if is_unanchored:
                 unanchored_facts.append(str(fact))
